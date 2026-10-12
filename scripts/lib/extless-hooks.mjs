@@ -1,7 +1,7 @@
 // Node resolve hook: lets Node run Metro-style sources whose relative imports omit the extension
 // (e.g. vendored upstream files). Only affects relative specifiers that have no extension.
 import { existsSync } from "node:fs";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL, URL } from "node:url";
 
 const HAS_EXT = /\.[cm]?[jt]sx?$|\.json$/;
 
