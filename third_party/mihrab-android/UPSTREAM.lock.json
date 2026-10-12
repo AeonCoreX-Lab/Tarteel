@@ -3,11 +3,11 @@
   "mode": "files",
   "repo": "https://github.com/MihrabHQ/Mihrab",
   "branch": "main",
-  "sha": null,
-  "source": "snapshot:Mihrab-main_2.zip (no git metadata)",
+  "sha": "d2aec421c7c61ed1a3a4a2dfcb601e231721117a",
+  "source": "https://github.com/MihrabHQ/Mihrab@d2aec421c7c61ed1a3a4a2dfcb601e231721117a",
   "upstreamPackageVersion": "1.5.50",
   "license": "AGPL-3.0-or-later",
-  "importedAt": "2026-10-11T05:41:26.142Z",
+  "importedAt": "2026-10-12T14:13:14.432Z",
   "entries": [
     "android/app/src/main/java/com/prayer_times/PrayerAlarmActivity.kt",
     "android/app/src/main/java/com/prayer_times/FullScreenAlarmModule.kt",
@@ -15,7 +15,7 @@
   ],
   "files": {
     "android/app/src/main/java/com/prayer_times/FullScreenAlarmModule.kt": "32927b9235db16feeb36ec934c28112018358696d1ea6a43ef1616dcf6b1c001",
-    "android/app/src/main/java/com/prayer_times/PrayerAlarmActivity.kt": "4a1aa758881ce56af1933faadf8de1f65d4c0e76e21812d026bfd6aeac434bac",
+    "android/app/src/main/java/com/prayer_times/PrayerAlarmActivity.kt": "c74e0e61d7a5904e5a6accba97580ac7dcc335f2ccb606f1d33da782292d23d7",
     "android/app/src/main/java/com/prayer_times/PrayerAlarmHeadlessService.kt": "74611bfd3eb7920df96d1698c9a1fdd51f00a4497a18971b5d6157996015d443"
   },
   "licenseFiles": {

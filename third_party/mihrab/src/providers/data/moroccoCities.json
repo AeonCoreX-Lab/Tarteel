@@ -1,0 +1,1312 @@
+[
+  {
+    "id": 1,
+    "name": "الرباط",
+    "lat": 34.0218454,
+    "lng": -6.8438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 2,
+    "name": "الخميسات",
+    "lat": 33.830287,
+    "lng": -6.0938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 3,
+    "name": "تيفلت",
+    "lat": 33.894009,
+    "lng": -6.3438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 4,
+    "name": "الرماني",
+    "lat": 33.528608,
+    "lng": -6.5938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 5,
+    "name": "والماس",
+    "lat": 33.425509,
+    "lng": -6,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 6,
+    "name": "بوزنيقة",
+    "lat": 33.781005,
+    "lng": -7.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 7,
+    "name": "القنيطرة",
+    "lat": 34.26457,
+    "lng": -6.5938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 8,
+    "name": "سيدي قاسم",
+    "lat": 34.226412,
+    "lng": -5.7109,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 9,
+    "name": "سيدي يحيى الغرب",
+    "lat": 34.3085169,
+    "lng": -6.3125,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 10,
+    "name": "سيدي سليمان",
+    "lat": 34.259878,
+    "lng": -5.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 11,
+    "name": "سوق أربعاء الغرب",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 12,
+    "name": "عرباوة",
+    "lat": 34.9134851,
+    "lng": -5.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 13,
+    "name": "مولاي بوسلهام",
+    "lat": 34.8753224,
+    "lng": -6.25,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 14,
+    "name": "طنجة",
+    "lat": 35.7696302,
+    "lng": -5.8125,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 15,
+    "name": "تطوان",
+    "lat": 35.5697958,
+    "lng": -5.3438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 16,
+    "name": "العرائش",
+    "lat": 35.1952327,
+    "lng": -6.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 17,
+    "name": "أصيلة",
+    "lat": 35.461928,
+    "lng": -6.0469,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 18,
+    "name": "شفشاون",
+    "lat": 35.1700832,
+    "lng": -5.25,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 19,
+    "name": "مرتيل",
+    "lat": 35.617441,
+    "lng": -5.25,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 20,
+    "name": "المضيق",
+    "lat": 35.6833598,
+    "lng": -5.3438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 21,
+    "name": "القصر الكبير",
+    "lat": 34.999218,
+    "lng": -5.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 22,
+    "name": "القصر الصغير",
+    "lat": 35.8006285,
+    "lng": -5.5625,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 23,
+    "name": "الحسيمة",
+    "lat": 35.245114,
+    "lng": -3.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 24,
+    "name": "سبتة",
+    "lat": 35.8894,
+    "lng": -5.3438,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 25,
+    "name": "الفنيدق",
+    "lat": 35.8392089,
+    "lng": -5.3438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 26,
+    "name": "الجبهة",
+    "lat": 35.2158,
+    "lng": -4.6875,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 27,
+    "name": "واد لاو",
+    "lat": 35.450492,
+    "lng": -5.0938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 28,
+    "name": "باب برد",
+    "lat": 34.998897,
+    "lng": -4.8906,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 29,
+    "name": "وزان",
+    "lat": 34.796757,
+    "lng": -5.5938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 30,
+    "name": "بوسكور",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 31,
+    "name": "وجدة",
+    "lat": 34.677874,
+    "lng": -1.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 32,
+    "name": "بركان",
+    "lat": 34.9266755,
+    "lng": -2.3438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 33,
+    "name": "فكيك",
+    "lat": 32.115048,
+    "lng": -1.2188,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 34,
+    "name": "بوعرفة",
+    "lat": 32.532903,
+    "lng": -1.9609,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 35,
+    "name": "كرسيف",
+    "lat": 34.2274367,
+    "lng": -3.3438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 36,
+    "name": "جرادة",
+    "lat": 34.310531,
+    "lng": -2.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 37,
+    "name": "عين الشعير",
+    "lat": 32.2202009,
+    "lng": -2.5,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 38,
+    "name": "تاوريرت",
+    "lat": 34.413438,
+    "lng": -2.8906,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 39,
+    "name": "الناظور",
+    "lat": 35.1739922,
+    "lng": -2.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 40,
+    "name": "مليلية",
+    "lat": 35.2923,
+    "lng": -2.9609,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 41,
+    "name": "دبدو",
+    "lat": 33.986368,
+    "lng": -3,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 42,
+    "name": "سلوان",
+    "lat": 35.07284,
+    "lng": -2.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 43,
+    "name": "بني أنصار",
+    "lat": 35.259687,
+    "lng": -2.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 44,
+    "name": "فرخانة",
+    "lat": 35.286107,
+    "lng": -2.9688,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 45,
+    "name": "تالسينت",
+    "lat": 32.535512,
+    "lng": -3.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 46,
+    "name": "تندرارة",
+    "lat": 33.049438,
+    "lng": -2,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 47,
+    "name": "العيون الشرقية",
+    "lat": 34.584,
+    "lng": -2.5,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 48,
+    "name": "بني ادرار",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 49,
+    "name": "السعيدية",
+    "lat": 35.0822208,
+    "lng": -2.25,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 50,
+    "name": "رأس الماء",
+    "lat": 35.1372835,
+    "lng": -2.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 51,
+    "name": "تافوغالت",
+    "lat": 34.8055488,
+    "lng": -2.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 52,
+    "name": "فزوان",
+    "lat": 34.9163284,
+    "lng": -2.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 53,
+    "name": "أحفير",
+    "lat": 34.955281,
+    "lng": -2.0938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 54,
+    "name": "زايو",
+    "lat": 34.941906,
+    "lng": -2.7109,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 55,
+    "name": "دريوش",
+    "lat": 34.97694,
+    "lng": -3.3906,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 56,
+    "name": "بني تجيت",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 57,
+    "name": "بوعنان",
+    "lat": 32.039244,
+    "lng": -3.0469,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 58,
+    "name": "الدار البيضاء",
+    "lat": 33.5945144,
+    "lng": -7.6875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 59,
+    "name": "المحمدية",
+    "lat": 33.6958383,
+    "lng": -7.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 60,
+    "name": "بن سليمان",
+    "lat": 33.6228983,
+    "lng": -7.1406,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 61,
+    "name": "سطات",
+    "lat": 33.002397,
+    "lng": -7.6406,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 62,
+    "name": "الكارة",
+    "lat": 33.277113,
+    "lng": -7.2344,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 63,
+    "name": "البروج",
+    "lat": 32.504976,
+    "lng": -7.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 64,
+    "name": "ابن أحمد",
+    "lat": 33.0625,
+    "lng": -7.25,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 65,
+    "name": "برشيد",
+    "lat": 33.2676746,
+    "lng": -7.5938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 66,
+    "name": "الجديدة",
+    "lat": 33.2293229,
+    "lng": -8.5,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 67,
+    "name": "أزمور",
+    "lat": 33.288141,
+    "lng": -8.3438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 68,
+    "name": "سيدي بنور",
+    "lat": 32.6507792,
+    "lng": -8.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 69,
+    "name": "خميس الزمامرة",
+    "lat": 32.6276804,
+    "lng": -8.7109,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 70,
+    "name": "خنيفرة",
+    "lat": 32.9357718,
+    "lng": -5.6875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 71,
+    "name": "مولاي بوعزة",
+    "lat": 33.224507,
+    "lng": -6.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 72,
+    "name": "زاوية أحنصال",
+    "lat": 31.8456029,
+    "lng": -6.0938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 73,
+    "name": "بني ملال",
+    "lat": 32.334193,
+    "lng": -6.3438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 74,
+    "name": "أزيلال",
+    "lat": 31.959295,
+    "lng": -6.5938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 75,
+    "name": "الفقيه بنصالح",
+    "lat": 32.49694,
+    "lng": -6.6875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 76,
+    "name": "دمنات",
+    "lat": 31.732224,
+    "lng": -7,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 77,
+    "name": "القصيبة",
+    "lat": 32.568902,
+    "lng": -6.0469,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 78,
+    "name": "قصبة تادلة",
+    "lat": 32.602894,
+    "lng": -6.25,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 79,
+    "name": "خريبكة",
+    "lat": 32.8856482,
+    "lng": -6.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 80,
+    "name": "وادي زم",
+    "lat": 32.862504,
+    "lng": -6.5938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 81,
+    "name": "فاس",
+    "lat": 34.0346534,
+    "lng": -5,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 82,
+    "name": "صفرو",
+    "lat": 33.824898,
+    "lng": -4.8438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 83,
+    "name": "مولاي يعقوب",
+    "lat": 34.087468,
+    "lng": -5.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 84,
+    "name": "بولمان",
+    "lat": 33.3637958,
+    "lng": -4.7344,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 85,
+    "name": "ميسور",
+    "lat": 33.047057,
+    "lng": -4,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 86,
+    "name": "رباط الخير",
+    "lat": 33.8154579,
+    "lng": -4.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 87,
+    "name": "المنزل بني يازغة",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 88,
+    "name": "إموزار كندر",
+    "lat": 33.7160971,
+    "lng": -5,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 89,
+    "name": "تازة",
+    "lat": 34.230155,
+    "lng": -4,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 90,
+    "name": "تاونات",
+    "lat": 34.538476,
+    "lng": -4.6875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 91,
+    "name": "أكنول",
+    "lat": 34.65602,
+    "lng": -3.8906,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 92,
+    "name": "تيزي وسلي",
+    "lat": 34.7461941,
+    "lng": -3.7969,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 93,
+    "name": "بورد",
+    "lat": 34.7445412,
+    "lng": -4.0938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 94,
+    "name": "تاهلة",
+    "lat": 34.050634,
+    "lng": -4.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 95,
+    "name": "تيسة",
+    "lat": 34.28657,
+    "lng": -4.6875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 96,
+    "name": "قرية با محمد",
+    "lat": 34.364056,
+    "lng": -5.2109,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 97,
+    "name": "كتامة",
+    "lat": 34.8763848,
+    "lng": -4.6406,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 98,
+    "name": "واد أمليل",
+    "lat": 34.191562,
+    "lng": -4.25,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 99,
+    "name": "مكناس",
+    "lat": 33.8984131,
+    "lng": -5.5938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 100,
+    "name": "يفرن",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 101,
+    "name": "الحاجب",
+    "lat": 33.690156,
+    "lng": -5.3906,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 102,
+    "name": "زرهون",
+    "lat": 34.0547,
+    "lng": -5.5,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 103,
+    "name": "آزرو",
+    "lat": 33.4415843,
+    "lng": -5.2344,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 104,
+    "name": "مراكش",
+    "lat": 31.6295,
+    "lng": -8,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 105,
+    "name": "قلعة السراغنة",
+    "lat": 32.0538921,
+    "lng": -7.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 106,
+    "name": "الصويرة",
+    "lat": 31.5118281,
+    "lng": -9.75,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 107,
+    "name": "شيشاوة",
+    "lat": 31.5463197,
+    "lng": -8.75,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 108,
+    "name": "بنجرير",
+    "lat": 32.235207,
+    "lng": -7.9609,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 109,
+    "name": "الرحامنة",
+    "lat": 32.2361,
+    "lng": -7.9375,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 110,
+    "name": "تمنار",
+    "lat": 31.003117,
+    "lng": -9.6875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 111,
+    "name": "آسفي",
+    "lat": 32.2650776,
+    "lng": -9.25,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 112,
+    "name": "الوليدية",
+    "lat": 32.7097639,
+    "lng": -9,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 113,
+    "name": "اليوسفية",
+    "lat": 32.245801,
+    "lng": -8.5,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 114,
+    "name": "تسلطانت",
+    "lat": 31.5445753,
+    "lng": -7.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 115,
+    "name": "تامصلوحت",
+    "lat": 31.4833,
+    "lng": -8.0938,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 116,
+    "name": "قطارة",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 117,
+    "name": "أكادير",
+    "lat": 30.4205162,
+    "lng": -9.5625,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 118,
+    "name": "تارودانت",
+    "lat": 30.470651,
+    "lng": -8.7969,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 119,
+    "name": "تزنيت",
+    "lat": 29.698624,
+    "lng": -9.7344,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 120,
+    "name": "إغرم",
+    "lat": 30.089004,
+    "lng": -8.4609,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 121,
+    "name": "تالوين",
+    "lat": 30.5314629,
+    "lng": -7.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 122,
+    "name": "تافراوت",
+    "lat": 29.720472,
+    "lng": -8.9844,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 123,
+    "name": "طاطا",
+    "lat": 29.746392,
+    "lng": -7.9844,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 124,
+    "name": "أقا",
+    "lat": 29.391861,
+    "lng": -8.25,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 125,
+    "name": "فم لحصن",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 126,
+    "name": "بويكرة",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 127,
+    "name": "أولاد تايمة",
+    "lat": 30.3927088,
+    "lng": -9.2109,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 128,
+    "name": "الرشيدية",
+    "lat": 31.929089,
+    "lng": -4.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 129,
+    "name": "الريصاني",
+    "lat": 31.2833,
+    "lng": -4.25,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 130,
+    "name": "أرفود",
+    "lat": 31.4324061,
+    "lng": -4.2344,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 131,
+    "name": "تنديت",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 132,
+    "name": "كلميمة",
+    "lat": 31.692627,
+    "lng": -4.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 133,
+    "name": "إملشيل",
+    "lat": 32.156119,
+    "lng": -5.5938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 134,
+    "name": "تنجداد",
+    "lat": 31.510201,
+    "lng": -5,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 135,
+    "name": "الريش",
+    "lat": 32.25677,
+    "lng": -4.4609,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 136,
+    "name": "ميدلت",
+    "lat": 32.680347,
+    "lng": -4.75,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 137,
+    "name": "زاكورة",
+    "lat": 30.3279053,
+    "lng": -5.8438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 138,
+    "name": "ورزازات",
+    "lat": 30.920193,
+    "lng": -6.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 139,
+    "name": "تنغير",
+    "lat": 31.52133,
+    "lng": -5.5,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 140,
+    "name": "هسكورة",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 141,
+    "name": "قلعة مكونة",
+    "lat": 31.2378612,
+    "lng": -6.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 142,
+    "name": "أكدز",
+    "lat": 30.6943155,
+    "lng": -6.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 143,
+    "name": "بومالن دادس",
+    "lat": 31.372661,
+    "lng": -6,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 144,
+    "name": "النيف",
+    "lat": 31.116268,
+    "lng": -5.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 145,
+    "name": "أسول",
+    "lat": 31.94966,
+    "lng": -5.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 146,
+    "name": "أمسمرير",
+    "lat": 31.696181,
+    "lng": -5.8125,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 147,
+    "name": "تازارين",
+    "lat": 30.7830658,
+    "lng": -5.5625,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 148,
+    "name": "سيدي إفني",
+    "lat": 29.3791253,
+    "lng": -10.1875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 149,
+    "name": "كلميم",
+    "lat": 28.9863852,
+    "lng": -10.0625,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 150,
+    "name": "أسا",
+    "lat": 27.978305,
+    "lng": -9.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 151,
+    "name": "الزاك",
+    "lat": 28.022026,
+    "lng": -9.2969,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 152,
+    "name": "طانطان",
+    "lat": 28.437553,
+    "lng": -11.0938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 153,
+    "name": "بويزكارن",
+    "lat": 29.177425,
+    "lng": -9.7344,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 154,
+    "name": "المحبس",
+    "lat": 27.4137251,
+    "lng": -9.0469,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 155,
+    "name": "لمسيد",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 156,
+    "name": "العيون",
+    "lat": 27.154512,
+    "lng": -13.2344,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 157,
+    "name": "السمارة",
+    "lat": 26.7435827,
+    "lng": -11.6875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 158,
+    "name": "بوجدور",
+    "lat": 26.1263378,
+    "lng": -14.5,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 159,
+    "name": "طرفاية",
+    "lat": 27.9401204,
+    "lng": -12.9375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 160,
+    "name": "تفاريتي",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 161,
+    "name": "بوكراع",
+    "lat": 26.3575997,
+    "lng": -12.8438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 162,
+    "name": "كلتة زمور",
+    "lat": 25.148848,
+    "lng": -12.3438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 163,
+    "name": "أمكالة",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 164,
+    "name": "أخفنير",
+    "lat": 27.9330926,
+    "lng": -12.0469,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 165,
+    "name": "الداخلة",
+    "lat": 23.6940663,
+    "lng": -15.9844,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 166,
+    "name": "الكويرة",
+    "lat": 20.9167,
+    "lng": -17.0938,
+    "source": "checked-by-hand+ministry-lng"
+  },
+  {
+    "id": 167,
+    "name": "أوسرد",
+    "lat": 22.567,
+    "lng": -14.3047,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 168,
+    "name": "بئر كندوز",
+    "lat": 21.8352819,
+    "lng": -16.4688,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 169,
+    "name": "بئر أنزاران",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 301,
+    "name": "خميس سيدي عبد الجليل",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 302,
+    "name": "أولاد عياد",
+    "lat": 34.0839266,
+    "lng": -4.5938,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 303,
+    "name": "تاهلة",
+    "lat": 34.050634,
+    "lng": -4.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 304,
+    "name": "مطماطة",
+    "lat": 34.0983766,
+    "lng": -4.5469,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 305,
+    "name": "إيمنتانوت",
+    "lat": 31.1735007,
+    "lng": -8.8438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 306,
+    "name": "سيدي غانم",
+    "lat": 31.2864744,
+    "lng": -9.4375,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 307,
+    "name": "تفنتان",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 308,
+    "name": "آيت القاق",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 309,
+    "name": "أكدال أملشيل",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 310,
+    "name": "اكودال املشيل ميدلت",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 311,
+    "name": "أكايوار",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 312,
+    "name": "عين العودة",
+    "lat": 33.803077,
+    "lng": -6.75,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 313,
+    "name": "أسكين",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 314,
+    "name": "آيت ورير",
+    "lat": 31.563898,
+    "lng": -7.6875,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 315,
+    "name": "زاوية مولاي ابراهيم",
+    "lat": 31.2858471,
+    "lng": -7.9609,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 316,
+    "name": "تولكولت",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 317,
+    "name": "إيكس",
+    "lat": 33.5850575,
+    "lng": -7.8438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 318,
+    "name": "كرس",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 319,
+    "name": "تيسنت",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 320,
+    "name": "فم زكيد",
+    "lat": 30.085933,
+    "lng": -6.8438,
+    "source": "geocode-lat+ministry-lng"
+  },
+  {
+    "id": 321,
+    "name": "قصر إيش",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": 322,
+    "name": "إيمين ثلاث",
+    "lat": null,
+    "lng": null
+  }
+]
