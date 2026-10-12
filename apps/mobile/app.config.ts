@@ -25,6 +25,7 @@ const config: ExpoConfig = {
     "expo-router",
     "expo-sqlite",
     "expo-localization",
+    "expo-status-bar",
     [
       "expo-splash-screen",
       {
