@@ -11,17 +11,30 @@
   "dependencies": {
     "@tarteel/core": "*",
     "@tarteel/database": "*",
+    "@tarteel/prayer": "*",
     "@tarteel/quran-data": "*",
     "@tarteel/search": "*",
     "@tarteel/storage": "*",
     "@tarteel/types": "*",
     "expo": "~57.0.9",
+    "expo-constants": "~57.0.21",
+    "expo-linking": "~57.0.12",
+    "expo-localization": "~57.0.2",
+    "expo-location": "~57.0.20",
+    "expo-router": "~57.0.25",
+    "expo-splash-screen": "~57.0.9",
+    "expo-sqlite": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
     "react": "^19.2.0",
     "react-native": "0.86.2",
-    "zustand": "^5.0.0",
-    "@tarteel/prayer": "*",
+    "react-native-mmkv": "^4.3.2",
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-notify-kit": "^10.4.0",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-svg": "15.15.4",
     "tarteel-android": "*",
-    "react-native-notify-kit": "^10.4.0"
+    "zustand": "^5.0.0"
   },
   "license": "AGPL-3.0-or-later"
 }
