@@ -47,3 +47,18 @@ Metadata). Translations: "Text (with aya numbers)".
 The only change to the Quran text is removing the Bismillah that Tanzil prepends to ayah 1 of surahs 2-114 (except 9), so verse
 numbering matches `hafs-6236`. Changing the downloads (other text type or options) means re-running the import and re-reading
 the importer's checks: it refuses to guess when a file does not look as expected.
+
+## Also committed: QuranEnc (Filipino / Tagalog)
+`data/translations/tl-rowwad/` (Rowwad Translation Center, via https://quranenc.com/en/browse/tagalog_rwwad) is generated the same way
+from the untouched CSV download in `data/sources/quranenc/` (hash in `SHA256SUMS`):
+
+```
+npm run import:quranenc
+npm run validate:translations && npm run build:db
+```
+
+QuranEnc's terms allow re-publishing only without modification, naming QuranEnc.com and the version, and keeping the info block
+(`QURANENC-INFO.txt`). So `ayahs.json` is the text verbatim, including the `[n]` footnote markers inside it, and the footnotes
+they point at are kept in `footnotes.json`. To update: download the CSV again from the translation page ("CSV" button), replace
+`data/sources/quranenc/tagalog_rwwad.csv` without opening or editing it, and re-run the commands above. Do not edit the generated
+files by hand: `scripts/import-quranenc/import.test.ts` fails if they differ from what the importer produces.

@@ -1,0 +1,28 @@
+{
+  "id": "tl-rowwad",
+  "kind": "translation",
+  "version": "1.1.4",
+  "language": "tl",
+  "languageName": "Filipino (Tagalog)",
+  "direction": "ltr",
+  "translator": "Rowwad Translation Center",
+  "source": {
+    "name": "QuranEnc.com: Filipino Translation (Tagalog), Rowwad Translation Center (tagalog_rwwad)",
+    "url": "https://quranenc.com/en/browse/tagalog_rwwad"
+  },
+  "license": {
+    "name": "QuranEnc terms: may be downloaded and re-published unmodified, naming QuranEnc.com and the version (see PROVENANCE.md)",
+    "url": "https://quranenc.com/en/browse/tagalog_rwwad"
+  },
+  "copyright": "Rowwad Translation Center (translation); published by QuranEnc.com. Rights remain with the translator and publisher.",
+  "attribution": "Filipino (Tagalog) translation by Rowwad Translation Center, via QuranEnc.com, https://quranenc.com/en/browse/tagalog_rwwad (version 1.1.4, last update 2025-02-05)",
+  "numberingConvention": "hafs-6236",
+  "redistributionPermitted": true,
+  "importedAt": "2026-10-12",
+  "files": {
+    "ayahs.json": "95b0f5e61ce9c966d106b36ab98aa2f31420b5e938d740151eaae4e31c95b0a6",
+    "footnotes.json": "625fb79ad71f5036ddb2049e3dea3636aa3f1cffb9aa0c472dc41685348029af",
+    "PROVENANCE.md": "1ab031afe49016bed346f49eaed8fc6d6ff74d32c9d8612e2fa71897b4611c8b",
+    "QURANENC-INFO.txt": "aa726ffa7d2b2f72f975ea81bb3dd897fcfe07f4fe17379a69a6a41773a99d7a"
+  }
+}

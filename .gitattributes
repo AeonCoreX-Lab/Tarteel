@@ -1,0 +1,3 @@
+# Untouched third-party downloads are kept byte for byte (QuranEnc's terms forbid modifying them, and the importer pins their
+# sha256). `binary` stops git from converting or stripping the CRLF line endings of the CSV, in diffs, patches and checkouts.
+data/sources/quranenc/*.csv binary

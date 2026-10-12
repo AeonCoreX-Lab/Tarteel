@@ -1,0 +1,11 @@
+Translation Info:
+#---------------------------
+# Translation of the meanings of the Noble Qur'an
+# Language: Tagalog
+# Translation ID: tagalog_rwwad
+# Source: https://quranenc.com
+# URL: https://quranenc.com/en/browse/tagalog_rwwad
+# Last update: 2025-02-05 01:31:34 (v1.1.4-csv.1)
+# Check for updates: https://quranenc.com/check/tagalog_rwwad/v1.1.4-csv.1
+# PLEASE DON'T REMOVE THIS IMPORTANT INFORMATION!
+#---------------------------
