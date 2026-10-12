@@ -43,7 +43,7 @@ test("disabled prayers, sunrise and before-reminders", () => {
   const plan = planAlerts({ days: days(new Date(2026, 9, 7), 1), settings, now: at(7, 0, 0) });
   assert.deepEqual(plan.map((p) => `${p.event}:${p.kind}`), ["Sunrise:sunrise", "Dhuhr:before", "Dhuhr:adhan", "Maghrib:before", "Maghrib:adhan"]);
   const dh = plan.find((p) => p.id === alertId("2026-10-07", "Dhuhr", "before"));
-  assert.equal(dh?.at.getHours() * 60 + (dh?.at.getMinutes() ?? 0), 11 * 60 + 40);
+  assert.equal((dh?.at.getHours() ?? 0) * 60 + (dh?.at.getMinutes() ?? 0), 11 * 60 + 40);
   assert.equal(dh?.clock, "11:55"); // clock is the prayer's own time
   assert.equal(planAlerts({ days: days(new Date(2026, 9, 7), 1), settings: { ...settings, beforeMinutes: null }, now: at(7, 0, 0) }).filter((p) => p.kind === "before").length, 0);
 });

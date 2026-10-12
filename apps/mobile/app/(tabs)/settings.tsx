@@ -13,6 +13,10 @@ import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
 import { HEADING_FONT, useTheme } from "../../src/theme";
 
+// Tanzil's terms of use require the source to be clearly indicated, with a link to tanzil.net.
+const TANZIL_URL = "https://tanzil.net";
+const QURAN_TEXT_CREDIT = "Tanzil Project · Uthmani text, version 1.1 · CC BY 3.0 (verbatim copies only)";
+
 function Group({ title, children }: { title: string; children: ReactNode }) {
   const t = useTheme();
   return (
@@ -100,9 +104,9 @@ export default function SettingsTab() {
         <Text style={{ color: th.text, fontWeight: "600" }}>{t("translation")}</Text>
         <Row>
           <Button label={t("none")} selected={s.selectedTranslationId === null} onPress={() => s.set("selectedTranslationId", null)} />
-          {translations.map((tr) => (
-            <Button key={tr.id} label={`${tr.languageName} · ${tr.translator}`} selected={s.selectedTranslationId === tr.id} onPress={() => s.set("selectedTranslationId", tr.id)} />
-          ))}
+        {translations.map((tr) => (
+          <Button key={tr.id} label={`${tr.languageName} · ${tr.translator}`} selected={s.selectedTranslationId === tr.id} onPress={() => s.set("selectedTranslationId", tr.id)} />
+        ))}
         </Row>
         <Stepper label={t("arabicSize")} value={s.arabicFontSize} step={2} {...LIMITS.arabicFontSize} onChange={(n) => s.set("arabicFontSize", n)} />
         <Stepper label={t("translationSize")} value={s.translationFontSize} step={1} {...LIMITS.translationFontSize} onChange={(n) => s.set("translationFontSize", n)} />
@@ -157,18 +161,21 @@ export default function SettingsTab() {
         <Text style={{ color: th.text, fontSize: 15, lineHeight: 22 }}>{t("privacyNote")}</Text>
       </Group>
 
-      {translations.length > 0 ? (
-        <Group title={t("sources")}>
-          {translations.map((tr) => (
-            <View key={tr.id} style={{ gap: 2 }}>
-              <Text style={{ color: th.text, fontWeight: "700", fontFamily: HEADING_FONT }}>{tr.languageName} · {tr.translator}</Text>
-              <Text selectable style={{ color: th.muted, fontSize: 13 }}>{tr.attribution}</Text>
-              <Text selectable style={{ color: th.muted, fontSize: 13 }}>{tr.copyright} · {tr.licenseName} · v{tr.version}</Text>
-              <Text selectable style={{ color: th.muted, fontSize: 13 }}>{tr.sourceName} — {tr.sourceUrl}</Text>
-            </View>
-          ))}
-        </Group>
-      ) : null}
+      <Group title={t("sources")}>
+        <View style={{ gap: 2 }}>
+          <Text style={{ color: th.text, fontWeight: "700", fontFamily: HEADING_FONT }}>{t("quranText")}</Text>
+          <Text selectable style={{ color: th.muted, fontSize: 13 }}>{QURAN_TEXT_CREDIT}</Text>
+          <Row><Button label="tanzil.net" hint={TANZIL_URL} onPress={() => void Linking.openURL(TANZIL_URL)} /></Row>
+        </View>
+        {translations.map((tr) => (
+          <View key={tr.id} style={{ gap: 2 }}>
+            <Text style={{ color: th.text, fontWeight: "700", fontFamily: HEADING_FONT }}>{tr.languageName} · {tr.translator}</Text>
+            <Text selectable style={{ color: th.muted, fontSize: 13 }}>{tr.attribution}</Text>
+            <Text selectable style={{ color: th.muted, fontSize: 13 }}>{tr.copyright} · {tr.licenseName} · v{tr.version}</Text>
+            <Text selectable style={{ color: th.muted, fontSize: 13 }}>{tr.sourceName} — {tr.sourceUrl}</Text>
+          </View>
+        ))}
+      </Group>
 
       <Group title={t("about")}>
         <Text style={{ color: th.text, fontSize: 18, fontWeight: "700", fontFamily: HEADING_FONT }}>{BRAND.name} · {BRAND.arabicName}</Text>

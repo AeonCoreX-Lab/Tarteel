@@ -31,3 +31,10 @@ CONTENT
 -------
 Quran text, translations, audio, fonts and other datasets are NOT covered by the
 licence above; each has its own terms recorded in docs/licensing/INVENTORY.md.
+
+The datasets currently bundled come from the Tanzil Project (https://tanzil.net):
+the Quran text (Uthmani, version 1.1, Copyright (C) 2007-2026 Tanzil Project, Creative Commons
+Attribution 3.0 under Tanzil's terms: verbatim copies only, source credited with a link to
+tanzil.net) and Quran translations by Muhiuddin Khan (Bengali) and Saheeh International (English),
+which Tanzil provides for non-commercial use. See data/*/**/COPYRIGHT-TANZIL.txt and
+docs/licensing/INVENTORY.md.

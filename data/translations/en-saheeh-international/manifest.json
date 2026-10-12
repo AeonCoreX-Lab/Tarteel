@@ -1,0 +1,27 @@
+{
+  "id": "en-saheeh-international",
+  "kind": "translation",
+  "version": "2011-04-24",
+  "language": "en",
+  "languageName": "English",
+  "direction": "ltr",
+  "translator": "Saheeh International",
+  "source": {
+    "name": "Tanzil Project: Quran translations, en.sahih",
+    "url": "https://tanzil.net/trans/"
+  },
+  "license": {
+    "name": "Tanzil translation terms: non-commercial use; otherwise permission from the translator or publisher is required",
+    "url": "https://tanzil.net/trans/"
+  },
+  "copyright": "Saheeh International (translator); text as compiled by the Tanzil Project. Rights remain with the translator and publisher.",
+  "attribution": "English translation by Saheeh International, via the Tanzil Project, https://tanzil.net/trans/ (last update April 24, 2011)",
+  "numberingConvention": "hafs-6236",
+  "redistributionPermitted": true,
+  "importedAt": "2026-10-12",
+  "files": {
+    "ayahs.json": "05df3ac117d9c9b19a50a402455a51b2385c5ac2d771b0d712faf1cc2edf3ebd",
+    "COPYRIGHT-TANZIL.txt": "81510e0aada1f996348bf645bf3851496ee94674ab63bd3df0b5b798218095cb",
+    "PROVENANCE.md": "594732495d53f66963472557b21a51fd0475de729b699d0155ecb89613ddfda2"
+  }
+}

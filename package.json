@@ -19,6 +19,7 @@
     "test": "node --no-warnings --import ./scripts/lib/register-extless.mjs --test \"packages/*/test/**/*.test.ts\" \"scripts/**/*.test.ts\" \"tests/**/*.test.ts\"",
     "validate:quran": "node --no-warnings scripts/validate-quran/cli.ts",
     "validate:translations": "node --no-warnings scripts/validate-translations/cli.ts",
+    "import:tanzil": "node --no-warnings scripts/import-tanzil/cli.ts",
     "build:db": "node --no-warnings scripts/build-database/cli.ts",
     "bootstrap:mobile": "sh scripts/bootstrap-mobile.sh",
     "check": "npm run typecheck && npm run lint && npm run test && npm run upstream:verify && npm run validate:quran && npm run validate:translations",

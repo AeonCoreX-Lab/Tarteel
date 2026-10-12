@@ -1,0 +1,11 @@
+# --------------------------------------------------------------------
+#
+#  Quran Translation
+#  Name: মুহিউদ্দীন খান
+#  Translator: Muhiuddin Khan
+#  Language: Bengali
+#  ID: bn.bengali
+#  Last Update: April 30, 2011
+#  Source: Tanzil.net
+#
+# --------------------------------------------------------------------

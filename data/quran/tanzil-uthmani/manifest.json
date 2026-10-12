@@ -1,0 +1,28 @@
+{
+  "id": "tanzil-uthmani",
+  "kind": "quran",
+  "version": "1.1",
+  "language": "ar",
+  "languageName": "Arabic",
+  "direction": "rtl",
+  "source": {
+    "name": "Tanzil Project: Quran text, Uthmani, Version 1.1",
+    "url": "https://tanzil.net/download/"
+  },
+  "license": {
+    "name": "Creative Commons Attribution 3.0, under Tanzil's terms of use (verbatim copies only; credit Tanzil and link to tanzil.net)",
+    "url": "https://tanzil.net/download/"
+  },
+  "copyright": "Copyright (C) 2007-2026 Tanzil Project",
+  "attribution": "Quran text (Uthmani, version 1.1) from the Tanzil Project, https://tanzil.net",
+  "numberingConvention": "hafs-6236",
+  "redistributionPermitted": true,
+  "importedAt": "2026-10-12",
+  "files": {
+    "ayah_meta.json": "23df16895dcf1746a379f6a87e74bd320c6b35596928e5f368478cdd86f05152",
+    "ayahs.json": "d11112784bf8c0623a576eb767e090e86f86f97baee81b6895419ba31f33fee4",
+    "COPYRIGHT-TANZIL.txt": "72493509d507314f60c018fd33aa57d9064a0de42be8926745e4953f59925c62",
+    "PROVENANCE.md": "14a63d0780311675ddb02a260c676f8ed1eefa8038accd471a4b8f92d9fb19a0",
+    "surahs.json": "1eb1479da138329a8dea59cda2cf954063785da12b2b01811f6703b71261117a"
+  }
+}

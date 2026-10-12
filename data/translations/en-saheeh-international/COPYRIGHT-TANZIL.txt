@@ -1,0 +1,11 @@
+# --------------------------------------------------------------------
+#
+#  Quran Translation
+#  Name: Saheeh International
+#  Translator: Saheeh International
+#  Language: English
+#  ID: en.sahih
+#  Last Update: April 24, 2011
+#  Source: Tanzil.net
+#
+# --------------------------------------------------------------------

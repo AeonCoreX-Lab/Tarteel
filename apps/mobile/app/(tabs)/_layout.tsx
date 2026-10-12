@@ -1,3 +1,4 @@
+import type { ColorValue } from "react-native";
 import { Redirect, Tabs } from "expo-router";
 import { Icon } from "../../src/components/Icons";
 import type { IconName } from "../../src/components/Icons";
@@ -5,7 +6,7 @@ import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
 import { useTheme } from "../../src/theme";
 
-const icon = (name: IconName) => ({ color }: { color: string }) => <Icon name={name} color={color} size={24} />;
+const icon = (name: IconName) => ({ color }: { color: ColorValue }) => <Icon name={name} color={color} size={24} />;
 
 // Icon + text label on every tab (never icon-only). Each screen draws its own serif heading, so no navigator header.
 export default function TabsLayout() {

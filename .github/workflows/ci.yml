@@ -46,10 +46,18 @@ jobs:
       # Validation scripts only need Node + the workspace packages (no npm install required),
       # but workspace links are created by npm, so install without lifecycle scripts.
       - run: if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts; fi
-      - run: npm run validate:quran
+      # No Quran dataset is committed yet (see docs/data-sources/README.md), so an empty data/quran/ is tolerated here.
+      # Once a dataset is added, a missing/invalid one still fails: --allow-empty only covers "no dataset directory at all".
+      - run: npm run validate:quran -- --allow-empty
       - run: npm run validate:translations
       - name: Build content database (also proves FTS5 + import work)
-        run: npm run build:db -- --out build/db
+        run: |
+          if [ -n "$(find data/quran -mindepth 1 -maxdepth 1 -type d 2>/dev/null)" ]; then
+            npm run build:db -- --out build/db
+          else
+            echo "No Quran dataset yet: building the schema-only database to prove migrations + FTS5 still work."
+            npm run build:db -- --out build/db --empty
+          fi
 
   mobile-types:
     # Real TypeScript check of the mobile app against the installed Expo / React Native types. Informational for now

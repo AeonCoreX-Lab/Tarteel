@@ -1,0 +1,27 @@
+{
+  "id": "bn-muhiuddin-khan",
+  "kind": "translation",
+  "version": "2011-04-30",
+  "language": "bn",
+  "languageName": "Bengali",
+  "direction": "ltr",
+  "translator": "Muhiuddin Khan",
+  "source": {
+    "name": "Tanzil Project: Quran translations, bn.bengali",
+    "url": "https://tanzil.net/trans/"
+  },
+  "license": {
+    "name": "Tanzil translation terms: non-commercial use; otherwise permission from the translator or publisher is required",
+    "url": "https://tanzil.net/trans/"
+  },
+  "copyright": "Muhiuddin Khan (translator); text as compiled by the Tanzil Project. Rights remain with the translator and publisher.",
+  "attribution": "Bengali translation by মুহিউদ্দীন খান, via the Tanzil Project, https://tanzil.net/trans/ (last update April 30, 2011)",
+  "numberingConvention": "hafs-6236",
+  "redistributionPermitted": true,
+  "importedAt": "2026-10-12",
+  "files": {
+    "ayahs.json": "f75cc4156efa8e67775039b10f2c8f8a005041a666ac0fa5130b1f8b5f83bc18",
+    "COPYRIGHT-TANZIL.txt": "c85667bf1cb47962f3b1c72aa2447d630d5b4f22789cb4f6410bc857d1b6c22e",
+    "PROVENANCE.md": "6b7c5f3b3b97634c1b04012b64aff0e657f148be7079b6293a5b91f0796ec074"
+  }
+}

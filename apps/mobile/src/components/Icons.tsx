@@ -1,5 +1,6 @@
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 import type { ReactNode } from "react";
+import type { ColorValue } from "react-native";
 
 export type IconName =
   | "today" | "quran" | "bookmark" | "settings" | "search" | "compass" | "calendar" | "bell" | "pin" | "check" | "chevronRight" | "chevronLeft" | "sound";
@@ -21,7 +22,7 @@ const GLYPHS: Record<IconName, ReactNode> = {
   sound: (<><Path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" /><Path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /></>),
 };
 
-export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: { name: IconName; size?: number; color: string; strokeWidth?: number }) {
+export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: { name: IconName; size?: number; color: ColorValue; strokeWidth?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {GLYPHS[name]}
