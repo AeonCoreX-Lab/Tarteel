@@ -1,0 +1,32 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <!-- Merged into the app by the manifest merger. -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+  <application>
+    <!-- Same component declarations as the upstream app manifest for these classes. -->
+    <activity
+      android:name=".PrayerAlarmActivity"
+      android:exported="false"
+      android:showWhenLocked="true"
+      android:turnScreenOn="true"
+      android:launchMode="singleTask"
+      android:taskAffinity=""
+      android:excludeFromRecents="true"
+      android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+      android:theme="@android:style/Theme.Material.NoActionBar" />
+
+    <service
+      android:name=".PrayerAlarmHeadlessService"
+      android:exported="false"
+      android:foregroundServiceType="specialUse">
+      <property
+        android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+        android:value="prayerCountdown" />
+    </service>
+  </application>
+</manifest>

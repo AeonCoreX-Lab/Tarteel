@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  code:
+    name: Typecheck, lint, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-${{ runner.os }}-
+      - name: Install
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Vendored upstream code is pristine
+        run: npm run upstream:verify
+
+  data:
+    # Quran content integrity. A PR with invalid, missing or altered Quran/translation data fails here.
+    name: Validate Quran + translation data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # Validation scripts only need Node + the workspace packages (no npm install required),
+      # but workspace links are created by npm, so install without lifecycle scripts.
+      - run: if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts; fi
+      - run: npm run validate:quran
+      - run: npm run validate:translations
+      - name: Build content database (also proves FTS5 + import work)
+        run: npm run build:db -- --out build/db
+
+  mobile-types:
+    # Real TypeScript check of the mobile app against the installed Expo / React Native types. Informational for now
+    # (continue-on-error) because the vendored Mihrab files are checked under Tarteel's stricter settings too.
+    name: Mobile typecheck (informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - run: npx tsc -p apps/mobile --noEmit

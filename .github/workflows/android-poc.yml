@@ -1,0 +1,80 @@
+name: Android PoC build (no Quran data)
+
+# Builds an installable APK WITHOUT a Quran dataset so prayer times, alerts and the rest of the app can be tested on a phone
+# before any dataset is chosen. It contains no Quran text, is debug-signed, and must never be published.
+# The normal release build (android.yml) still requires a validated dataset.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deps:
+    # Creates package-lock.json on the very first run (and commits it); does nothing once it exists.
+    permissions:
+      contents: write
+    uses: ./.github/workflows/bootstrap-deps.yml
+    with:
+      skip_if_locked: true
+
+  apk:
+    needs: deps
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }} # the branch tip, which now includes the bootstrap commit
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install (exact, from package-lock.json)
+        run: npm ci
+
+      - name: Checks that do not need a dataset
+        run: |
+          npm run typecheck
+          npm test
+          npm run upstream:verify
+
+      - name: Content-less database
+        run: npm run build:db -- --empty
+
+      - name: Generate native Android project
+        working-directory: apps/mobile
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: npx expo prebuild --platform android --no-install --clean
+
+      - name: Show how the native library was linked (informational)
+        working-directory: apps/mobile/android
+        run: |
+          echo "--- settings.gradle"; grep -n -i "tarteel" settings.gradle || echo "(no tarteel entry in settings.gradle)"
+          echo "--- generated package list"; grep -rn "TarteelAndroidPackage" app/src/main app/build 2>/dev/null | head -5 || true
+
+      - name: Build release APK (arm64 only, debug-signed)
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
+
+      - name: Locate APK
+        id: apk
+        run: echo "path=$(find apps/mobile/android/app/build/outputs/apk/release -name '*.apk' | head -n1)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tarteel-poc-${{ github.run_number }}
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error

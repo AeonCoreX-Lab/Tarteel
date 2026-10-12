@@ -1,0 +1,10 @@
+{
+  "name": "tarteel-android",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "description": "Local React Native library: Android full-screen prayer alert. Kotlin comes unmodified from third_party/mihrab-android (hash-locked); everything else here is Tarteel's own.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "peerDependencies": { "react-native": "*" }
+}

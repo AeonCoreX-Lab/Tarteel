@@ -1,0 +1,33 @@
+Tarteel
+Copyright (C) 2026 Tarteel contributors
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. See LICENSE for the full text.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+SOURCE CODE
+-----------
+Under AGPL-3.0 section 13 and section 6, anyone who receives or uses Tarteel
+(including over a network) must be able to obtain the complete corresponding
+source. The app links to it in Settings -> About; the location is configured by
+`extra.sourceUrl` in apps/mobile/app.config.ts.
+
+DERIVED / INCLUDED THIRD-PARTY CODE
+-----------------------------------
+third_party/mihrab/
+  Selected source files from Mihrab (https://github.com/MihrabHQ/Mihrab),
+  Copyright (C) 2026 Hassan El Ghamri, licensed AGPL-3.0-or-later.
+  Files are kept byte-for-byte as imported and are verified against
+  third_party/mihrab/UPSTREAM.lock.json (see docs/upstream/README.md).
+  Tarteel does not use the Mihrab name, icon, store listings or screenshots;
+  see Mihrab's TRADEMARK.md. Tarteel is not affiliated with or endorsed by Mihrab.
+
+CONTENT
+-------
+Quran text, translations, audio, fonts and other datasets are NOT covered by the
+licence above; each has its own terms recorded in docs/licensing/INVENTORY.md.

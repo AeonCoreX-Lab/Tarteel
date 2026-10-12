@@ -1,0 +1,101 @@
+import type { UiLanguage } from "@tarteel/types";
+import { useSettings } from "./state/settings";
+
+const en = {
+  appName: "Tarteel", surahs: "Surahs", continueReading: "Continue reading", search: "Search", bookmarks: "Bookmarks",
+  settings: "Settings", theme: "Theme", system: "System", light: "Light", dark: "Dark", amoled: "AMOLED",
+  readerMode: "Reading mode", arabicOnly: "Arabic", translationOnly: "Translation", both: "Both",
+  translation: "Translation", none: "None", arabicSize: "Arabic text size", translationSize: "Translation text size",
+  lineSpacing: "Line spacing", saveHistory: "Keep reading history on this device", language: "App language",
+  bookmark: "Bookmark", bookmarked: "Bookmarked", remove: "Remove", searchArabic: "Arabic", searchTranslation: "Translation",
+  searchPlaceholder: "Search or type 2:255", goTo: "Go to", noResults: "No results", noBookmarks: "No bookmarks yet. Bookmark an ayah while reading.",
+  sources: "Translation sources", loading: "Preparing Quran data…", loadFailed: "Could not open the Quran data", ayah: "Ayah",
+  about: "About", sourceCode: "Source code", licenseNote: "Free software under AGPL-3.0-or-later. Includes code from Mihrab (AGPL-3.0-or-later).",
+  today: "Today", quran: "Quran", nextPrayer: "Next prayer", timeLeft: "Time left", now: "Now", next: "Next", passed: "Passed",
+  fajr: "Fajr", sunrise: "Sunrise", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha",
+  needLocationTitle: "Set your location", needLocationBody: "Prayer times are calculated on this device from your location. Your location is never sent anywhere.",
+  useMyLocation: "Use my location", locating: "Finding location…", enterManually: "Enter manually",
+  locationDenied: "Location permission was declined. You can allow it in system settings, or enter your location manually.",
+  locationFailed: "Could not get your location. Try again, or enter it manually.", timesFailed: "Could not calculate prayer times",
+  defaultForRegion: "default for your region", hanafi: "Hanafi Asr", standardAsr: "Standard Asr", changeMethod: "Change method",
+  prayerSettings: "Prayer times", method: "Calculation method", asrSchool: "Asr calculation", automatic: "Automatic", standard: "Standard",
+  latitude: "Latitude", longitude: "Longitude", save: "Save", hijriAdjust: "Hijri date adjustment (days)", useGps: "Use GPS",
+  month: "Month", qibla: "Qibla", prevMonth: "Previous month", nextMonth: "Next month", dayShort: "Day", failedDay: "Could not calculate this day",
+  turnLeft: "Turn left", turnRight: "Turn right", aligned: "Facing the Qibla", findingHeading: "Finding direction…", atKaaba: "You are at the Kaaba.",
+  headingTrue: "Using true north", headingMagnetic: "Using magnetic north (may be off by a few degrees)",
+  calibrate: "Compass needs calibration: move the phone in a slow figure-8, away from metal and magnets.",
+  setupWelcome: "Welcome to Tarteel", setupPromise: "Read the Quran and keep prayer times, with no account, no ads and no tracking. Everything stays on your device.",
+  continue: "Continue", back: "Back", skip: "Skip for now", step: "Step", startApp: "Start", readyTitle: "You are ready",
+  skipLocationNote: "You can skip this. The Quran works without a location; prayer times need one and you can add it later in Settings.",
+  coordsInvalid: "Enter a valid latitude (-90 to 90) and longitude (-180 to 180).", coordsNullIsland: "0, 0 is not a real place. Enter your actual coordinates.",
+  yourChoice: "your choice", chooseAnother: "Choose another method", hideMethods: "Hide methods", minutes: "minutes",
+  asrChoiceBody: "Asr time depends on the school you follow. The Hanafi Asr is later by", confirmLocal: "Please confirm these against your local mosque or official timetable.",
+  translationTitle: "Quran translation", translationBody: "Pick a translation to read beside the Arabic. You can change it any time.",
+  summaryLocation: "Location", notSet: "Not set", changeLater: "You can change all of this later in Settings.", runSetup: "Run setup again",
+  noQuranData: "Quran data is not installed in this build.",
+  tagline: "Quran for every heart", skipIntro: "Skip", getStarted: "Get Started", nextPage: "Next", page: "Page",
+  slide1Title: "The Holy Quran in Your Hands", slide1Body: "Read, reflect and get closer to Allah, anytime, anywhere.",
+  slide2Title: "Multiple Translations", slide2Body: "Read the Quran in your preferred language.",
+  slide3Title: "Offline First", slide3Body: "Access the Quran anytime, even without internet.",
+  readMore: "Continue where you stopped", continueSub: "Pick up from your last position", locationChip: "Location", quickActions: "Tools",
+  nowLabel: "Now", sunriseNote: "Ends Fajr time", startsAt: "starts", hijriDate: "Hijri date", openSettings: "Open settings",
+  appearance: "Appearance", reading: "Reading", privacy: "Privacy", version: "Version", surahsLabel: "Surahs", savedAyahs: "Saved ayahs",
+  privacyNote: "No account, no ads and no tracking. Your location, bookmarks, notes and reading history stay on this device.",
+  noBookmarksTitle: "Nothing saved yet", sample: "Preview",
+  decrease: "Decrease", increase: "Increase", verses: "ayahs", makkah: "Makkah", madinah: "Madinah",
+};
+type Dict = typeof en;
+
+const bn: Dict = {
+  appName: "তারতীল", surahs: "সূরা", continueReading: "পড়া চালিয়ে যান", search: "অনুসন্ধান", bookmarks: "বুকমার্ক",
+  settings: "সেটিংস", theme: "থিম", system: "সিস্টেম", light: "লাইট", dark: "ডার্ক", amoled: "AMOLED",
+  readerMode: "পড়ার ধরন", arabicOnly: "আরবি", translationOnly: "অনুবাদ", both: "দুটোই",
+  translation: "অনুবাদ", none: "কোনোটি নয়", arabicSize: "আরবি লেখার আকার", translationSize: "অনুবাদের লেখার আকার",
+  lineSpacing: "লাইনের ব্যবধান", saveHistory: "এই ডিভাইসে পড়ার ইতিহাস রাখুন", language: "অ্যাপের ভাষা",
+  bookmark: "বুকমার্ক করুন", bookmarked: "বুকমার্ক করা আছে", remove: "মুছুন", searchArabic: "আরবি", searchTranslation: "অনুবাদ",
+  searchPlaceholder: "খুঁজুন বা 2:255 লিখুন", goTo: "যান", noResults: "কিছু পাওয়া যায়নি", noBookmarks: "এখনো কোনো বুকমার্ক নেই। পড়ার সময় আয়াত বুকমার্ক করুন।",
+  sources: "অনুবাদের উৎস", loading: "কুরআনের ডেটা প্রস্তুত হচ্ছে…", loadFailed: "কুরআনের ডেটা খোলা যায়নি", ayah: "আয়াত",
+  about: "সম্পর্কে", sourceCode: "সোর্স কোড", licenseNote: "AGPL-3.0-or-later লাইসেন্সের ফ্রি সফটওয়্যার। Mihrab (AGPL-3.0-or-later) থেকে নেওয়া কোড আছে।",
+  today: "আজ", quran: "কুরআন", nextPrayer: "পরবর্তী নামাজ", timeLeft: "বাকি সময়", now: "এখন", next: "পরবর্তী", passed: "শেষ",
+  fajr: "ফজর", sunrise: "সূর্যোদয়", dhuhr: "যোহর", asr: "আসর", maghrib: "মাগরিব", isha: "ইশা",
+  needLocationTitle: "আপনার অবস্থান ঠিক করুন", needLocationBody: "নামাজের সময় এই ডিভাইসেই আপনার অবস্থান থেকে হিসাব করা হয়। আপনার অবস্থান কোথাও পাঠানো হয় না।",
+  useMyLocation: "আমার অবস্থান ব্যবহার করুন", locating: "অবস্থান খোঁজা হচ্ছে…", enterManually: "নিজে লিখুন",
+  locationDenied: "অবস্থানের অনুমতি দেওয়া হয়নি। সিস্টেম সেটিংসে অনুমতি দিন, অথবা নিজে অবস্থান লিখুন।",
+  locationFailed: "অবস্থান পাওয়া যায়নি। আবার চেষ্টা করুন, অথবা নিজে লিখুন।", timesFailed: "নামাজের সময় হিসাব করা যায়নি",
+  defaultForRegion: "আপনার অঞ্চলের ডিফল্ট", hanafi: "হানাফি আসর", standardAsr: "সাধারণ আসর", changeMethod: "পদ্ধতি বদলান",
+  prayerSettings: "নামাজের সময়", method: "হিসাবের পদ্ধতি", asrSchool: "আসরের হিসাব", automatic: "স্বয়ংক্রিয়", standard: "সাধারণ",
+  latitude: "অক্ষাংশ", longitude: "দ্রাঘিমাংশ", save: "সংরক্ষণ", hijriAdjust: "হিজরি তারিখ সমন্বয় (দিন)", useGps: "GPS ব্যবহার করুন",
+  month: "মাস", qibla: "কিবলা", prevMonth: "আগের মাস", nextMonth: "পরের মাস", dayShort: "দিন", failedDay: "এই দিনের হিসাব করা যায়নি",
+  turnLeft: "বামে ঘুরুন", turnRight: "ডানে ঘুরুন", aligned: "কিবলার দিকে আছেন", findingHeading: "দিক খোঁজা হচ্ছে…", atKaaba: "আপনি কাবায় আছেন।",
+  headingTrue: "প্রকৃত উত্তর ব্যবহার হচ্ছে", headingMagnetic: "চুম্বকীয় উত্তর ব্যবহার হচ্ছে (কয়েক ডিগ্রি ভুল হতে পারে)",
+  calibrate: "কম্পাস ক্যালিব্রেট করুন: ফোনটি ধীরে ৮-এর মতো ঘোরান, ধাতু ও চুম্বক থেকে দূরে।",
+  setupWelcome: "তারতীলে স্বাগতম", setupPromise: "কোনো অ্যাকাউন্ট, বিজ্ঞাপন বা ট্র্যাকিং ছাড়াই কুরআন পড়ুন ও নামাজের সময় দেখুন। সবকিছু আপনার ডিভাইসেই থাকে।",
+  continue: "এগিয়ে যান", back: "পিছনে", skip: "এখন বাদ দিন", step: "ধাপ", startApp: "শুরু করুন", readyTitle: "আপনি প্রস্তুত",
+  skipLocationNote: "এটি বাদ দিতে পারেন। অবস্থান ছাড়াই কুরআন চলে; নামাজের সময়ের জন্য অবস্থান লাগবে, পরে সেটিংসে দিতে পারবেন।",
+  coordsInvalid: "সঠিক অক্ষাংশ (-৯০ থেকে ৯০) ও দ্রাঘিমাংশ (-১৮০ থেকে ১৮০) লিখুন।", coordsNullIsland: "০, ০ কোনো আসল স্থান নয়। আপনার সঠিক স্থানাঙ্ক লিখুন।",
+  yourChoice: "আপনার পছন্দ", chooseAnother: "অন্য পদ্ধতি বেছে নিন", hideMethods: "পদ্ধতি লুকান", minutes: "মিনিট",
+  asrChoiceBody: "আসরের সময় নির্ভর করে আপনি কোন মাযহাব অনুসরণ করেন তার উপর। হানাফি আসর দেরিতে হয়", confirmLocal: "অনুগ্রহ করে স্থানীয় মসজিদ বা সরকারি সময়সূচির সাথে মিলিয়ে নিন।",
+  translationTitle: "কুরআনের অনুবাদ", translationBody: "আরবির পাশে পড়ার জন্য একটি অনুবাদ বেছে নিন। যেকোনো সময় বদলাতে পারবেন।",
+  summaryLocation: "অবস্থান", notSet: "ঠিক করা হয়নি", changeLater: "এসব পরে সেটিংসে বদলাতে পারবেন।", runSetup: "সেটআপ আবার চালান",
+  noQuranData: "এই বিল্ডে কুরআনের ডেটা ইনস্টল করা নেই।",
+  tagline: "প্রতিটি হৃদয়ের জন্য কুরআন", skipIntro: "বাদ দিন", getStarted: "শুরু করুন", nextPage: "পরবর্তী", page: "পাতা",
+  slide1Title: "পবিত্র কুরআন আপনার হাতের মুঠোয়", slide1Body: "পড়ুন, ভাবুন এবং আল্লাহর আরও কাছে যান, যেকোনো সময়, যেকোনো জায়গায়।",
+  slide2Title: "একাধিক অনুবাদ", slide2Body: "আপনার পছন্দের ভাষায় কুরআন পড়ুন।",
+  slide3Title: "অফলাইন-প্রথম", slide3Body: "ইন্টারনেট ছাড়াই যেকোনো সময় কুরআন পড়ুন।",
+  readMore: "যেখানে থেমেছিলেন সেখান থেকে", continueSub: "শেষ অবস্থান থেকে শুরু করুন", locationChip: "অবস্থান", quickActions: "টুলস",
+  nowLabel: "এখন", sunriseNote: "ফজরের সময় শেষ", startsAt: "শুরু", hijriDate: "হিজরি তারিখ", openSettings: "সেটিংস খুলুন",
+  appearance: "চেহারা", reading: "পড়া", privacy: "গোপনীয়তা", version: "সংস্করণ", surahsLabel: "সূরা", savedAyahs: "সংরক্ষিত আয়াত",
+  privacyNote: "কোনো অ্যাকাউন্ট, বিজ্ঞাপন বা ট্র্যাকিং নেই। আপনার অবস্থান, বুকমার্ক, নোট ও পড়ার ইতিহাস এই ডিভাইসেই থাকে।",
+  noBookmarksTitle: "এখনো কিছু সংরক্ষিত নেই", sample: "প্রিভিউ",
+  decrease: "কমান", increase: "বাড়ান", verses: "আয়াত", makkah: "মক্কী", madinah: "মাদানী",
+};
+
+const dictionaries: Partial<Record<UiLanguage, Dict>> = { en, bn };
+
+export type StringKey = keyof Dict;
+
+export function useT(): (key: StringKey) => string {
+  const lang = useSettings((s) => s.uiLanguage);
+  const d = dictionaries[lang] ?? en;
+  return (key) => d[key] ?? en[key];
+}

@@ -1,0 +1,130 @@
+/**
+ * Typography system — task #36.
+ *
+ * Type scale that every Text in the app should reference. Pairs
+ * the platform default Latin face (SF Pro on iOS, Roboto on Android) with
+ * Amiri / Scheherazade for Arabic ayah and dua text once those fonts are
+ * bundled (a follow-up data PR — they need to be added to assets/fonts/
+ * and registered in iOS Info.plist + Android src/main/assets).
+ *
+ * Each token defines `fontSize`, `lineHeight`, `fontWeight`, `letterSpacing`.
+ * The `tabular` flag opts a token into tabular numerals — required for
+ * prayer times, percentages, and any clock-style number per CLAUDE.md
+ * principle 3 ("tabular precision for sacred data").
+ */
+
+import { Platform } from 'react-native';
+import { tabularNumeralStyle } from './textScale';
+
+export type TypeToken = {
+  fontSize: number;
+  lineHeight: number;
+  fontWeight: '400' | '500' | '600' | '700';
+  letterSpacing?: number;
+  /** When true, applies tabular-nums automatically. */
+  tabular?: boolean;
+};
+
+export const TYPE: Record<
+  | 'display'
+  | 'title1'
+  | 'title2'
+  | 'title3'
+  | 'headline'
+  | 'body'
+  | 'callout'
+  | 'footnote'
+  | 'caption'
+  | 'label',
+  TypeToken
+> = {
+  display: { fontSize: 56, lineHeight: 60, fontWeight: '600', letterSpacing: -0.6, tabular: true },
+  title1: { fontSize: 28, lineHeight: 34, fontWeight: '600', letterSpacing: -0.3 },
+  title2: { fontSize: 22, lineHeight: 28, fontWeight: '600' },
+  title3: { fontSize: 18, lineHeight: 24, fontWeight: '600' },
+  headline: { fontSize: 16, lineHeight: 22, fontWeight: '600' },
+  body: { fontSize: 16, lineHeight: 22, fontWeight: '400' },
+  /** @deprecated 15 is the size that puts 14/15/16 on one screen — use `body` or `footnote`. */
+  callout: { fontSize: 15, lineHeight: 20, fontWeight: '400' },
+  footnote: { fontSize: 13, lineHeight: 18, fontWeight: '400' },
+  caption: { fontSize: 11, lineHeight: 14, fontWeight: '400', letterSpacing: 0.4 },
+  /**
+   * Section and tile labels — the replacement for every uppercase,
+   * letterspaced overline (docs/design/redesign-plan.md §2.1). Sentence
+   * case, `palette.muted`, no tracking. A label names the group under it
+   * and then gets out of the way; the overline shouted it.
+   */
+  label: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
+};
+
+/** Returns a flat style object for a type token, with tabular numerals
+ *  applied when the token opts in. Use as `style={typeStyle('body')}`. */
+export function typeStyle(
+  token: keyof typeof TYPE,
+): TypeToken & { fontVariant?: ['tabular-nums'] } {
+  const t = TYPE[token];
+  return t.tabular ? { ...t, ...tabularNumeralStyle } : t;
+}
+
+/**
+ * Bundled-font names — task #69.
+ *
+ * Component code references `FONTS.arabicQuran` etc. via the family name
+ * (PostScript `name` field, not the filename). On iOS, the names below
+ * must match the `UIAppFonts` entries in `ios/PrayerApp/Info.plist`.
+ * On Android, the React Native asset pipeline makes them available
+ * automatically once the `.ttf`s are dropped into
+ * `android/app/src/main/assets/fonts/`.
+ *
+ * **Until the `.ttf` files are added** (see `docs/data-sources.md`
+ * task #69), RN falls back to the system Arabic face — which renders
+ * everything correctly but visually thinner than the proper Naskh.
+ * The `arabicTextStyle()` helper below picks the right family while
+ * staying robust to that fallback.
+ *
+ * Both fonts are SIL OFL 1.1 — explicitly permitted in commercial /
+ * F-Droid distributions. Run `node scripts/font-check.js` to verify
+ * the binaries are in place before a release.
+ */
+export const FONTS = {
+  /** Primary Latin face — undefined falls back to the system default
+   *  (SF Pro on iOS, Roboto on Android). We don't override Latin. */
+  primary: undefined as string | undefined,
+  /**
+   * Arabic body face — Amiri (classical Naskh). Used for dua text, surah
+   * names and general Arabic. Android resolves custom fonts by asset
+   * FILENAME (`assets/fonts/Amiri.ttf`), iOS by the font's internal
+   * family name ("Amiri") — both align on this string.
+   */
+  arabicBody: 'Amiri' as const,
+  /**
+   * Arabic Quran face — AmiriQuran, ayah text only (quranic annotation
+   * glyphs, taller diacritics, mushaf letterforms). The family name
+   * differs per platform: iOS reads the internal name "Amiri Quran";
+   * Android matches the asset filename "AmiriQuran".
+   */
+  arabicQuran: Platform.select({
+    ios: 'Amiri Quran',
+    default: 'AmiriQuran',
+  }) as string,
+} as const;
+
+/**
+ * Style helper for Arabic text. Returns a `{ fontFamily }` object you
+ * can spread into a `Text` style. Use `kind='quran'` for ayahs AND for
+ * dua text — both are printed fully vocalised, and a third of the dua
+ * corpus is literal Quran; `kind='body'` for everything else
+ * (transliterations, Islamic event names).
+ *
+ * NOTE (look-and-feel upgrade): Amiri's ascenders/descenders are much
+ * taller than the system Arabic face — call sites must pair this with a
+ * roomier lineHeight (≈ 2.1× fontSize for fully-vocalised ayah text) or
+ * diacritics clip.
+ */
+export function arabicTextStyle(kind: 'quran' | 'body' = 'body'): {
+  fontFamily: string;
+} {
+  return {
+    fontFamily: kind === 'quran' ? FONTS.arabicQuran : FONTS.arabicBody,
+  };
+}

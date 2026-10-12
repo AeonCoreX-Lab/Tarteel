@@ -1,0 +1,36 @@
+{
+  "name": "tarteel",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Free, open-source, offline-first Quran app and platform",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "third_party/*",
+    "native/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "node --no-warnings --import ./scripts/lib/register-extless.mjs --test \"packages/*/test/**/*.test.ts\" \"scripts/**/*.test.ts\" \"tests/**/*.test.ts\"",
+    "validate:quran": "node --no-warnings scripts/validate-quran/cli.ts",
+    "validate:translations": "node --no-warnings scripts/validate-translations/cli.ts",
+    "build:db": "node --no-warnings scripts/build-database/cli.ts",
+    "bootstrap:mobile": "sh scripts/bootstrap-mobile.sh",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run upstream:verify && npm run validate:quran && npm run validate:translations",
+    "upstream:verify": "node --no-warnings scripts/upstream/cli.ts verify",
+    "upstream:sync": "node --no-warnings scripts/upstream/cli.ts sync",
+    "upstream:diff": "node --no-warnings scripts/upstream/cli.ts diff"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

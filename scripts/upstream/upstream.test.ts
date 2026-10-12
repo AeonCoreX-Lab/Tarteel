@@ -1,0 +1,135 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import type { UpstreamConfig } from "./lib.ts";
+import { LicenseChangedError, diffAgainstUpstream, readLock, resolveClosure, sync, verify } from "./lib.ts";
+
+function write(root: string, rel: string, text: string) {
+  mkdirSync(dirname(join(root, rel)), { recursive: true });
+  writeFileSync(join(root, rel), text);
+}
+function fakeUpstream() {
+  const r = mkdtempSync(join(tmpdir(), "up-"));
+  write(r, "package.json", JSON.stringify({ version: "9.9.9", dependencies: { adhan: "^4.4.3" } }));
+  write(r, "LICENSE", "AGPL text");
+  write(r, "NOTICE", "notice v1");
+  write(r, "src/a.ts", "import { b } from './lib/b';\nimport type { T } from './types';\nimport { calc } from 'adhan';\nexport const a = b + calc;\n");
+  write(r, "src/lib/b.ts", "import data from '../data.json';\nexport const b = data.x;\n");
+  write(r, "src/data.json", '{"x":1}');
+  write(r, "src/types.ts", "export interface T { x: number }\n");
+  write(r, "src/unrelated.ts", "export const nope = 1;\n");
+  return r;
+}
+const cfg = (dest: string): UpstreamConfig => ({
+  repo: "https://example.org/up", branch: "main", license: "AGPL-3.0-or-later",
+  licenseFiles: ["LICENSE", "NOTICE"], destination: dest, entries: ["src/a.ts"],
+});
+const dest = () => join(mkdtempSync(join(tmpdir(), "dest-")), "mihrab");
+
+test("closure follows runtime, type-only and json imports, and ignores unrelated files", () => {
+  const { files, external } = resolveClosure(fakeUpstream(), ["src/a.ts"]);
+  assert.deepEqual(files, ["src/a.ts", "src/data.json", "src/lib/b.ts", "src/types.ts"]);
+  assert.deepEqual(Object.keys(external), ["adhan"]);
+});
+
+test("unresolvable relative imports fail loudly", () => {
+  const r = fakeUpstream();
+  write(r, "src/bad.ts", "import x from './missing';\n");
+  assert.throws(() => resolveClosure(r, ["src/bad.ts"]), /Unresolved/);
+});
+
+test("sync vendors the closure with hashes, licence files and external versions", () => {
+  const up = fakeUpstream();
+  const d = dest();
+  const lock = sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: "abc", source: "test", now: () => "2026-01-01T00:00:00Z" });
+  assert.equal(lock.sha, "abc");
+  assert.equal(Object.keys(lock.files).length, 4);
+  assert.deepEqual(lock.externalDependencies, { adhan: "^4.4.3" });
+  assert.equal(lock.upstreamPackageVersion, "9.9.9");
+  assert.deepEqual(verify(d), []);
+  assert.deepEqual(readLock(d)?.files, lock.files);
+});
+
+test("verify catches edits, deletions and stray files", () => {
+  const up = fakeUpstream();
+  const d = dest();
+  sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: null, source: "s" });
+  appendFileSync(join(d, "src/lib/b.ts"), "// local tweak\n");
+  write(d, "src/extra.ts", "x");
+  write(d, "UPSTREAM-LICENSES/LICENSE", "tampered");
+  const problems = verify(d).join("\n");
+  assert.match(problems, /modified: src\/lib\/b\.ts/);
+  assert.match(problems, /unexpected file: src\/extra\.ts/);
+  assert.match(problems, /modified licence file: LICENSE/);
+});
+
+test("a changed upstream licence blocks sync unless explicitly accepted", () => {
+  const up = fakeUpstream();
+  const d = dest();
+  sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: "1", source: "s" });
+  write(up, "LICENSE", "SOME OTHER LICENSE");
+  assert.throws(() => sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: "2", source: "s" }), LicenseChangedError);
+  assert.equal(readLock(d)?.sha, "1"); // nothing was overwritten
+  sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: "2", source: "s", acceptLicenseChange: true });
+  assert.equal(readLock(d)?.sha, "2");
+});
+
+test("diff reports changed, added and removed files plus dependency bumps, without writing", () => {
+  const up = fakeUpstream();
+  const d = dest();
+  sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: "1", source: "s" });
+  write(up, "src/types.ts", "export interface T { x: number; y: string }\n");
+  write(up, "src/lib/c.ts", "export const c = 1;\n");
+  write(up, "src/lib/b.ts", "import data from '../data.json';\nimport { c } from './c';\nexport const b = data.x + c;\n");
+  write(up, "package.json", JSON.stringify({ version: "10.0.0", dependencies: { adhan: "^5.0.0" } }));
+  const diff = diffAgainstUpstream(cfg(d), up, d);
+  assert.deepEqual(diff.added, ["src/lib/c.ts"]);
+  assert.deepEqual(diff.changed.map((c) => c.file).sort(), ["src/lib/b.ts", "src/types.ts"]);
+  assert.deepEqual(diff.externalChanged, { adhan: { from: "^4.4.3", to: "^5.0.0" } });
+  assert.deepEqual(verify(d), []); // destination untouched
+});
+
+// ---------------------------------------------------------------- files mode (Kotlin, XML, ...)
+function fakeAndroidUpstream() {
+  const r = mkdtempSync(join(tmpdir(), "upk-"));
+  write(r, "LICENSE", "AGPL text");
+  write(r, "android/app/src/main/java/com/x/Alarm.kt", "package com.x\nclass Alarm\n");
+  write(r, "android/app/src/main/java/com/x/Svc.kt", "package com.x\nclass Svc\n");
+  write(r, "android/app/src/main/java/com/x/Unrelated.kt", "package com.x\nclass Unrelated\n");
+  return r;
+}
+const filesCfg = (dest: string): UpstreamConfig => ({
+  repo: "https://example.org/up", branch: "main", license: "AGPL-3.0-or-later", licenseFiles: ["LICENSE"], destination: dest,
+  mode: "files",
+  entries: ["android/app/src/main/java/com/x/Alarm.kt", "android/app/src/main/java/com/x/Svc.kt"],
+});
+
+test("files mode vendors exactly the listed files, verbatim, with their path preserved", () => {
+  const up = fakeAndroidUpstream();
+  const d = dest();
+  const lock = sync({ name: "k", cfg: filesCfg(d), srcRoot: up, destRoot: d, sha: "s1", source: "t" });
+  assert.equal(lock.mode, "files");
+  assert.deepEqual(Object.keys(lock.files).sort(), ["android/app/src/main/java/com/x/Alarm.kt", "android/app/src/main/java/com/x/Svc.kt"]);
+  assert.deepEqual(lock.externalDependencies, {});
+  assert.ok(existsSync(join(d, "files/android/app/src/main/java/com/x/Alarm.kt")));
+  assert.ok(!existsSync(join(d, "files/android/app/src/main/java/com/x/Unrelated.kt")));
+  assert.deepEqual(verify(d), []);
+});
+
+test("files mode: verify catches edits and stray files; diff reports changes; missing entries fail loudly", () => {
+  const up = fakeAndroidUpstream();
+  const d = dest();
+  sync({ name: "k", cfg: filesCfg(d), srcRoot: up, destRoot: d, sha: "s1", source: "t" });
+  write(up, "android/app/src/main/java/com/x/Svc.kt", "package com.x\nclass Svc2\n");
+  const diff = diffAgainstUpstream(filesCfg(d), up, d);
+  assert.deepEqual(diff.changed.map((c) => c.file), ["android/app/src/main/java/com/x/Svc.kt"]);
+  assert.deepEqual(verify(d), []);
+  appendFileSync(join(d, "files/android/app/src/main/java/com/x/Alarm.kt"), "// local edit\n");
+  write(d, "files/extra.kt", "x");
+  const problems = verify(d).join("\n");
+  assert.match(problems, /modified: android\/app\/src\/main\/java\/com\/x\/Alarm\.kt/);
+  assert.match(problems, /unexpected file: files\/extra\.kt/);
+  assert.throws(() => sync({ name: "k", cfg: { ...filesCfg(d), entries: ["nope.kt"] }, srcRoot: up, destRoot: d, sha: null, source: "t" }), /not found/);
+});

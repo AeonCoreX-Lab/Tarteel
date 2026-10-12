@@ -1,0 +1,43 @@
+{
+  "mihrab": {
+    "repo": "https://github.com/MihrabHQ/Mihrab",
+    "branch": "main",
+    "license": "AGPL-3.0-or-later",
+    "licenseFiles": [
+      "LICENSE",
+      "NOTICE",
+      "TRADEMARK.md"
+    ],
+    "destination": "third_party/mihrab",
+    "entries": [
+      "src/providers/localAdhan.ts",
+      "src/providers/autoMethod.ts",
+      "src/providers/validateTimings.ts",
+      "src/providers/imsak.ts",
+      "src/providers/types.ts",
+      "src/prayer/daruriTimes.ts",
+      "src/prayer/dayRollover.ts",
+      "src/hijri/convert.ts",
+      "src/hijri/events.ts",
+      "src/hijri/islamicDay.ts",
+      "src/hijri/upcomingEvents.ts"
+    ]
+  },
+  "mihrab-android": {
+    "repo": "https://github.com/MihrabHQ/Mihrab",
+    "branch": "main",
+    "license": "AGPL-3.0-or-later",
+    "licenseFiles": [
+      "LICENSE",
+      "NOTICE",
+      "TRADEMARK.md"
+    ],
+    "destination": "third_party/mihrab-android",
+    "mode": "files",
+    "entries": [
+      "android/app/src/main/java/com/prayer_times/PrayerAlarmActivity.kt",
+      "android/app/src/main/java/com/prayer_times/FullScreenAlarmModule.kt",
+      "android/app/src/main/java/com/prayer_times/PrayerAlarmHeadlessService.kt"
+    ]
+  }
+}

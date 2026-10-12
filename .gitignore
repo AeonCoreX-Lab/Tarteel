@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.expo/
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/assets/db/*.db
+build/
+*.keystore
+*.jks
+.env
+.env.*
+!.env.example

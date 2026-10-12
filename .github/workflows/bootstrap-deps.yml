@@ -1,0 +1,109 @@
+name: Bootstrap dependencies
+
+# Creates and maintains package-lock.json entirely in GitHub Actions: nothing runs on your phone.
+#
+#  * First push (no lockfile yet): installs everything with Expo-matched versions (`expo install`) and COMMITS
+#    package.json + package-lock.json back to the branch.
+#  * Later pushes that touch a package.json: refreshes the lockfile and commits it if it changed.
+#  * Run it manually (Actions tab) to re-align every dependency with the Expo SDK again.
+#  * android-poc.yml calls it first, so a build never starts without a lockfile.
+# After that every workflow uses `npm ci`, which is exact and reproducible.
+#
+# The commit is made with the built-in GITHUB_TOKEN, which does not trigger further workflow runs (no loops).
+# If the branch is protected, the push is refused: the lockfile is then uploaded as an artifact instead.
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - package.json
+      - "apps/*/package.json"
+      - "packages/*/package.json"
+      - "native/*/package.json"
+      - "third_party/*/package.json"
+      - scripts/bootstrap-mobile.sh
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      skip_if_locked:
+        description: "Do nothing when package-lock.json already exists"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bootstrap-deps-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Decide what to do
+        id: plan
+        run: |
+          if [ ! -f package-lock.json ]; then
+            echo "mode=full" >> "$GITHUB_OUTPUT"; echo "No lockfile yet: full bootstrap."
+          elif [ "${{ inputs.skip_if_locked }}" = "true" ]; then
+            echo "mode=none" >> "$GITHUB_OUTPUT"; echo "Lockfile exists: nothing to do."
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "mode=refresh" >> "$GITHUB_OUTPUT"; echo "package.json changed: refreshing the lockfile."
+          else
+            echo "mode=full" >> "$GITHUB_OUTPUT"; echo "Manual run: full re-alignment with the Expo SDK."
+          fi
+
+      - name: Full bootstrap (Expo-matched versions)
+        if: steps.plan.outputs.mode == 'full'
+        run: sh scripts/bootstrap-mobile.sh
+
+      - name: Refresh lockfile only
+        if: steps.plan.outputs.mode == 'refresh'
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Verify the lockfile installs cleanly (npm ci)
+        if: steps.plan.outputs.mode != 'none'
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Commit lockfile and dependency versions
+        id: commit
+        if: steps.plan.outputs.mode != 'none'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json apps/mobile/package.json
+          if git diff --cached --quiet; then
+            echo "Nothing to commit: already up to date."
+            exit 0
+          fi
+          git commit -m "chore: update lockfile and Expo-matched dependency versions [skip ci]"
+          if git push origin "HEAD:refs/heads/${{ github.ref_name }}"; then
+            echo "Pushed."
+          else
+            echo "push_failed=true" >> "$GITHUB_OUTPUT"
+            echo "::error::Could not push (branch protection?). The lockfile is attached to this run as an artifact: commit it yourself."
+          fi
+
+      - name: Keep the lockfile as an artifact if the push was refused
+        if: steps.commit.outputs.push_failed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lockfile-and-package-json
+          path: |
+            package-lock.json
+            package.json
+            apps/mobile/package.json
+
+      - name: Fail loudly if the push was refused
+        if: steps.commit.outputs.push_failed == 'true'
+        run: exit 1

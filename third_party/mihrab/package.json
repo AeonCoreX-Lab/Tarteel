@@ -1,0 +1,10 @@
+{
+  "name": "@tarteel/third-party-mihrab",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "description": "Pristine, hash-locked vendor copy of selected Mihrab sources (see UPSTREAM.lock.json). Do not edit.",
+  "dependencies": {
+    "adhan": "^4.4.3"
+  }
+}
