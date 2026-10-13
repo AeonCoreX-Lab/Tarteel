@@ -65,8 +65,18 @@ let adhanAvailable = true;
 try { await import("adhan"); } catch { adhanAvailable = false; }
 
 test("on-device calculation: Dhaka, Karachi/Hanafi gives six ordered, valid times", { skip: !adhanAvailable }, async () => {
-  const { computeLocalAdhanTimes } = await import("../third_party/mihrab/src/providers/localAdhan");
-  const { timings } = computeLocalAdhanTimes({ latitude: 23.8103, longitude: 90.4125, date: new Date(2026, 9, 6), calculationMethod: 1, school: 1 });
-  validateTimings(timings); // shape + ordering, throws otherwise
-  assert.ok(timings["Imsak"] && timings["Imsak"] < (timings["Fajr"] as string));
+  // localAdhan prints clock times in the DEVICE's timezone (right for a phone). Dhaka's day only sorts correctly on a Dhaka
+  // clock: on a UTC CI runner Sunrise (23:52 the evening before) would sort before Dhuhr (05:48). So the test runs on Dhaka time
+  // and puts the runner's timezone back afterwards.
+  const previousTz = process.env["TZ"];
+  process.env["TZ"] = "Asia/Dhaka";
+  try {
+    const { computeLocalAdhanTimes } = await import("../third_party/mihrab/src/providers/localAdhan");
+    const { timings } = computeLocalAdhanTimes({ latitude: 23.8103, longitude: 90.4125, date: new Date(2026, 9, 6), calculationMethod: 1, school: 1 });
+    validateTimings(timings); // shape + ordering, throws otherwise
+    assert.ok(timings["Imsak"] && timings["Imsak"] < (timings["Fajr"] as string));
+  } finally {
+    if (previousTz === undefined) delete process.env["TZ"];
+    else process.env["TZ"] = previousTz;
+  }
 });

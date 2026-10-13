@@ -47,7 +47,26 @@ const LOCK_FILE = "UPSTREAM.lock.json";
 
 /** Where a vendored upstream file lives inside the destination folder. */
 function vendoredPath(destRoot: string, mode: "closure" | "files", f: string): string {
-  return mode === "files" ? join(destRoot, FILES_DIR, f) : join(destRoot, SRC_DIR, f.replace(/^src\//, ""));
+  // Closure mode keeps upstream's own layout, so every relative import keeps resolving: "src/x.ts" -> <dest>/src/x.ts, and a
+  // file outside src/ that a vendored file imports (e.g. "../../data/hijri/v1/overrides.json") -> <dest>/data/hijri/v1/overrides.json.
+  return mode === "files" ? join(destRoot, FILES_DIR, f) : join(destRoot, f);
+}
+
+/** Top-level folders of the destination that hold vendored files: src/, files/ and the licence folder always, plus data/ etc. for closure files outside src/. */
+function vendoredDirs(mode: "closure" | "files", upstreamPaths: readonly string[]): string[] {
+  const dirs = new Set([SRC_DIR, FILES_DIR, LICENSE_DIR]);
+  if (mode === "closure") for (const f of upstreamPaths) dirs.add(f.split("/")[0] as string);
+  return [...dirs];
+}
+
+/** A closure file outside src/ must sit in its own folder and may not escape the upstream root or land on a folder this tool owns. */
+function assertVendorable(mode: "closure" | "files", files: readonly string[]): void {
+  if (mode === "files") return;
+  for (const f of files) {
+    const top = f.split("/")[0] as string;
+    if (f.startsWith("..") || !f.includes("/") || top === FILES_DIR || top === LICENSE_DIR)
+      throw new Error(`Cannot vendor "${f}": closure files must live in a subfolder of the upstream root (not the root itself, "${FILES_DIR}/" or "${LICENSE_DIR}/").`);
+  }
 }
 
 function resolveFiles(root: string, entries: string[]): { files: string[]; external: Record<string, string[]> } {
@@ -143,6 +162,7 @@ export function sync(opts: SyncOptions): UpstreamLock {
   const { name, cfg, srcRoot, destRoot } = opts;
   const mode = cfg.mode ?? "closure";
   const { files, external } = resolveFor(cfg, srcRoot);
+  assertVendorable(mode, files);
   const licenseFiles = hashLicenseFiles(srcRoot, cfg.licenseFiles);
   if (!licenseFiles["LICENSE"]) throw new Error("Upstream has no LICENSE file: refusing to import.");
 
@@ -156,9 +176,9 @@ export function sync(opts: SyncOptions): UpstreamLock {
       );
   }
 
-  rmSync(join(destRoot, SRC_DIR), { recursive: true, force: true });
-  rmSync(join(destRoot, FILES_DIR), { recursive: true, force: true });
-  rmSync(join(destRoot, LICENSE_DIR), { recursive: true, force: true });
+  // Clear every folder a previous or this sync owns, so a file upstream dropped does not linger.
+  const owned = new Set([...vendoredDirs(mode, files), ...(prev ? vendoredDirs(prev.mode ?? "closure", Object.keys(prev.files)) : [])]);
+  for (const dir of owned) rmSync(join(destRoot, dir), { recursive: true, force: true });
   const hashes: Record<string, string> = {};
   for (const f of files) {
     const to = vendoredPath(destRoot, mode, f);
@@ -225,7 +245,7 @@ export function verify(destRoot: string): string[] {
     if (!existsSync(p)) problems.push(`missing licence file: ${f}`);
     else if (sha256(readFileSync(p)) !== h) problems.push(`modified licence file: ${f}`);
   }
-  for (const p of [...listFiles(join(destRoot, SRC_DIR)), ...listFiles(join(destRoot, FILES_DIR)), ...listFiles(join(destRoot, LICENSE_DIR))]) {
+  for (const p of vendoredDirs(mode, Object.keys(lock.files)).flatMap((d) => listFiles(join(destRoot, d)))) {
     const rel = toPosix(relative(destRoot, p));
     if (!expected.has(rel)) problems.push(`unexpected file: ${rel}`);
   }

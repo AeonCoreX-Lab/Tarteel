@@ -7,7 +7,7 @@ actually needs (plus their import closure) are copied, so the repo stays small e
 | File | Role |
 |---|---|
 | `upstream.config.json` | upstream repo + the **entry files** we want. Everything they import is pulled in automatically |
-| `third_party/mihrab/src/**` | pristine copies, never edited |
+| `third_party/mihrab/src/**` | pristine copies, never edited. A file outside `src/` that a vendored file imports (e.g. `data/hijri/v1/overrides.json`) is kept at the same relative place, in `third_party/mihrab/data/**`, so relative imports keep resolving |
 | `third_party/mihrab/UPSTREAM.lock.json` | commit SHA, sha256 of every file, upstream licence hashes, external dependency versions |
 | `third_party/mihrab/UPSTREAM-LICENSES/` | upstream LICENSE, NOTICE, TRADEMARK.md (shipped with our source) |
 

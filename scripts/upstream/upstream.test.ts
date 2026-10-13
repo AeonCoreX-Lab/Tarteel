@@ -133,3 +133,42 @@ test("files mode: verify catches edits and stray files; diff reports changes; mi
   assert.match(problems, /unexpected file: files\/extra\.kt/);
   assert.throws(() => sync({ name: "k", cfg: { ...filesCfg(d), entries: ["nope.kt"] }, srcRoot: up, destRoot: d, sha: null, source: "t" }), /not found/);
 });
+
+test("a closure file outside src/ keeps its place, so relative imports keep resolving", () => {
+  const up = fakeUpstream();
+  write(up, "src/hijri/cal.ts", "import o from '../../data/hijri/v1/overrides.json';\nexport const c = o.v;\n");
+  write(up, "data/hijri/v1/overrides.json", '{"v":1}');
+  const d = dest();
+  const c = { ...cfg(d), entries: ["src/a.ts", "src/hijri/cal.ts"] };
+  const lock = sync({ name: "t", cfg: c, srcRoot: up, destRoot: d, sha: "1", source: "s" });
+  assert.ok(existsSync(join(d, "src/hijri/cal.ts")));
+  assert.ok(existsSync(join(d, "data/hijri/v1/overrides.json")), "next to src/, exactly where '../../data/...' points");
+  assert.ok(!existsSync(join(d, "src/data/hijri/v1/overrides.json")), "not folded into src/");
+  assert.ok("data/hijri/v1/overrides.json" in lock.files);
+  assert.deepEqual(verify(d), []);
+  // verify sees edits and strays in that folder too
+  appendFileSync(join(d, "data/hijri/v1/overrides.json"), " ");
+  write(d, "data/stray.json", "{}");
+  const problems = verify(d).join("\n");
+  assert.match(problems, /modified: data\/hijri\/v1\/overrides\.json/);
+  assert.match(problems, /unexpected file: data\/stray\.json/);
+});
+
+test("a re-sync removes a data folder upstream no longer needs", () => {
+  const up = fakeUpstream();
+  write(up, "src/hijri/cal.ts", "import o from '../../data/x.json';\nexport const c = o;\n");
+  write(up, "data/x.json", "{}");
+  const d = dest();
+  sync({ name: "t", cfg: { ...cfg(d), entries: ["src/a.ts", "src/hijri/cal.ts"] }, srcRoot: up, destRoot: d, sha: "1", source: "s" });
+  assert.ok(existsSync(join(d, "data/x.json")));
+  sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: "2", source: "s" });
+  assert.ok(!existsSync(join(d, "data")), "stale data/ folder is gone");
+  assert.deepEqual(verify(d), []);
+});
+
+test("closure files that would land on the destination root or a tool-owned folder are refused", () => {
+  const up = fakeUpstream();
+  write(up, "src/c.ts", "import p from '../package.json';\nexport const c = p;\n");
+  const d = dest();
+  assert.throws(() => sync({ name: "t", cfg: { ...cfg(d), entries: ["src/c.ts"] }, srcRoot: up, destRoot: d, sha: null, source: "s" }), /Cannot vendor "package\.json"/);
+});
