@@ -15,7 +15,7 @@ UI is always written fresh in Tarteel's design system.
 | 6 | **Qibla / compass** (`CompassScreen`, `native/Compass*`) | 2k | `expo-sensors` first; port Kotlin module only if needed | maybe |
 | 7 | **Adhan alerts** (`notifications` 5.4k, `native/PrayerAlarms`, `CustomAdhan`, `FullScreenAlarm`, `PrayerSilence`) | 7k + Kotlin | Notification scheduling logic vendored; Android alarm/full-screen/DND via Kotlin copied in by an Expo config plugin | **yes (largest risk)** |
 | 8 | **Quran reader** (`quran` 35k, `QuranScreen`, `QuranSurahScreen`) | 40k | Tarteel text reader exists; add mushaf pages, riwayat, word-by-word, tajweed in stages | mushaf line view (Kotlin) |
-| 9 | Quran audio (`quran/audio` 5k, `WordPlayer`, track-player) | 5k | `react-native-track-player`; reciter metadata in `content.db`; files in FileStore | none |
+| 9 | Quran audio (`quran/audio` 5k, `WordPlayer`, track-player) | 5k | **Built (own implementation, `packages/audio`):** per-ayah download manager, rolling queue, Listen page, MiniPlayer, reciter picker. Reader follows the recitation (ayah highlight, auto-scroll, word highlight when timings exist). Reciters stay disabled until the source licence is confirmed; no timing source chosen yet; tap-a-word-to-hear not built. See [docs/audio](../audio/README.md) | none |
 | 10 | Khatmah, resume doors, downloads (`QuranDownloads`, `Khatmah*`) | 3k | New UI; progress in `user.db` | none |
 | 11 | **Prayer log, practice, journal, fasting** (`journal`, `practice`, `fasting`, `LogScreen`) | 6k | Logic vendored where pure; storage on `user.db` | none |
 | 12 | Tasbih + dhikr + duas (`tasbih`, `dhikr`, `duas`, `TasbihScreen`) | 3k | Logic vendored; **dua content licence verified before shipping** | none |

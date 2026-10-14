@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ReadingProgress } from "@tarteel/core";
 import type { Repositories } from "@tarteel/database";
 import type { TranslationMeta } from "@tarteel/types";
+import { initAudio } from "../audio/runtime";
 import { initDatabases } from "../platform/database";
 import { prefs } from "../platform/preferences";
 import { useSettings } from "./settings";
@@ -34,6 +35,7 @@ export function AppProvider({ children, fallback }: { children: ReactNode; fallb
         // Default to the first installed translation; fall back if the selected one is gone.
         if (list.length && !list.some((t) => t.id === selectedTranslationId)) set("selectedTranslationId", (list[0] as TranslationMeta).id);
         setTranslations(list);
+        void initAudio(r).catch(() => undefined); // surah names for the lock screen; audio is optional
         setRepos(r);
       })
       .catch((e: unknown) => setError(e instanceof Error ? e : new Error(String(e))));

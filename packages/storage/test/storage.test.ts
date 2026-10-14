@@ -57,6 +57,19 @@ test("memory file store round trip", async () => {
   assert.equal(await fs.exists("audio", "r/1.mp3"), false);
 });
 
+test("memory file store move replaces the destination and listWithSize reads direct children only", async () => {
+  const fs = createMemoryFileStore();
+  await fs.write("audio", "r/1.mp3.part", new Uint8Array([1, 2, 3]));
+  await fs.write("audio", "r/1.mp3", new Uint8Array([9]));
+  await fs.write("audio", "r/sub/2.mp3", new Uint8Array([7, 7]));
+  await fs.move("audio", "r/1.mp3.part", "r/1.mp3");
+  assert.equal(await fs.exists("audio", "r/1.mp3.part"), false);
+  assert.equal(await fs.size("audio", "r/1.mp3"), 3);
+  assert.deepEqual(await fs.listWithSize("audio", "r"), [{ name: "1.mp3", size: 3 }]);
+  await assert.rejects(fs.move("audio", "r/missing", "r/x"));
+  await assert.rejects(fs.move("audio", "r/1.mp3", "../escape"));
+});
+
 test("transaction runner nests with savepoints and rolls back", async () => {
   const log: string[] = [];
   const tx = createTransactionRunner(async (s) => void log.push(s));

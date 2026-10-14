@@ -31,6 +31,7 @@ Brand: [BRAND](docs/design/BRAND.md) · UI kit: [UI-KIT](docs/design/UI-KIT.md) 
 | `packages/database` | Migrations, repositories, dataset importer |
 | `packages/search` | Arabic/translation normalisation + safe FTS5 query builder |
 | `packages/prayer` | Method defaults, Hijri calendar (Umm al-Qura + tabular + offset), next-prayer/countdown logic. Calculator injected |
+| `packages/audio` | Recitation: reciter catalogue, per-ayah download manager, playback queue/controller. Pure TS, ports injected (empty catalogue by default) |
 | `packages/core` | Preference schema, last-read logic, go-to parsing |
 | `apps/mobile` | Expo / React Native app (Android first) |
 | `scripts/` | `validate-quran`, `validate-translations`, `build-database`, `upstream` (sync/verify/diff) |

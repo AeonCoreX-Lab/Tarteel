@@ -29,3 +29,20 @@ test("reading progress: pointer always updated, history only when enabled", asyn
   assert.deepEqual(rp.lastRead, { surahId: 3, ayahNumber: 1 });
   assert.equal(calls.length, 1);
 });
+
+test("audio preferences default to the offline-safe choice and survive a round trip", () => {
+  const prefs = createPreferencesStore(createMemoryKeyValueStore(), PREFERENCE_DEFAULTS);
+  assert.equal(prefs.get("audioAllowStreaming"), false, "streaming is opt-in");
+  assert.equal(prefs.get("audioReciterId"), null);
+  assert.equal(prefs.get("lastListened"), null);
+  prefs.set("audioAllowStreaming", true);
+  prefs.set("audioReciterId", "some-reciter");
+  prefs.set("lastListened", { surahId: 2, ayahNumber: 5, reciterId: "some-reciter", at: 1, pausedAt: null });
+  assert.equal(prefs.get("audioAllowStreaming"), true);
+  assert.equal(prefs.get("audioReciterId"), "some-reciter");
+  assert.equal(prefs.get("lastListened")?.ayahNumber, 5);
+  // a wrong-typed stored value falls back to the default instead of crashing
+  const kv = createMemoryKeyValueStore();
+  kv.setString("pref.audioPlaybackRate", JSON.stringify("fast"));
+  assert.equal(createPreferencesStore(kv, PREFERENCE_DEFAULTS).get("audioPlaybackRate"), 1);
+});

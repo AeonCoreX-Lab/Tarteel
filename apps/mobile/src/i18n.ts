@@ -43,6 +43,21 @@ const en = {
   privacyNote: "No account, no ads and no tracking. Your location, bookmarks, notes and reading history stay on this device.",
   noBookmarksTitle: "Nothing saved yet", sample: "Preview",
   decrease: "Decrease", increase: "Increase", verses: "ayahs", makkah: "Makkah", madinah: "Madinah",
+  listen: "Listen", recitation: "Recitation", reciters: "Reciters", reciter: "Reciter", chooseReciter: "Choose reciter", searchReciters: "Search reciters",
+  noRecitersTitle: "No recitation in this build", noRecitersBody: "No reciter has been added and licence-verified yet, so audio is not offered. Everything else works as before.",
+  play: "Play", pause: "Pause", stopPlayback: "Stop", playAyah: "Play this ayah", playSurah: "Play surah", previousAyah: "Previous ayah", nextAyah: "Next ayah",
+  previousSurah: "Previous surah", nextSurah: "Next surah", nowPlaying: "Now playing", continueListening: "Continue listening", surahsToListen: "Surahs",
+  downloadSurah: "Download surah", downloadRest: "Download the rest", ayahsOnDevice: "ayahs on this device", downloading: "Downloading", cancel: "Cancel",
+  delete: "Delete", tapAgainToDelete: "Tap again to delete", downloadAll: "Download all", downloadedLabel: "Downloaded", partlyDownloaded: "Partly downloaded",
+  select: "Select", selected: "Selected", approx: "about", usedOnDevice: "Used on this device",
+  allowStreaming: "Stream audio that is not downloaded",
+  streamingBody: "Off by default. When off, only downloaded audio plays and nothing is fetched for playback. When on, ayahs that are not downloaded are streamed from the audio host over the internet.",
+  blockedNotice: "This ayah is not downloaded and streaming is off.", gapNotice: "Playback stopped: this ayah is not downloaded.",
+  allowStreamingAction: "Allow streaming", speed: "Speed", repeatEach: "Repeat each ayah", repeatRange: "Repeat the range", pauseBetween: "Pause between repeats", off: "Off",
+  noSpace: "Not enough free space on this device.", downloadInterrupted: "Download paused because the connection dropped. Everything fetched is kept; tap Download to continue.",
+  downloadIncomplete: "Some ayahs could not be downloaded. Tap Download to try again.", downloadDone: "Download complete.", downloadFailed: "The download could not start.",
+  recitationPrivacy: "Audio is fetched only when you ask: a download, or streaming if you turn it on. The audio host can see your IP address and which reciter and surah you request. Nothing else is sent, and nothing is sent when you play downloaded audio.",
+  followRecitation: "Follow recitation", audioSources: "Recitation sources", listenNotAvailable: "Recitation is not available in this build.", openListen: "Open Listen",
 };
 type Dict = typeof en;
 
@@ -88,6 +103,21 @@ const bn: Dict = {
   privacyNote: "কোনো অ্যাকাউন্ট, বিজ্ঞাপন বা ট্র্যাকিং নেই। আপনার অবস্থান, বুকমার্ক, নোট ও পড়ার ইতিহাস এই ডিভাইসেই থাকে।",
   noBookmarksTitle: "এখনো কিছু সংরক্ষিত নেই", sample: "প্রিভিউ",
   decrease: "কমান", increase: "বাড়ান", verses: "আয়াত", makkah: "মক্কী", madinah: "মাদানী",
+  listen: "শুনুন", recitation: "তিলাওয়াত", reciters: "কারী", reciter: "কারী", chooseReciter: "কারী বেছে নিন", searchReciters: "কারী খুঁজুন",
+  noRecitersTitle: "এই বিল্ডে তিলাওয়াত নেই", noRecitersBody: "এখনো কোনো কারী যোগ ও লাইসেন্স যাচাই করা হয়নি, তাই অডিও দেওয়া হচ্ছে না। বাকি সবকিছু আগের মতোই চলে।",
+  play: "চালান", pause: "থামান", stopPlayback: "বন্ধ করুন", playAyah: "এই আয়াত শুনুন", playSurah: "সূরা শুনুন", previousAyah: "আগের আয়াত", nextAyah: "পরের আয়াত",
+  previousSurah: "আগের সূরা", nextSurah: "পরের সূরা", nowPlaying: "এখন চলছে", continueListening: "শোনা চালিয়ে যান", surahsToListen: "সূরা",
+  downloadSurah: "সূরা ডাউনলোড করুন", downloadRest: "বাকিটুকু ডাউনলোড করুন", ayahsOnDevice: "আয়াত এই ডিভাইসে আছে", downloading: "ডাউনলোড হচ্ছে", cancel: "বাতিল",
+  delete: "মুছুন", tapAgainToDelete: "মুছতে আবার চাপুন", downloadAll: "সব ডাউনলোড করুন", downloadedLabel: "ডাউনলোড করা", partlyDownloaded: "আংশিক ডাউনলোড",
+  select: "বেছে নিন", selected: "নির্বাচিত", approx: "প্রায়", usedOnDevice: "এই ডিভাইসে ব্যবহৃত",
+  allowStreaming: "ডাউনলোড করা নয় এমন অডিও স্ট্রিম করুন",
+  streamingBody: "ডিফল্টে বন্ধ। বন্ধ থাকলে শুধু ডাউনলোড করা অডিও চলে এবং শোনার জন্য কিছুই নেটওয়ার্ক থেকে আনা হয় না। চালু করলে ডাউনলোড না থাকা আয়াত ইন্টারনেটে অডিও হোস্ট থেকে স্ট্রিম হয়।",
+  blockedNotice: "এই আয়াত ডাউনলোড করা নেই এবং স্ট্রিমিং বন্ধ।", gapNotice: "শোনা থেমে গেছে: এই আয়াত ডাউনলোড করা নেই।",
+  allowStreamingAction: "স্ট্রিমিং চালু করুন", speed: "গতি", repeatEach: "প্রতিটি আয়াত পুনরাবৃত্তি", repeatRange: "পুরো অংশ পুনরাবৃত্তি", pauseBetween: "পুনরাবৃত্তির মাঝে বিরতি", off: "বন্ধ",
+  noSpace: "এই ডিভাইসে যথেষ্ট খালি জায়গা নেই।", downloadInterrupted: "সংযোগ ছিঁড়ে যাওয়ায় ডাউনলোড থেমেছে। যা এসেছে সবই রাখা আছে; চালিয়ে যেতে ডাউনলোড চাপুন।",
+  downloadIncomplete: "কিছু আয়াত ডাউনলোড করা যায়নি। আবার চেষ্টা করতে ডাউনলোড চাপুন।", downloadDone: "ডাউনলোড সম্পূর্ণ।", downloadFailed: "ডাউনলোড শুরু করা যায়নি।",
+  recitationPrivacy: "অডিও শুধু আপনি চাইলেই আনা হয়: ডাউনলোড, অথবা আপনি চালু করলে স্ট্রিমিং। অডিও হোস্ট আপনার IP ঠিকানা এবং কোন কারী ও সূরা চেয়েছেন তা দেখতে পায়। আর কিছু পাঠানো হয় না, এবং ডাউনলোড করা অডিও চালানোর সময় কিছুই পাঠানো হয় না।",
+  followRecitation: "তিলাওয়াতের সাথে চলুন", audioSources: "তিলাওয়াতের উৎস", listenNotAvailable: "এই বিল্ডে তিলাওয়াত নেই।", openListen: "শোনার পাতা খুলুন",
 };
 
 const dictionaries: Partial<Record<UiLanguage, Dict>> = { en, bn };

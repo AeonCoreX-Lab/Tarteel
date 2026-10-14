@@ -5,4 +5,8 @@
 - Android auto-backup is disabled (`allowBackup: false` in `apps/mobile/app.config.ts`) so notes are not uploaded to
   Google Drive backups. Revisit only with an explicit, user-controlled export/sync feature.
 - Reading history is optional and can be turned off in Settings; the last-read pointer is always local.
+- Recitation audio is the only other network use, and only when asked: a download, or streaming if the user turns it on
+  (off by default). The audio host sees the device IP address and which reciter and surah are requested; nothing else is
+  sent and playing downloaded audio sends nothing. No reciter ships yet: the host will be named here when one is added
+  (see [docs/audio](../audio/README.md)). Last-listened position is stored locally in preferences only.
 - Future optional cloud features must be opt-in, off by default, and documented here before shipping.

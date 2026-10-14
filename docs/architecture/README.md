@@ -31,5 +31,9 @@ User input is turned into quoted FTS tokens so it can never inject FTS syntax.
 ## Platform adapters (apps/*)
 mobile: `react-native-mmkv`, `expo-sqlite`. web (phase 6): localStorage + SQLite WASM/OPFS behind the same interfaces.
 
+## Audio
+`packages/audio` (pure TS, injected `FileStore` / `AudioHttp` / `PlayerPort`) with Expo adapters in `apps/mobile/src/audio`.
+Files live in the filesystem area, preferences in MMKV, nothing in SQLite. See [docs/audio](../audio/README.md).
+
 ## Known gaps (tracked, not hidden)
-Audio, notes UI, Juz/Page/Hizb navigation screens, downloadable translation packs, web app, optional cloud.
+Notes UI, Juz/Page/Hizb navigation screens, downloadable translation packs, web app, optional cloud.

@@ -4,6 +4,11 @@ import type { ViewToken } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AyahWithTranslation, Surah } from "@tarteel/types";
+import { followTarget } from "@tarteel/audio";
+import { RecitedArabic } from "../../src/audio/RecitedArabic";
+import { SurahAudio } from "../../src/audio/SurahAudio";
+import { usePlaybackStatus } from "../../src/audio/hooks";
+import { audio, RECITERS } from "../../src/audio/runtime";
 import { Icon } from "../../src/components/Icons";
 import { StarBadge } from "../../src/components/Ornaments";
 import { Caption, Segmented } from "../../src/components/ui";
@@ -23,16 +28,32 @@ interface RowProps {
   translationSize: number;
   lineSpacing: number;
   th: Theme;
-  labels: { bookmark: string; bookmarked: string; ayah: string };
+  labels: { bookmark: string; bookmarked: string; ayah: string; playAyah: string };
   onToggle: (a: AyahWithTranslation) => void;
+  /** This ayah is being recited right now. */
+  recited: boolean;
+  /** Absent when the build offers no recitation. */
+  onPlay?: (a: AyahWithTranslation) => void;
 }
 
 const AyahRow = memo(function AyahRow(p: RowProps) {
   const { item, th } = p;
+  const arabicStyle = { color: th.text, fontSize: p.arabicSize, lineHeight: p.arabicSize * p.lineSpacing, textAlign: "right", writingDirection: "rtl" } as const;
   return (
-    <View style={{ paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: th.border, gap: 12 }}>
+    <View style={{ paddingVertical: 18, paddingHorizontal: p.recited ? 10 : 0, borderBottomWidth: 1, borderBottomColor: th.border, gap: 12, borderLeftWidth: p.recited ? 3 : 0, borderLeftColor: th.brass, backgroundColor: p.recited ? th.surfaceAlt : undefined }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <StarBadge n={item.ayahNumber} size={38} fill={th.surfaceAlt} stroke={th.brass} color={th.text} />
+        {p.onPlay ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${p.labels.playAyah}, ${p.labels.ayah} ${item.ayahNumber}`}
+            onPress={() => p.onPlay?.(item)}
+            style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 8 }}
+          >
+            <Text style={{ color: th.accentText, fontSize: 16, fontWeight: "700" }}>▶</Text>
+            <Text style={{ color: th.accentText, fontSize: 13, fontWeight: "600" }}>{p.labels.playAyah}</Text>
+          </Pressable>
+        ) : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${p.bookmarked ? p.labels.bookmarked : p.labels.bookmark}, ${p.labels.ayah} ${item.ayahNumber}`}
@@ -45,9 +66,18 @@ const AyahRow = memo(function AyahRow(p: RowProps) {
         </Pressable>
       </View>
       {p.showArabic ? (
-        <Text selectable style={{ color: th.text, fontSize: p.arabicSize, lineHeight: p.arabicSize * p.lineSpacing, textAlign: "right", writingDirection: "rtl" }}>
-          {item.textArabic}
-        </Text>
+        p.recited && p.onPlay ? (
+          <RecitedArabic
+            ayah={{ surahId: item.surahId, ayahNumber: item.ayahNumber }}
+            text={item.textArabic}
+            style={arabicStyle}
+            lit={{ backgroundColor: `${th.brass}59`, color: th.text }}
+          />
+        ) : (
+          <Text selectable style={arabicStyle}>
+            {item.textArabic}
+          </Text>
+        )
       ) : null}
       {p.showTranslation && item.translation ? (
         <Text selectable style={{ color: p.showArabic ? th.muted : th.text, fontSize: p.translationSize, lineHeight: p.translationSize * 1.55 }}>
@@ -70,6 +100,27 @@ export default function SurahScreen() {
   const [ayahs, setAyahs] = useState<AyahWithTranslation[]>([]);
   const [marks, setMarks] = useState<Set<number>>(new Set());
   const listRef = useRef<FlatList<AyahWithTranslation>>(null);
+  const status = usePlaybackStatus();
+  const recitedAyah = status.active;
+  // The list follows the recitation until the reader scrolls by hand; "Follow recitation" (or playing an ayah) resumes it.
+  const [following, setFollowing] = useState(true);
+  const lastScrolled = useRef(-1);
+  const playFrom = useCallback((a: AyahWithTranslation) => {
+    setFollowing(true);
+    lastScrolled.current = -1;
+    void audio.controller.playFromAyah({ surahId: a.surahId, ayahNumber: a.ayahNumber });
+  }, []);
+  const recitingHere = status.playing && status.active?.surahId === surahId;
+  const target = followTarget({ following, playing: status.playing, active: status.active, surahId, lastScrolled: lastScrolled.current });
+  useEffect(() => {
+    if (target === null || target >= ayahs.length) return;
+    lastScrolled.current = target;
+    listRef.current?.scrollToIndex({ index: target, viewPosition: 0.3, animated: true });
+  }, [target, ayahs.length]);
+  const followNow = useCallback(() => {
+    lastScrolled.current = -1;
+    setFollowing(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,6 +173,7 @@ export default function SurahScreen() {
           <Caption>{surah.nameEnglish} · {surah.ayahCount} {t("verses")} · {t(surah.revelationPlace)}</Caption>
         </View>
       ) : null}
+      <SurahAudio surahId={surahId} />
       <Segmented
         label={t("readerMode")}
         value={s.readerMode}
@@ -138,7 +190,7 @@ export default function SurahScreen() {
         ref={listRef}
         data={ayahs}
         keyExtractor={(a) => String(a.ayahNumber)}
-        extraData={marks}
+        extraData={[marks, recitedAyah]}
         ListHeaderComponent={header}
         contentContainerStyle={{ width: "100%", maxWidth: 720, alignSelf: "center", paddingHorizontal: 16, paddingTop: 8, paddingBottom: insets.bottom + 32 }}
         initialNumToRender={12}
@@ -147,6 +199,7 @@ export default function SurahScreen() {
         onScrollToIndexFailed={(info: { averageItemLength: number; index: number }) => {
           listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: false });
         }}
+        onScrollBeginDrag={() => setFollowing(false)}
         viewabilityConfig={viewability}
         onViewableItemsChanged={onViewable}
         renderItem={({ item }: { item: AyahWithTranslation }) => (
@@ -159,11 +212,23 @@ export default function SurahScreen() {
             translationSize={s.translationFontSize}
             lineSpacing={s.lineSpacing}
             th={th}
-            labels={{ bookmark: t("bookmark"), bookmarked: t("bookmarked"), ayah: t("ayah") }}
+            labels={{ bookmark: t("bookmark"), bookmarked: t("bookmarked"), ayah: t("ayah"), playAyah: t("playAyah") }}
             onToggle={toggle}
+            recited={recitedAyah?.surahId === item.surahId && recitedAyah.ayahNumber === item.ayahNumber}
+            onPlay={RECITERS.length > 0 ? playFrom : undefined}
           />
         )}
       />
+      {recitingHere && !following ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("followRecitation")}
+          onPress={followNow}
+          style={{ position: "absolute", alignSelf: "center", top: 12, minHeight: 44, justifyContent: "center", paddingHorizontal: 18, borderRadius: 22, backgroundColor: th.accent, borderWidth: 1, borderColor: th.brass }}
+        >
+          <Text style={{ color: th.onAccent, fontWeight: "700", fontSize: 14 }}>{t("followRecitation")}</Text>
+        </Pressable>
+      ) : null}
     </>
   );
 }

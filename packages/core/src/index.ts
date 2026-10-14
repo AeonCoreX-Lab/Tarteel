@@ -27,6 +27,21 @@ export interface PreferenceSchema {
   prayerOffsets: Record<string, number>;
   /** Moon-sighting adjustment for the Hijri date, usually -2..+2. */
   hijriOffsetDays: number;
+  /** Chosen reciter (an id from the audio catalog). null = none chosen yet. */
+  audioReciterId: string | null;
+  /**
+   * Off by default: with it off, nothing is fetched to play audio and only downloaded audio plays. When the user
+   * turns it on, ayahs that are not downloaded stream from the audio source (a network request).
+   */
+  audioAllowStreaming: boolean;
+  audioPlaybackRate: number;
+  /** Memorisation: each ayah N times, then the whole range M times. */
+  audioRepeatEachAyah: number;
+  audioRepeatRange: number;
+  /** Pause after each finished ayah as a multiple of its length (0 = off). */
+  audioPauseFactor: number;
+  /** Where continuous listening got to: its own place, separate from the reading marker. */
+  lastListened: { surahId: number; ayahNumber: number; reciterId: string; at: number; pausedAt: number | null } | null;
 }
 
 export const PREFERENCE_DEFAULTS: PreferenceSchema = {
@@ -46,12 +61,22 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
   asrSchool: null,
   prayerOffsets: {},
   hijriOffsetDays: 0,
+  audioReciterId: null,
+  audioAllowStreaming: false,
+  audioPlaybackRate: 1,
+  audioRepeatEachAyah: 1,
+  audioRepeatRange: 1,
+  audioPauseFactor: 0,
+  lastListened: null,
 };
 
 export const LIMITS = {
   arabicFontSize: { min: 18, max: 56 },
   translationFontSize: { min: 12, max: 32 },
   lineSpacing: { min: 1.3, max: 2.6 },
+  audioPlaybackRate: { min: 0.75, max: 2 },
+  audioRepeat: { min: 1, max: 10 },
+  audioPauseFactor: { min: 0, max: 3 },
 } as const;
 
 export function clamp(n: number, min: number, max: number): number {

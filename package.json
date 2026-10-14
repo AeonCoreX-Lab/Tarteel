@@ -23,15 +23,18 @@
     "import:quranenc": "node --no-warnings scripts/import-quranenc/cli.ts",
     "build:db": "node --no-warnings scripts/build-database/cli.ts",
     "bootstrap:mobile": "sh scripts/bootstrap-mobile.sh",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run upstream:verify && npm run validate:quran && npm run validate:translations",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run upstream:verify && npm run validate:quran && npm run validate:translations && npm run validate:audio",
     "upstream:verify": "node --no-warnings scripts/upstream/cli.ts verify",
     "upstream:sync": "node --no-warnings scripts/upstream/cli.ts sync",
-    "upstream:diff": "node --no-warnings scripts/upstream/cli.ts diff"
+    "upstream:diff": "node --no-warnings scripts/upstream/cli.ts diff",
+    "validate:audio": "node --no-warnings scripts/validate-audio/cli.ts",
+    "postinstall": "patch-package"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/node": "^22.0.0",
     "eslint": "^9.0.0",
+    "patch-package": "^8.0.1",
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.0.0"
   }

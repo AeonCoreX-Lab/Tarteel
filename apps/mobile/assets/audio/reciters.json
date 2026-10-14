@@ -1,0 +1,36 @@
+[
+  {
+    "id": "alafasy-128",
+    "name": "Mishary Rashid Alafasy",
+    "arabicName": "مشاري راشد العفاسي",
+    "urlTemplate": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/{ayah}.mp3",
+    "bitrateKbps": 128,
+    "riwayah": "hafs",
+    "aliases": ["afasy", "alafasi", "mishari"],
+    "attribution": "Recitation by Mishary Rashid Alafasy, via Islamic Network (alquran.cloud)",
+    "verification": {
+      "licenseVerified": false,
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "NOT VERIFIED: draft. Terms read, written confirmation from Islamic Network pending; file URL not yet tested",
+      "termsUrl": "https://alquran.cloud/terms-and-conditions"
+    },
+    "enabled": false
+  },
+  {
+    "id": "husary-128",
+    "name": "Mahmoud Khalil Al-Husary",
+    "arabicName": "محمود خليل الحصري",
+    "urlTemplate": "https://cdn.islamic.network/quran/audio/128/ar.husary/{ayah}.mp3",
+    "bitrateKbps": 128,
+    "riwayah": "hafs",
+    "aliases": ["husari", "hussary", "al-husary"],
+    "attribution": "Recitation by Mahmoud Khalil Al-Husary, via Islamic Network (alquran.cloud)",
+    "verification": {
+      "licenseVerified": false,
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "NOT VERIFIED: draft. Terms read, written confirmation from Islamic Network pending; file URL not yet tested",
+      "termsUrl": "https://alquran.cloud/terms-and-conditions"
+    },
+    "enabled": false
+  }
+]

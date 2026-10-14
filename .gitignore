@@ -10,3 +10,7 @@ build/
 .env
 .env.*
 !.env.example
+
+# Ignore Android & IDE trashed temporary files
+**/*.trashed-*
+

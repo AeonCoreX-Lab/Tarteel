@@ -8,6 +8,7 @@ import { METHODS, resolveMethod, validateCoordinates } from "@tarteel/prayer";
 import { BRAND } from "../../src/brand";
 import { Button, Caption, Card, Heading, Row, ScreenScroll, Segmented } from "../../src/components/ui";
 import { LocationError, deviceRegion, detectLocation } from "../../src/platform/location";
+import { RECITERS, selectedReciter } from "../../src/audio/runtime";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
@@ -155,6 +156,14 @@ export default function SettingsTab() {
         </Row>
         {locMsg ? <Text accessibilityLiveRegion="polite" style={{ color: th.text, fontSize: 13 }}>{locMsg}</Text> : null}
         <Row><Button label={t("runSetup")} onPress={() => { s.set("onboardingComplete", false); router.replace("/setup"); }} /></Row>
+      </Group>
+
+      <Group title={t("recitation")}>
+        <Text style={{ color: th.text, fontSize: 15 }}>
+          {RECITERS.length === 0 ? t("listenNotAvailable") : `${t("reciter")}: ${selectedReciter()?.name ?? t("chooseReciter")}`}
+        </Text>
+        <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("recitationPrivacy")}</Text>
+        <Row><Button label={t("reciters")} onPress={() => router.push("/reciters")} /></Row>
       </Group>
 
       <Group title={t("privacy")}>

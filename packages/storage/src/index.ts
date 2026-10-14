@@ -152,6 +152,19 @@ export interface FileStore {
   remove(area: FileArea, relativePath: string): Promise<void>;
   list(area: FileArea, relativeDir?: string): Promise<string[]>;
   size(area: FileArea, relativePath: string): Promise<number>;
+  /**
+   * Renames a file inside one area, replacing the destination. Downloads are written to a `.part` file and moved
+   * into place only after they have been verified, so a killed app never leaves a truncated file under its real name.
+   */
+  move(area: FileArea, fromRelativePath: string, toRelativePath: string): Promise<void>;
+  /** Names and sizes of the files directly inside a directory, in ONE call (not one `size()` per file). */
+  listWithSize(area: FileArea, relativeDir?: string): Promise<FileEntry[]>;
+}
+
+export interface FileEntry {
+  /** File name only, without the directory. */
+  name: string;
+  size: number;
 }
 
 /** Rejects path traversal and absolute paths. Adapters MUST call this. */
@@ -181,5 +194,25 @@ export function createMemoryFileStore(): FileStore {
       return [...files.keys()].filter((x) => x.startsWith(prefix)).map((x) => x.slice(prefix.length));
     },
     size: async (a, p) => (files.get(k(a, p)) ?? new Uint8Array()).length,
+    move: async (a, from, to) => {
+      const src = k(a, from);
+      const dst = k(a, to);
+      const v = files.get(src);
+      if (!v) throw new Error(`Not found: ${src}`);
+      files.set(dst, v);
+      files.delete(src);
+    },
+    listWithSize: async (a, dir = "") => {
+      assertSafeRelativePath(dir || "x");
+      const prefix = `${a}/${dir ? dir + "/" : ""}`;
+      const out: FileEntry[] = [];
+      for (const [key, v] of files) {
+        if (!key.startsWith(prefix)) continue;
+        const rest = key.slice(prefix.length);
+        if (rest.includes("/")) continue; // direct children only
+        out.push({ name: rest, size: v.length });
+      }
+      return out;
+    },
   };
 }

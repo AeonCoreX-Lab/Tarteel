@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FlatList, Image, Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import type { Surah } from "@tarteel/types";
+import { RECITERS } from "../../src/audio/runtime";
 import { MARKS } from "../../src/brand";
 import { Icon } from "../../src/components/Icons";
 import { StarBadge } from "../../src/components/Ornaments";
@@ -28,6 +29,17 @@ export default function QuranTab() {
     <View style={{ gap: 16, paddingBottom: 12 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <Heading size={30}>{t("quran")}</Heading>
+        {RECITERS.length > 0 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("listen")}
+            onPress={() => router.push("/listen")}
+            style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1, borderColor: th.border, backgroundColor: th.surface }}
+          >
+            <Text style={{ color: th.accentText, fontSize: 14, fontWeight: "700" }}>▶</Text>
+            <Text style={{ color: th.text, fontSize: 14, fontWeight: "600" }}>{t("listen")}</Text>
+          </Pressable>
+        ) : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("search")}

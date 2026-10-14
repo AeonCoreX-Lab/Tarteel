@@ -1,9 +1,18 @@
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
+import { View } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { MiniPlayer } from "../src/audio/MiniPlayer";
 import { BrandSplash } from "../src/components/BrandSplash";
 import { AppProvider } from "../src/state/app";
 import { useT } from "../src/i18n";
 import { HEADING_FONT, useTheme } from "../src/theme";
+
+/** The recitation card is carried over every screen except Listen, which is the player itself. */
+function AudioDock() {
+  const path = usePathname();
+  if (path === "/listen") return null;
+  return <MiniPlayer />;
+}
 
 export default function RootLayout() {
   const th = useTheme();
@@ -11,6 +20,7 @@ export default function RootLayout() {
   return (
     <AppProvider fallback={({ error }) => <BrandSplash error={error} />}>
       <StatusBar style={th.dark ? "light" : "dark"} />
+      <View style={{ flex: 1 }}>
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: th.bg },
@@ -28,7 +38,11 @@ export default function RootLayout() {
         <Stack.Screen name="qibla" options={{ title: t("qibla") }} />
         <Stack.Screen name="search" options={{ title: t("search") }} />
         <Stack.Screen name="surah/[id]" options={{ title: "" }} />
+        <Stack.Screen name="listen" options={{ title: t("listen") }} />
+        <Stack.Screen name="reciters" options={{ title: t("reciters") }} />
       </Stack>
+      <AudioDock />
+      </View>
     </AppProvider>
   );
 }

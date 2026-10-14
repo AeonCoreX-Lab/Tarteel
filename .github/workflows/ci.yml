@@ -50,6 +50,7 @@ jobs:
       # Once a dataset is added, a missing/invalid one still fails: --allow-empty only covers "no dataset directory at all".
       - run: npm run validate:quran -- --allow-empty
       - run: npm run validate:translations
+      - run: npm run validate:audio
       - name: Build content database (also proves FTS5 + import work)
         run: |
           if [ -n "$(find data/quran -mindepth 1 -maxdepth 1 -type d 2>/dev/null)" ]; then
