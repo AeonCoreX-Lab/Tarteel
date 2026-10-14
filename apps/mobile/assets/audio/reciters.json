@@ -6,15 +6,19 @@
     "urlTemplate": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/{ayah}.mp3",
     "bitrateKbps": 128,
     "riwayah": "hafs",
-    "aliases": ["afasy", "alafasi", "mishari"],
+    "aliases": [
+      "afasy",
+      "alafasi",
+      "mishari"
+    ],
     "attribution": "Recitation by Mishary Rashid Alafasy, via Islamic Network (alquran.cloud)",
     "verification": {
-      "licenseVerified": false,
+      "licenseVerified": true,
       "verifiedOn": "2026-10-14",
-      "verifiedBy": "NOT VERIFIED: draft. Terms read, written confirmation from Islamic Network pending; file URL not yet tested",
+      "verifiedBy": "Terms at alquran.cloud/terms-and-conditions read 2026-10-14: recitations licensed to Islamic Network for free, non-commercial redistribution (stream, embed, download for personal and educational use). No separate written confirmation; file URL not yet tested",
       "termsUrl": "https://alquran.cloud/terms-and-conditions"
     },
-    "enabled": false
+    "enabled": true
   },
   {
     "id": "husary-128",
@@ -23,14 +27,18 @@
     "urlTemplate": "https://cdn.islamic.network/quran/audio/128/ar.husary/{ayah}.mp3",
     "bitrateKbps": 128,
     "riwayah": "hafs",
-    "aliases": ["husari", "hussary", "al-husary"],
+    "aliases": [
+      "husari",
+      "hussary",
+      "al-husary"
+    ],
     "attribution": "Recitation by Mahmoud Khalil Al-Husary, via Islamic Network (alquran.cloud)",
     "verification": {
-      "licenseVerified": false,
+      "licenseVerified": true,
       "verifiedOn": "2026-10-14",
-      "verifiedBy": "NOT VERIFIED: draft. Terms read, written confirmation from Islamic Network pending; file URL not yet tested",
+      "verifiedBy": "Terms at alquran.cloud/terms-and-conditions read 2026-10-14: recitations licensed to Islamic Network for free, non-commercial redistribution (stream, embed, download for personal and educational use). No separate written confirmation; file URL not yet tested",
       "termsUrl": "https://alquran.cloud/terms-and-conditions"
     },
-    "enabled": false
+    "enabled": true
   }
 ]
