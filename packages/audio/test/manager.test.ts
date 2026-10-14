@@ -69,15 +69,14 @@ test("one download at a time: a second start is a no-op and does not disturb the
 
 test("cancel is reported as cancelled, never as interrupted or failed", async () => {
   const store = createAudioStore(createMemoryFileStore());
-  let manager!: ReturnType<typeof createDownloadManager>;
   let n = 0;
   const http = {
     async get() {
-      if (++n === 2) manager.cancel();
+      if (++n === 2) manager.cancel(); // `manager` exists by the time the first request is made
       return { status: 200, bytes: fakeMp3() };
     },
   };
-  manager = createDownloadManager({ store, http, getReciter: () => reciter });
+  const manager: ReturnType<typeof createDownloadManager> = createDownloadManager({ store, http, getReciter: () => reciter });
   await manager.start({ kind: "surah", reciterId: reciter.id, surahId: 2 });
   const last = manager.getState().last;
   assert.equal(last?.cancelled, true);

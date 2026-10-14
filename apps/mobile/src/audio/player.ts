@@ -1,12 +1,20 @@
+import { Image } from "react-native";
 import TrackPlayer, { AppKilledPlaybackBehavior, Capability, Event, State } from "react-native-track-player";
 import type { Track } from "react-native-track-player";
 import type { PlaybackController, PlayerPort, PlayerState, PlayerTrack } from "@tarteel/audio";
 
 // The mark is shown as artwork on the lock screen and in the notification: there is no cover art for a recitation.
+// react-native-track-player types `artwork` as a string, so the bundled image is handed over as its resolved uri.
 /* eslint-disable @typescript-eslint/no-require-imports */
-const ARTWORK = require("../../assets/brand/icon.png") as number;
+const ARTWORK_SOURCE = require("../../assets/brand/icon.png") as number;
+/* eslint-enable @typescript-eslint/no-require-imports */
+let artworkUri: string | undefined;
+const artwork = (): string => {
+  if (artworkUri === undefined) artworkUri = Image.resolveAssetSource(ARTWORK_SOURCE).uri;
+  return artworkUri;
+};
 
-const toTrack = (t: PlayerTrack): Track => ({ id: t.id, url: t.url, title: t.title, artist: t.artist, album: t.album, artwork: ARTWORK });
+const toTrack = (t: PlayerTrack): Track => ({ id: t.id, url: t.url, title: t.title, artist: t.artist, album: t.album, artwork: artwork() });
 const fromTrack = (t: Track): PlayerTrack => ({ id: String(t.id), url: String(t.url), title: t.title ?? "", artist: t.artist ?? "", album: t.album });
 
 /** Maps `PlayerPort` onto react-native-track-player. The player is set up lazily on first play, never at app start. */
