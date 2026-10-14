@@ -1,5 +1,6 @@
-import { createAudioStore, createDownloadManager, createPlaybackController, createTimingCache, findReciter, loadTimings, offeredReciters, parseCatalog, prefetchAyah, readCachedTimings, surahRefs } from "@tarteel/audio";
+import { createAudioStore, createDownloadManager, createPlaybackController, createTimingCache, findReciter, isBasmalahRef, loadTimings, offeredReciters, parseCatalog, prefetchAyah, readCachedTimings, surahRefs } from "@tarteel/audio";
 import type { AyahRef, PlaybackPolicy, Reciter, TimingTable } from "@tarteel/audio";
+import { opensWithBismillahHeading } from "@tarteel/quran-data";
 import type { Repositories } from "@tarteel/database";
 import { useSettings } from "../state/settings";
 import { createExpoFileStore, freeDiskBytes } from "./fileStore";
@@ -52,6 +53,7 @@ const controller = createPlaybackController({
   prefetch: (reciter, ref) => prefetchAyah({ store, http, reciter, ref }),
   label: (ref) => {
     const n = surahNames.get(ref.surahId);
+    if (isBasmalahRef(ref)) return { title: `${surahLabel(ref.surahId)} · Bismillah`, album: surahLabel(ref.surahId) };
     return { title: `${surahLabel(ref.surahId)} · ${ref.ayahNumber}${n ? ` / ${n.ayahCount}` : ""}`, album: surahLabel(ref.surahId) };
   },
   onListened: (ref, reciterId) => useSettings.getState().set("lastListened", { surahId: ref.surahId, ayahNumber: ref.ayahNumber, reciterId, at: Date.now(), pausedAt: null }),
@@ -91,7 +93,11 @@ export const audio = { store, manager, controller };
 /** Queue the missing ayahs of a surah for download (a no-op while another download runs). */
 export async function downloadSurah(reciter: Reciter, surahId: number): Promise<void> {
   const status = await store.surahStatus(reciter.id, surahId);
-  if (status.missing.length === 0) return;
+  // The surah's Bismillah plays the recording of 1:1, so the surah is not playable offline without that file.
+  const bismillah: AyahRef = { surahId: 1, ayahNumber: 1 };
+  const needBismillah = opensWithBismillahHeading(surahId) && !reciter.bismillahInFirstAyah && !(await store.hasAyah(reciter.id, bismillah));
+  if (status.missing.length === 0 && !needBismillah) return;
   const refs: AyahRef[] = surahRefs(surahId).filter((r) => status.missing.includes(r.ayahNumber));
+  if (needBismillah) refs.unshift(bismillah);
   await manager.start({ kind: "surah", reciterId: reciter.id, surahId, refs });
 }

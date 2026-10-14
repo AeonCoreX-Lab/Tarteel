@@ -21,6 +21,8 @@ export interface FollowInput {
  */
 export function followTarget(i: FollowInput): number | null {
   if (!i.following || !i.playing || !i.active || i.active.surahId !== i.surahId) return null;
+  // The Bismillah (ayah 0) sits in the list header, above the first row: nothing to scroll to.
+  if (i.active.ayahNumber < 1) return null;
   const index = i.active.ayahNumber - 1;
   return index === i.lastScrolled ? null : index;
 }

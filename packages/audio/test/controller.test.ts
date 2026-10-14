@@ -114,10 +114,11 @@ test("offline policy: plays what is downloaded, then reports the GAP when the qu
 test("memorisation repeats expand into the queue itself", async () => {
   const { ctl, player } = setup({ policy: { repeatEachAyah: 2, repeatRange: 2 } });
   await ctl.playRange(r(112, 1), r(112, 2));
-  assert.deepEqual(player.queue.map((t) => t.title), ["112:1", "112:1", "112:2", "112:2", "112:1", "112:1", "112:2", "112:2"]);
-  assert.equal(new Set(player.queue.map((t) => t.id)).size, 8, "ids unique");
+  // 112:0 is the Bismillah: once in front of the first ayah (not once per repeated ayah), and again at the start of the second pass.
+  assert.deepEqual(player.queue.map((t) => t.title), ["112:0", "112:1", "112:1", "112:2", "112:2", "112:0", "112:1", "112:1", "112:2", "112:2"]);
+  assert.equal(new Set(player.queue.map((t) => t.id)).size, 10, "ids unique");
   await ctl.playFromAyah(r(112, 1));
-  assert.equal(player.queue.length, 4, "play-from-here ignores repeats");
+  assert.equal(player.queue.length, 5, "play-from-here ignores repeats: the Bismillah and the surah's 4 ayahs");
 });
 
 test("playback rate from the policy is applied", async () => {
@@ -130,15 +131,17 @@ test("listening queues a window across surahs, records the place, and tops up be
   const { ctl, player, listened } = setup();
   await ctl.listenFrom(r(1, 1));
   assert.equal(ctl.isListening(), true);
-  assert.equal(player.queue.length, LISTEN_WINDOW);
-  assert.equal(player.queue[7]?.title, "2:1", "al-Fatihah runs straight into the next surah");
+  // The window is 200 ayahs plus the Bismillah of the one surah entered (2). Al-Fatihah has it as ayah 1.
+  assert.equal(player.queue.length, LISTEN_WINDOW + 1);
+  assert.equal(player.queue[7]?.title, "2:0", "al-Fatihah runs into the Bismillah of the next surah");
+  assert.equal(player.queue[8]?.title, "2:1");
   assert.deepEqual(listened, ["1:1"]);
 
   // move near the end of the window: the controller appends the next one
   player.active = player.queue.length - 5;
   ctl.handleActiveTrackChanged(player.queue[player.active]?.id ?? null);
   await tick(); await tick(); await tick();
-  assert.equal(player.queue.length, LISTEN_WINDOW * 2);
+  assert.equal(player.queue.length, LISTEN_WINDOW * 2 + 2, "the second window enters surah 3: one more Bismillah");
   const ids = player.queue.map((t) => t.id);
   assert.equal(new Set(ids).size, ids.length, "no id reused across top-ups");
   assert.equal(player.queue[LISTEN_WINDOW]?.title, player.queue[LISTEN_WINDOW - 1]?.title === "2:193" ? "2:194" : player.queue[LISTEN_WINDOW]?.title);
@@ -152,7 +155,7 @@ test("two quick track changes do not append the same window twice", async () => 
   ctl.handleActiveTrackChanged(id);
   ctl.handleActiveTrackChanged(id);
   await tick(); await tick(); await tick(); await tick();
-  assert.equal(player.queue.length, LISTEN_WINDOW * 2);
+  assert.equal(player.queue.length, LISTEN_WINDOW * 2 + 2);
 });
 
 test("a range play replaces a continuous listen", async () => {
@@ -166,14 +169,15 @@ test("lock-screen next/previous move by SURAH", async () => {
   const { ctl, player } = setup();
   await ctl.listenFrom(r(2, 1));
   await ctl.nextSurah();
-  assert.equal(player.queue[0]?.title, "3:1");
-  assert.deepEqual(ctl.getStatus().active, r(3, 1));
+  assert.equal(player.queue[0]?.title, "3:0", "a surah starts with its Bismillah");
+  assert.equal(player.queue[1]?.title, "3:1");
+  assert.deepEqual(ctl.getStatus().active, r(3, 0));
   // mid-surah: previous restarts the surah, then steps back from its first ayah
   ctl.handleActiveTrackChanged("3:5:4");
   await ctl.previousSurah();
-  assert.equal(player.queue[0]?.title, "3:1");
+  assert.equal(player.queue[0]?.title, "3:0");
   await ctl.previousSurah();
-  assert.equal(player.queue[0]?.title, "2:1");
+  assert.equal(player.queue[0]?.title, "2:0");
   // limits
   await ctl.listenFrom(r(114, 1));
   assert.equal(await ctl.nextSurah(), undefined);
@@ -188,12 +192,12 @@ test("prefetch swaps a streaming entry for the file, two or more places ahead on
   await ctl.playFromAyah(r(2, 1));
   ctl.handleActiveTrackChanged(player.queue[0]?.id ?? null);
   await tick(); await tick(); await tick(); await tick();
-  assert.deepEqual(seen.sort(), ["2:2", "2:3", "2:4"]);
+  assert.deepEqual(seen.sort(), ["2:1", "2:2", "2:3"]);
   assert.match(player.queue[1]?.url ?? "", /^https:/, "the very next entry is left alone");
-  assert.equal(player.queue[2]?.url, "file:///p/3.mp3");
-  assert.equal(player.queue[3]?.url, "file:///p/4.mp3");
-  assert.equal(player.queue[2]?.id, "2:3:2", "id preserved through the swap");
-  assert.equal(player.queue.length, 286);
+  assert.equal(player.queue[2]?.url, "file:///p/2.mp3");
+  assert.equal(player.queue[3]?.url, "file:///p/3.mp3");
+  assert.equal(player.queue[2]?.id, "2:2:2", "id preserved through the swap");
+  assert.equal(player.queue.length, 287, "the Bismillah and the 286 ayahs");
 });
 
 test("a prefetch that finishes after the queue changed is dropped", async () => {
@@ -226,8 +230,13 @@ test("an error on an ayah that is not on disk is reported as a GAP; on disk it i
 
 test("pause between repeats: pauses on a natural end, resumes when the timer fires, and a manual command cancels it", async () => {
   const { ctl, player, timers } = setup({ policy: { pauseFactor: 1 } });
-  await ctl.playRange(r(112, 1), r(112, 2));
-  ctl.handleActiveTrackChanged("112:2:1", { positionSec: 6, durationSec: 6 });
+  await ctl.playRange(r(112, 1), r(112, 2)); // queue: Bismillah, 112:1, 112:2
+  // The Bismillah finishing by itself is not an ayah to recite back: no pause after it.
+  ctl.handleActiveTrackChanged("112:1:1", { positionSec: 4, durationSec: 4 });
+  await tick(); await tick();
+  assert.equal(player.log.includes("pause"), false);
+  assert.equal(timers.length, 0);
+  ctl.handleActiveTrackChanged("112:2:2", { positionSec: 6, durationSec: 6 });
   await tick(); await tick();
   assert.ok(player.log.includes("pause"));
   assert.equal(timers.length, 1);
@@ -274,7 +283,8 @@ test("a newer start supersedes one still loading", async () => {
   const [a, b] = await Promise.all([first, second]);
   assert.deepEqual(b, { started: true });
   assert.equal(a.started === false && a.reason === "superseded", true);
-  assert.equal(slow.player.queue[0]?.title, "112:1");
+  assert.equal(slow.player.queue[0]?.title, "112:0");
+  assert.equal(slow.player.queue[1]?.title, "112:1");
 });
 
 test("status subscribers are notified, and a throwing player.setup can be retried", async () => {
@@ -294,4 +304,67 @@ test("status subscribers are notified, and a throwing player.setup can be retrie
   const c2 = createPlaybackController({ player, getReciter: () => makeReciter(), getPolicy: () => ({ allowStreaming: true, rate: 1, repeatEachAyah: 1, repeatRange: 1, pauseFactor: 0 }), localUri: async () => null, prefetch: async () => null, label: () => ({ title: "" }) });
   await assert.rejects(c2.playFromAyah(r(112, 1)), /boom/);
   assert.deepEqual(await c2.playFromAyah(r(112, 1)), { started: true });
+});
+
+test("a Bismillah plays the recording of 1:1, from disk when 1:1 is downloaded and by URL otherwise", async () => {
+  const withFile = setup({ local: new Set(["1:1"]) });
+  await withFile.ctl.playFromAyah(r(112, 1));
+  assert.equal(withFile.player.queue[0]?.title, "112:0");
+  assert.equal(withFile.player.queue[0]?.url, "file:///l/1-1.mp3");
+  assert.match(withFile.player.queue[1]?.url ?? "", /112001\.mp3$/);
+
+  const streaming = setup();
+  await streaming.ctl.playFromAyah(r(112, 1));
+  assert.match(streaming.player.queue[0]?.url ?? "", /001001\.mp3$/, "the URL is 1:1's");
+});
+
+test("surah 1 and surah 9 get no Bismillah track", async () => {
+  const { ctl, player } = setup();
+  await ctl.playFromAyah(r(1, 1));
+  assert.equal(player.queue[0]?.title, "1:1");
+  await ctl.playFromAyah(r(9, 1));
+  assert.equal(player.queue[0]?.title, "9:1");
+});
+
+test("starting mid-surah plays no Bismillah", async () => {
+  const { ctl, player } = setup();
+  await ctl.playFromAyah(r(112, 3));
+  assert.deepEqual(player.queue.map((t) => t.title), ["112:3", "112:4"]);
+});
+
+test("a recording whose first ayah already holds the Bismillah gets no extra one", async () => {
+  const { ctl, player } = setup({ reciter: makeReciter({ bismillahInFirstAyah: true }) });
+  await ctl.playFromAyah(r(112, 1));
+  assert.equal(player.queue[0]?.title, "112:1");
+});
+
+test("offline: a surah downloaded without 1:1 is BLOCKED at its start; with 1:1 it plays", async () => {
+  const ayahs = new Set(["112:1", "112:2", "112:3", "112:4"]);
+  const without = setup({ local: ayahs, policy: { allowStreaming: false } });
+  const res = await without.ctl.playFromAyah(r(112, 1));
+  assert.equal(res.started, false);
+  assert.deepEqual(without.ctl.getStatus().blocked, r(112, 1), "named as the surah's first ayah, which is what 'download this surah' fixes");
+
+  const withIt = setup({ local: new Set([...ayahs, "1:1"]), policy: { allowStreaming: false } });
+  assert.deepEqual(await withIt.ctl.playFromAyah(r(112, 1)), { started: true });
+  assert.equal(withIt.player.queue.length, 5);
+});
+
+test("the listening place is the surah's first ayah while its Bismillah plays", async () => {
+  const { ctl, player, listened } = setup();
+  await ctl.listenFrom(r(111, 5)); // 111:5, then Bismillah + 112
+  assert.deepEqual(listened, ["111:5"]);
+  ctl.handleActiveTrackChanged(player.queue[1]?.id ?? null);
+  assert.deepEqual(ctl.getStatus().active, r(112, 0));
+  assert.deepEqual(listened, ["111:5", "112:1"]);
+});
+
+test("prefetch asks for 1:1 when the upcoming entry is a Bismillah", async () => {
+  const seen: string[] = [];
+  const { ctl, player } = setup({ prefetch: async (ref) => { seen.push(`${ref.surahId}:${ref.ayahNumber}`); return null; } });
+  await ctl.listenFrom(r(111, 5));
+  ctl.handleActiveTrackChanged(player.queue[0]?.id ?? null);
+  await tick(); await tick(); await tick();
+  assert.ok(seen.includes("1:1"), "the Bismillah is fetched as 1:1");
+  assert.equal(seen.includes("112:0"), false);
 });

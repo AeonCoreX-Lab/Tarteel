@@ -58,7 +58,7 @@ export function MiniPlayer() {
       {active ? (
         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 8 }}>
           <View style={{ flex: 1, marginEnd: 8 }}>
-            <Text numberOfLines={1} style={{ color: th.text, fontSize: 15, fontWeight: "700" }}>{`${surahLabel(active.surahId)} ${active.surahId}:${active.ayahNumber}`}</Text>
+            <Text numberOfLines={1} style={{ color: th.text, fontSize: 15, fontWeight: "700" }}>{active.ayahNumber === 0 ? `${surahLabel(active.surahId)} · ${t("bismillah")}` : `${surahLabel(active.surahId)} ${active.surahId}:${active.ayahNumber}`}</Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 }}>
               <Pressable accessibilityRole="button" accessibilityLabel={t("chooseReciter")} hitSlop={6} onPress={() => router.push("/reciters")}>
                 <Text numberOfLines={1} style={{ color: th.accentText, fontSize: 13, fontWeight: "600" }}>{loading ? "…" : (reciter?.name ?? t("chooseReciter"))}</Text>

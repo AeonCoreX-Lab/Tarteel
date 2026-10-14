@@ -5,10 +5,12 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AyahWithTranslation, Surah } from "@tarteel/types";
 import { followTarget } from "@tarteel/audio";
+import { opensWithBismillahHeading } from "@tarteel/quran-data";
 import { RecitedArabic } from "../../src/audio/RecitedArabic";
 import { SurahAudio } from "../../src/audio/SurahAudio";
 import { usePlaybackStatus } from "../../src/audio/hooks";
 import { audio, RECITERS } from "../../src/audio/runtime";
+import { BismillahHeading } from "../../src/components/BismillahHeading";
 import { Icon } from "../../src/components/Icons";
 import { StarBadge } from "../../src/components/Ornaments";
 import { Caption, Segmented } from "../../src/components/ui";
@@ -98,6 +100,8 @@ export default function SurahScreen() {
   const s = useSettings();
   const [surah, setSurah] = useState<Surah | undefined>();
   const [ayahs, setAyahs] = useState<AyahWithTranslation[]>([]);
+  // Ayah 1:1, shown as the heading of surahs 2-114 (except 9), whose own first ayah does not carry the Bismillah.
+  const [bismillah, setBismillah] = useState<AyahWithTranslation | undefined>();
   const [marks, setMarks] = useState<Set<number>>(new Set());
   const listRef = useRef<FlatList<AyahWithTranslation>>(null);
   const status = usePlaybackStatus();
@@ -124,15 +128,18 @@ export default function SurahScreen() {
 
   useEffect(() => {
     let cancelled = false;
+    const translationId = s.readerMode === "arabic" ? null : s.selectedTranslationId;
     void Promise.all([
       repos.quran.getSurah(surahId),
-      repos.quran.getSurahAyahs(surahId, s.readerMode === "arabic" ? null : s.selectedTranslationId),
+      repos.quran.getSurahAyahs(surahId, translationId),
       repos.bookmarks.listForSurah(surahId),
-    ]).then(([su, list, bm]) => {
+      opensWithBismillahHeading(surahId) ? repos.quran.getAyah({ surahId: 1, ayahNumber: 1 }, translationId) : Promise.resolve(undefined),
+    ]).then(([su, list, bm, bism]) => {
       if (cancelled) return;
       setSurah(su);
       setAyahs(list);
       setMarks(bm);
+      setBismillah(bism);
     });
     return () => { cancelled = true; };
   }, [repos, surahId, s.selectedTranslationId, s.readerMode]);
@@ -180,6 +187,9 @@ export default function SurahScreen() {
         onChange={(v) => s.set("readerMode", v)}
         options={[{ value: "arabic", label: t("arabicOnly") }, { value: "translation", label: t("translationOnly") }, { value: "both", label: t("both") }]}
       />
+      {bismillah ? (
+        <BismillahHeading ayah={bismillah} showArabic={showArabic} showTranslation={showTranslation} arabicSize={s.arabicFontSize} translationSize={s.translationFontSize} lineSpacing={s.lineSpacing} th={th} recited={status.active?.surahId === surahId && status.active.ayahNumber === 0} />
+      ) : null}
     </View>
   );
 

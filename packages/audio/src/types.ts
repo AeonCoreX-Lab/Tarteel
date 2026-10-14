@@ -38,6 +38,11 @@ export interface Reciter {
   bitrateKbps: number;
   /** Reading the recording is of, e.g. "hafs". */
   riwayah: string;
+  /**
+   * Set only for a recording whose FIRST ayah file already starts with the Bismillah, so the player must not add one
+   * in front of it. Leave it out for the usual one-file-per-ayah recordings, where the Bismillah is the 1:1 file.
+   */
+  bismillahInFirstAyah?: boolean;
   /** Extra spellings the search box should match. */
   aliases?: string[];
   /** Credit line shown in Settings -> Sources. */

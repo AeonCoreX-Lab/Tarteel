@@ -1,5 +1,5 @@
 import { ayahUrl } from "./catalog.ts";
-import { nextAyah } from "./refs.ts";
+import { audioRefOf, nextAyah } from "./refs.ts";
 import type { AyahRef, PlayerTrack, Reciter } from "./types.ts";
 
 /** Hard cap so repeat expansion can never build a pathological queue. */
@@ -50,7 +50,7 @@ export function listenWindow(start: AyahRef, count: number): { refs: AyahRef[]; 
 export interface BuildTracksArgs {
   refs: readonly AyahRef[];
   reciter: Reciter;
-  /** Local file URI for an ayah, or null when it is not on the device. */
+  /** Local file URI for an ayah's recording, or null when it is not on the device. Asked for a Bismillah as 1:1. */
   localUri: (ref: AyahRef) => string | null;
   /** Whether a missing ayah may be streamed. When false, the queue stops at the first missing ayah. */
   allowStreaming: boolean;
@@ -71,10 +71,13 @@ export function buildTracks(a: BuildTracksArgs): BuiltTracks {
   const offset = a.indexOffset ?? 0;
   for (let i = 0; i < a.refs.length; i++) {
     const ref = a.refs[i] as AyahRef;
-    const local = a.localUri(ref);
-    if (!local && !a.allowStreaming) return { tracks, blockedAt: ref };
+    // A Bismillah has no file of its own: it plays the recording of 1:1.
+    const source = audioRefOf(ref);
+    const local = a.localUri(source);
+    // Reported as the surah's first ayah: that is what the reader sees, and "download this surah" fetches the file.
+    if (!local && !a.allowStreaming) return { tracks, blockedAt: source === ref ? ref : { surahId: ref.surahId, ayahNumber: 1 } };
     const { title, album } = a.label(ref);
-    tracks.push({ id: trackId(ref, offset + i), url: local ?? ayahUrl(a.reciter, ref), title, artist: a.reciter.name, album });
+    tracks.push({ id: trackId(ref, offset + i), url: local ?? ayahUrl(a.reciter, source), title, artist: a.reciter.name, album });
   }
   return { tracks, blockedAt: null };
 }

@@ -57,7 +57,7 @@ const en = {
   noSpace: "Not enough free space on this device.", downloadInterrupted: "Download paused because the connection dropped. Everything fetched is kept; tap Download to continue.",
   downloadIncomplete: "Some ayahs could not be downloaded. Tap Download to try again.", downloadDone: "Download complete.", downloadFailed: "The download could not start.",
   recitationPrivacy: "Audio is fetched only when you ask: a download, or streaming if you turn it on. The audio host can see your IP address and which reciter and surah you request. Nothing else is sent, and nothing is sent when you play downloaded audio.",
-  followRecitation: "Follow recitation", audioSources: "Recitation sources", listenNotAvailable: "Recitation is not available in this build.", openListen: "Open Listen",
+  bismillah: "Bismillah", followRecitation: "Follow recitation", audioSources: "Recitation sources", listenNotAvailable: "Recitation is not available in this build.", openListen: "Open Listen",
 };
 type Dict = typeof en;
 
@@ -117,7 +117,7 @@ const bn: Dict = {
   noSpace: "এই ডিভাইসে যথেষ্ট খালি জায়গা নেই।", downloadInterrupted: "সংযোগ ছিঁড়ে যাওয়ায় ডাউনলোড থেমেছে। যা এসেছে সবই রাখা আছে; চালিয়ে যেতে ডাউনলোড চাপুন।",
   downloadIncomplete: "কিছু আয়াত ডাউনলোড করা যায়নি। আবার চেষ্টা করতে ডাউনলোড চাপুন।", downloadDone: "ডাউনলোড সম্পূর্ণ।", downloadFailed: "ডাউনলোড শুরু করা যায়নি।",
   recitationPrivacy: "অডিও শুধু আপনি চাইলেই আনা হয়: ডাউনলোড, অথবা আপনি চালু করলে স্ট্রিমিং। অডিও হোস্ট আপনার IP ঠিকানা এবং কোন কারী ও সূরা চেয়েছেন তা দেখতে পায়। আর কিছু পাঠানো হয় না, এবং ডাউনলোড করা অডিও চালানোর সময় কিছুই পাঠানো হয় না।",
-  followRecitation: "তিলাওয়াতের সাথে চলুন", audioSources: "তিলাওয়াতের উৎস", listenNotAvailable: "এই বিল্ডে তিলাওয়াত নেই।", openListen: "শোনার পাতা খুলুন",
+  bismillah: "বিসমিল্লাহ", followRecitation: "তিলাওয়াতের সাথে চলুন", audioSources: "তিলাওয়াতের উৎস", listenNotAvailable: "এই বিল্ডে তিলাওয়াত নেই।", openListen: "শোনার পাতা খুলুন",
 };
 
 const dictionaries: Partial<Record<UiLanguage, Dict>> = { en, bn };

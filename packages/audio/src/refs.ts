@@ -1,5 +1,44 @@
-import { HAFS_6236_AYAH_COUNTS } from "@tarteel/quran-data";
+import { HAFS_6236_AYAH_COUNTS, opensWithBismillahHeading } from "@tarteel/quran-data";
 import type { AyahRef } from "@tarteel/types";
+
+/**
+ * The Bismillah that opens a surah is recited, but under the `hafs-6236` numbering it is not an ayah of that surah
+ * (it is ayah 1 of al-Fatihah only). The player therefore queues it as ayah 0 of the surah it opens, and plays the
+ * recording of 1:1, the same words, for it.
+ */
+export const BASMALAH_AYAH = 0;
+
+export function basmalahRef(surahId: number): AyahRef {
+  return { surahId, ayahNumber: BASMALAH_AYAH };
+}
+
+/** Which surahs have one is the reader's own rule (`opensWithBismillahHeading`): the heading and the recitation agree. */
+export function isBasmalahRef(ref: AyahRef | null | undefined): boolean {
+  return ref != null && ref.ayahNumber === BASMALAH_AYAH && opensWithBismillahHeading(ref.surahId);
+}
+
+/** The ayah whose recording is played (and downloaded) for a ref: 1:1 for a Bismillah, the ref itself otherwise. */
+export function audioRefOf(ref: AyahRef): AyahRef {
+  return isBasmalahRef(ref) ? { surahId: 1, ayahNumber: 1 } : ref;
+}
+
+/**
+ * Puts the surah's Bismillah in front of its first ayah wherever a surah is entered: at the start of the list and at
+ * each surah boundary. A repeated ayah 1 (the memorisation drill) does not repeat it, but a repeated pass over the
+ * range starts with it again. `enabled: false` is for a recording whose first ayah already contains it.
+ */
+export function withBasmalah(refs: readonly AyahRef[], enabled = true): AyahRef[] {
+  if (!enabled) return [...refs];
+  const out: AyahRef[] = [];
+  for (const r of refs) {
+    const prev = out[out.length - 1];
+    if (r.ayahNumber === 1 && opensWithBismillahHeading(r.surahId) && !sameRef(prev, r) && !(prev && prev.surahId === r.surahId && prev.ayahNumber === BASMALAH_AYAH)) {
+      out.push(basmalahRef(r.surahId));
+    }
+    out.push(r);
+  }
+  return out;
+}
 
 /** Ayahs in a surah, or 0 for a number that is not a surah. */
 export function ayahCountOf(surahId: number): number {

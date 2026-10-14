@@ -54,6 +54,7 @@ export function reciterProblems(raw: unknown): string[] {
     if (!httpsUrl(v.termsUrl)) p.push("verification.termsUrl must be an https URL");
     if (raw.enabled === true && v.licenseVerified !== true) p.push("an enabled reciter needs verification.licenseVerified = true");
   }
+  if (raw.bismillahInFirstAyah !== undefined && typeof raw.bismillahInFirstAyah !== "boolean") p.push("bismillahInFirstAyah must be true or false");
   if (raw.timings !== undefined) {
     const t = raw.timings;
     if (!isRecord(t) || !httpsUrl(t.url) || !str(t.attribution)) p.push("timings needs an https url and an attribution");

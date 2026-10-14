@@ -1,5 +1,5 @@
 import { applyRepeats, buildTracks, canSwapAt, listenWindow, LISTEN_REFILL_AT, LISTEN_WINDOW, parseTrackId, pauseBetweenRepeatsMs, prefetchTargets } from "./queue.ts";
-import { ayahCountOf, expandRange, sameRef } from "./refs.ts";
+import { audioRefOf, ayahCountOf, expandRange, isBasmalahRef, sameRef, withBasmalah } from "./refs.ts";
 import type { AyahRef, PlayerTrack, Reciter } from "./types.ts";
 
 /** What the controller needs from a player library. The mobile adapter maps this onto react-native-track-player. */
@@ -138,17 +138,26 @@ export function createPlaybackController(deps: ControllerDeps): PlaybackControll
 
   async function localMap(reciter: Reciter, refs: readonly AyahRef[]): Promise<Map<string, string | null>> {
     const unique = new Map<string, AyahRef>();
-    for (const r of refs) unique.set(`${r.surahId}:${r.ayahNumber}`, r);
+    // A Bismillah is looked up as 1:1, the recording it plays.
+    for (const raw of refs) {
+      const r = audioRefOf(raw);
+      unique.set(`${r.surahId}:${r.ayahNumber}`, r);
+    }
     const entries = await Promise.all([...unique].map(async ([k, r]) => [k, await deps.localUri(reciter, r).catch(() => null)] as const));
     return new Map(entries);
   }
+
+  /** The queue for these ayahs, with each surah's Bismillah in front of its first ayah. */
+  const queued = (reciter: Reciter, refs: readonly AyahRef[]): AyahRef[] => withBasmalah(refs, !reciter.bismillahInFirstAyah);
+  /** The listening place is an ayah: a Bismillah counts as the start of its surah. */
+  const placeOf = (ref: AyahRef): AyahRef => (isBasmalahRef(ref) ? { surahId: ref.surahId, ayahNumber: 1 } : ref);
 
   async function build(reciter: Reciter, refs: readonly AyahRef[], indexOffset: number) {
     const local = await localMap(reciter, refs);
     return buildTracks({
       refs,
       reciter,
-      localUri: (r) => local.get(`${r.surahId}:${r.ayahNumber}`) ?? null,
+      localUri: (r) => local.get(`${r.surahId}:${r.ayahNumber}`) ?? null, // buildTracks asks for the recording's ref
       allowStreaming: deps.getPolicy().allowStreaming,
       label: deps.label,
       indexOffset,
@@ -184,7 +193,7 @@ export function createPlaybackController(deps: ControllerDeps): PlaybackControll
       listening = true;
       listenCursor = built.blockedAt ? null : opts.cursor;
       listenIndex = built.tracks.length;
-      deps.onListened?.(refs[0] as AyahRef, reciter.id);
+      deps.onListened?.(placeOf(refs[0] as AyahRef), reciter.id);
     }
     setStatus({ active: refs[0] as AyahRef, playing: true, loading: false });
     return { started: true };
@@ -203,12 +212,13 @@ export function createPlaybackController(deps: ControllerDeps): PlaybackControll
     const reciter = deps.getReciter();
     if (!reciter) return;
     for (const t of prefetchTargets(snap.queue, snap.idx)) {
-      const key = `${reciter.id}:${t.ref.surahId}:${t.ref.ayahNumber}`;
+      const source = audioRefOf(t.ref);
+      const key = `${reciter.id}:${source.surahId}:${source.ayahNumber}`;
       if (inFlight.has(key)) continue;
       inFlight.add(key);
       const mine = epoch;
       void deps
-        .prefetch(reciter, t.ref)
+        .prefetch(reciter, source)
         .then(async (uri) => {
           if (!uri || mine !== epoch) return;
           const [active, track] = await Promise.all([player.getActiveIndex(), player.getTrack(t.index)]);
@@ -227,7 +237,8 @@ export function createPlaybackController(deps: ControllerDeps): PlaybackControll
     const reciter = deps.getReciter();
     if (!reciter) return;
     const mine = epoch;
-    const { refs, cursor } = listenWindow(listenCursor, LISTEN_WINDOW);
+    const { refs: windowRefs, cursor } = listenWindow(listenCursor, LISTEN_WINDOW);
+    const refs = queued(reciter, windowRefs);
     // Claim the cursor BEFORE the await: two quick track changes would otherwise queue the same window twice.
     listenCursor = cursor;
     extending = true;
@@ -242,7 +253,7 @@ export function createPlaybackController(deps: ControllerDeps): PlaybackControll
       if (built.tracks.length > 0) await player.add(built.tracks);
     } catch {
       // A failed top-up leaves what is queued playing; the next track change tries again.
-      if (mine === epoch && listening && listenCursor === cursor) listenCursor = refs[0] ?? cursor;
+      if (mine === epoch && listening && listenCursor === cursor) listenCursor = windowRefs[0] ?? cursor;
     } finally {
       extending = false;
     }
@@ -266,13 +277,15 @@ export function createPlaybackController(deps: ControllerDeps): PlaybackControll
       const policy = deps.getPolicy();
       let refs = expandRange(from, to);
       if (opts.useRepeats !== false) refs = applyRepeats(refs, policy.repeatEachAyah, policy.repeatRange);
-      return start(refs, { listen: false, cursor: null });
+      const reciter = deps.getReciter();
+      return start(reciter ? queued(reciter, refs) : refs, { listen: false, cursor: null });
     },
     async listenFrom(ref) {
       if (ayahCountOf(ref.surahId) === 0) return { started: false, reason: "invalid" };
       const clamped = { surahId: ref.surahId, ayahNumber: Math.max(1, Math.min(ayahCountOf(ref.surahId), ref.ayahNumber)) };
       const { refs, cursor } = listenWindow(clamped, LISTEN_WINDOW);
-      return start(refs, { listen: true, cursor });
+      const reciter = deps.getReciter();
+      return start(reciter ? queued(reciter, refs) : refs, { listen: true, cursor });
     },
 
     async pause() {
@@ -328,13 +341,15 @@ export function createPlaybackController(deps: ControllerDeps): PlaybackControll
     handleActiveTrackChanged(id, previous) {
       clearPauseTimer();
       const ref = id ? parseTrackId(id) : null;
+      const wasBasmalah = isBasmalahRef(status.active);
       setStatus({ active: ref });
       if (ref && listening) {
         const reciter = deps.getReciter();
-        if (reciter) deps.onListened?.(ref, reciter.id);
+        if (reciter) deps.onListened?.(placeOf(ref), reciter.id);
       }
       const factor = deps.getPolicy().pauseFactor;
-      const pauseMs = previous ? pauseBetweenRepeatsMs({ lastDurationSec: previous.durationSec, lastPositionSec: previous.positionSec, factor }) : null;
+      // No "recite it back" gap after a Bismillah: it is not an ayah to repeat.
+      const pauseMs = previous && !wasBasmalah ? pauseBetweenRepeatsMs({ lastDurationSec: previous.durationSec, lastPositionSec: previous.positionSec, factor }) : null;
       if (ref && pauseMs !== null) {
         void player.pause().then(() => {
           pauseTimer = schedule(() => {
@@ -366,10 +381,10 @@ export function createPlaybackController(deps: ControllerDeps): PlaybackControll
       const reciter = deps.getReciter();
       if (!ref || !reciter) return;
       void deps
-        .localUri(reciter, ref)
+        .localUri(reciter, audioRefOf(ref))
         .then((local) => {
           // On disk and the player still failed: a broken file or a busy device. Not on disk: a gap in the download.
-          if (!local && !sameRef(status.gap, ref)) setStatus({ gap: ref, playing: false, loading: false });
+          if (!local && !sameRef(status.gap, placeOf(ref))) setStatus({ gap: placeOf(ref), playing: false, loading: false });
         })
         .catch(() => undefined);
     },

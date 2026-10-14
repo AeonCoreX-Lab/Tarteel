@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { allAyahRefs, ayahCountOf, expandRange, globalAyahNumber, isValidRef, nextAyah, surahRefs, totalAyahCount } from "../src/refs.ts";
+import { opensWithBismillahHeading } from "@tarteel/quran-data";
+import { allAyahRefs, audioRefOf, ayahCountOf, basmalahRef, expandRange, globalAyahNumber, isBasmalahRef, isValidRef, nextAyah, sameRef, surahRefs, totalAyahCount, withBasmalah } from "../src/refs.ts";
 
 test("counts follow the Hafs 6236 numbering", () => {
   assert.equal(totalAyahCount(), 6236);
@@ -46,4 +47,39 @@ test("globalAyahNumber counts through the whole book", () => {
   assert.equal(globalAyahNumber({ surahId: 114, ayahNumber: 6 }), totalAyahCount());
   assert.equal(globalAyahNumber({ surahId: 1, ayahNumber: 8 }), null);
   assert.equal(globalAyahNumber({ surahId: 115, ayahNumber: 1 }), null);
+});
+
+const rr = (s: number, a: number) => ({ surahId: s, ayahNumber: a });
+const keys = (refs: readonly { surahId: number; ayahNumber: number }[]) => refs.map((x) => `${x.surahId}:${x.ayahNumber}`);
+
+test("the Bismillah is recited for exactly the surahs the reader shows it as a heading for", () => {
+  for (let s = 1; s <= 114; s++) assert.equal(isBasmalahRef(basmalahRef(s)), opensWithBismillahHeading(s), `surah ${s}`);
+  assert.equal(isBasmalahRef(rr(2, 1)), false, "an ayah is not a Bismillah");
+  assert.equal(isBasmalahRef(null), false);
+});
+
+test("a Bismillah plays the recording of 1:1; every other ayah plays its own", () => {
+  assert.deepEqual(audioRefOf(basmalahRef(112)), rr(1, 1));
+  assert.deepEqual(audioRefOf(rr(112, 1)), rr(112, 1));
+  assert.deepEqual(audioRefOf(basmalahRef(9)), rr(9, 0), "At-Tawbah has none, so nothing is remapped");
+  assert.equal(isValidRef(basmalahRef(112)), false, "ayah 0 is not an ayah of the surah");
+});
+
+test("withBasmalah puts it in front of a surah's first ayah, once per entry into the surah", () => {
+  assert.deepEqual(keys(withBasmalah([rr(112, 1), rr(112, 2)])), ["112:0", "112:1", "112:2"]);
+  assert.deepEqual(keys(withBasmalah([rr(112, 3), rr(112, 4)])), ["112:3", "112:4"], "mid-surah: none");
+  assert.deepEqual(keys(withBasmalah([rr(1, 7), rr(2, 1), rr(2, 2)])), ["1:7", "2:0", "2:1", "2:2"]);
+  assert.deepEqual(keys(withBasmalah([rr(1, 1), rr(1, 2)])), ["1:1", "1:2"], "al-Fatihah: ayah 1 IS the Bismillah");
+  assert.deepEqual(keys(withBasmalah([rr(8, 75), rr(9, 1), rr(9, 2)])), ["8:75", "9:1", "9:2"], "At-Tawbah has none");
+  assert.deepEqual(keys(withBasmalah([rr(112, 1), rr(112, 1), rr(112, 2)])), ["112:0", "112:1", "112:1", "112:2"], "a repeated ayah 1 does not repeat it");
+  assert.deepEqual(keys(withBasmalah([rr(112, 1), rr(112, 2), rr(112, 1), rr(112, 2)])), ["112:0", "112:1", "112:2", "112:0", "112:1", "112:2"], "a repeated pass starts with it again");
+  assert.deepEqual(keys(withBasmalah([rr(112, 1)], false)), ["112:1"], "disabled for a recording that already holds it");
+  assert.deepEqual(withBasmalah([]), []);
+});
+
+test("withBasmalah does not reuse the input array or mutate it", () => {
+  const input = [rr(112, 1)];
+  const out = withBasmalah(input);
+  assert.equal(input.length, 1);
+  assert.equal(sameRef(out[1], input[0]), true);
 });

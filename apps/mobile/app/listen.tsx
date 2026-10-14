@@ -69,7 +69,7 @@ export default function ListenScreen() {
         <View style={{ gap: 12 }}>
           <Caption color={th.onAccent}>{active ? (listening ? t("listen") : t("nowPlaying")) : last ? t("continueListening") : t("listen")}</Caption>
           <Text style={{ color: th.onAccent, fontSize: 24, fontWeight: "700", fontFamily: HEADING_FONT }}>
-            {active ? `${surahLabel(active.surahId)} · ${active.ayahNumber}` : last ? `${surahLabel(last.surahId)} · ${last.ayahNumber}` : "—"}
+            {active ? `${surahLabel(active.surahId)} · ${active.ayahNumber === 0 ? t("bismillah") : active.ayahNumber}` : last ? `${surahLabel(last.surahId)} · ${last.ayahNumber}` : "—"}
           </Text>
           <Pressable accessibilityRole="button" accessibilityLabel={t("chooseReciter")} onPress={() => router.push("/reciters")} style={{ minHeight: 44, justifyContent: "center" }}>
             <Text style={{ color: th.onAccent, fontSize: 15, fontWeight: "600" }}>{reciter?.name} ›</Text>

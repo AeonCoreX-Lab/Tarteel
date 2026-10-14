@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { applyRepeats, buildTracks, canSwapAt, listenWindow, MAX_QUEUE_TRACKS, parseTrackId, pauseBetweenRepeatsMs, prefetchTargets, trackId } from "../src/queue.ts";
-import { expandRange } from "../src/refs.ts";
+import { basmalahRef, expandRange } from "../src/refs.ts";
 import type { PlayerTrack } from "../src/types.ts";
 import { makeReciter } from "./helpers.ts";
 
@@ -106,4 +106,27 @@ test("swap only entries two or more places ahead: the next one may already be bu
   assert.equal(canSwapAt(1, 0), false);
   assert.equal(canSwapAt(2, 0), true);
   assert.equal(canSwapAt(5, null), false);
+});
+
+test("buildTracks: a Bismillah uses 1:1's URL and 1:1's local file", () => {
+  const reciter = makeReciter();
+  const asked: string[] = [];
+  const { tracks } = buildTracks({
+    refs: [basmalahRef(112), r(112, 1)],
+    reciter,
+    localUri: (ref) => { asked.push(`${ref.surahId}:${ref.ayahNumber}`); return ref.surahId === 1 ? "file:///l/1-1.mp3" : null; },
+    allowStreaming: true,
+    label,
+  });
+  assert.deepEqual(asked, ["1:1", "112:1"]);
+  assert.equal(tracks[0]?.id, "112:0:0");
+  assert.equal(tracks[0]?.url, "file:///l/1-1.mp3");
+  assert.match(tracks[1]?.url ?? "", /112001\.mp3$/);
+  assert.equal(parseTrackId(tracks[0]?.id ?? "")?.ayahNumber, 0);
+});
+
+test("buildTracks: without 1:1 on the device and with streaming off, it stops AT the Bismillah and names the surah's first ayah", () => {
+  const { tracks, blockedAt } = buildTracks({ refs: [basmalahRef(112), r(112, 1)], reciter: makeReciter(), localUri: () => null, allowStreaming: false, label });
+  assert.equal(tracks.length, 0);
+  assert.deepEqual(blockedAt, r(112, 1));
 });

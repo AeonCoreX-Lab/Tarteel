@@ -92,3 +92,9 @@ test("ayahUrl: a reciter whose files are numbered through the whole book", () =>
   assert.equal(ayahUrl(r, { surahId: 2, ayahNumber: 1 }), "https://audio.example.invalid/128/ed/8.mp3");
   assert.equal(ayahUrl(r, { surahId: 114, ayahNumber: 6 }), "https://audio.example.invalid/128/ed/6236.mp3");
 });
+
+test("bismillahInFirstAyah is optional and must be a boolean", () => {
+  assert.deepEqual(reciterProblems(makeReciter()), []);
+  assert.deepEqual(reciterProblems(makeReciter({ bismillahInFirstAyah: true })), []);
+  assert.ok(reciterProblems({ ...makeReciter(), bismillahInFirstAyah: "yes" }).some((p) => /bismillahInFirstAyah/.test(p)));
+});

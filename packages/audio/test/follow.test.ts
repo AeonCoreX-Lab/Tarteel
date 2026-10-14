@@ -19,3 +19,8 @@ test("stays put when the reader has taken over, when paused, or when it is anoth
   assert.equal(followTarget({ ...base, surahId: 3 }), null);
   assert.equal(followTarget({ ...base, active: null }), null);
 });
+
+test("the Bismillah (ayah 0) has no row to scroll to", () => {
+  assert.equal(followTarget({ ...base, active: { surahId: 2, ayahNumber: 0 }, lastScrolled: 7 }), null);
+  assert.equal(followTarget({ ...base, active: { surahId: 2, ayahNumber: 0 } }), null);
+});

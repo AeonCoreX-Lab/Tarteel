@@ -68,6 +68,12 @@ Mihrab's surah reader does three things while a recitation plays: the recited ay
 the list scrolls to it (`scrollToIndex`, 30% down the viewport), and the recited word is lit from timing data.
 Tarteel does the same, written for its own list (`apps/mobile/app/surah/[id].tsx`), with these differences:
 
+- **Bismillah**: under `hafs-6236` the Bismillah is not an ayah of surahs 2-114 (except 9), and the dataset does not carry it. The reader
+  shows it as a heading (`BismillahHeading`, rule `opensWithBismillahHeading`); the player recites it too. It is queued as ayah 0 of the
+  surah it opens (`withBasmalah` in `packages/audio/src/refs.ts`) and plays the recording of **1:1** (`audioRefOf`), so a surah always
+  starts Bismillah, then ayah 1. One per entry into a surah: not repeated with a repeated ayah 1, but again at the start of each repeated
+  pass. No "recite it back" pause after it. A surah download also fetches 1:1. Set `bismillahInFirstAyah: true` on a reciter whose ayah-1
+  files already begin with the Bismillah, so it is not played twice.
 - **Ayah highlight**: the recited row gets a brass edge and a tinted background. It stays while paused, so the reader
   can see where the recitation is.
 - **Follow-scroll** (`followTarget` in `packages/audio/src/follow.ts`): scrolls once per ayah, only while a recitation

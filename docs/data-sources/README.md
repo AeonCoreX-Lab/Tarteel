@@ -48,6 +48,10 @@ The only change to the Quran text is removing the Bismillah that Tanzil prepends
 numbering matches `hafs-6236`. Changing the downloads (other text type or options) means re-running the import and re-reading
 the importer's checks: it refuses to guess when a file does not look as expected.
 
+The reader shows that Bismillah again, as a heading above the first ayah of surahs 2-114 (except 9), using the dataset's own ayah 1:1
+(`opensWithBismillahHeading` in `@tarteel/quran-data`; `tests/bismillah.test.ts` ties the rule to what the importer strips). Al-Fatihah
+has it as verse 1, so it gets no extra heading, and At-Tawbah has none.
+
 ## Also committed: QuranEnc (Filipino / Tagalog)
 `data/translations/tl-rowwad/` (Rowwad Translation Center, via https://quranenc.com/en/browse/tagalog_rwwad) is generated the same way
 from the untouched CSV download in `data/sources/quranenc/` (hash in `SHA256SUMS`):

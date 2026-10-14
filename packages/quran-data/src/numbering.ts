@@ -32,3 +32,14 @@ export const CONVENTIONS: Readonly<Record<string, NumberingConvention>> = {
 export function totalAyahs(c: NumberingConvention): number {
   return c.ayahCounts.reduce((a, b) => a + b, 0);
 }
+
+/**
+ * Surahs that open with the Bismillah as a HEADING in the reader: 2 to 114 except 9 (At-Tawbah, which has none).
+ * Al-Fatihah is not one of them: there the Bismillah is verse 1, so it is already the first row.
+ *
+ * Under "hafs-6236" the Bismillah is not a verse of those 112 surahs, and the dataset does not carry it (the importer
+ * removes the copy Tanzil prepends to their first ayah), so the reader shows it above the first ayah, taken from 1:1.
+ */
+export function opensWithBismillahHeading(surahId: number): boolean {
+  return Number.isInteger(surahId) && surahId >= 2 && surahId <= 114 && surahId !== 9;
+}
