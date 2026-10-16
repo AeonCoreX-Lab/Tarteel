@@ -1,0 +1,10 @@
+{
+  "packId": "example-pack",
+  "packVersion": 1,
+  "languages": ["bn", "en"],
+  "title": { "en": "Synthetic example pack", "bn": "কৃত্রিম উদাহরণ প্যাক" },
+  "description": { "en": "A made-up pack used to test the tools. It contains no real religious content." },
+  "requires": [],
+  "publishedAt": "2026-10-14T00:00:00Z",
+  "changelog": "Synthetic example pack used by the build-pack tests. It contains no real religious content."
+}

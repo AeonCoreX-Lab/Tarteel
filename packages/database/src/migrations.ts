@@ -128,7 +128,209 @@ CREATE TRIGGER translation_ayahs_ad AFTER DELETE ON translation_ayahs BEGIN
 END;
 `;
 
-export const CONTENT_MIGRATIONS: readonly Migration[] = [{ id: 1, name: "content_core", sql: CONTENT_001 }];
+// Source-linked knowledge model (docs/architecture/KNOWLEDGE.md). Every historical statement is a `claim` backed by
+// `source_passage` rows; every link between entities is an `edge` that is itself a claim. Rules from the product plan
+// are enforced here, not only in the UI:
+//  - a quotation may be stored only when the edition's licence permits redistribution;
+//  - a claim/edge reaches `published` only with a supporting passage or a written editorial basis, and never while
+//    its evidence label is `unverified`;
+//  - disputed / "no established report found" claims must carry an uncertainty note.
+// Entity kinds and edge types are lookup tables so later phases add rows (not table rebuilds).
+const CONTENT_002 = `
+CREATE TABLE license (
+  id TEXT PRIMARY KEY CHECK (length(id) > 0),
+  name TEXT NOT NULL,
+  url TEXT,
+  redistribution TEXT NOT NULL CHECK (redistribution IN ('yes','no','pending')),
+  non_commercial_only INTEGER NOT NULL DEFAULT 0 CHECK (non_commercial_only IN (0,1)),
+  share_alike INTEGER NOT NULL DEFAULT 0 CHECK (share_alike IN (0,1)),
+  attribution TEXT NOT NULL,
+  terms_note TEXT,
+  inventory_ref TEXT
+);
+
+CREATE TABLE source_work (
+  id TEXT PRIMARY KEY CHECK (length(id) > 0),
+  title TEXT NOT NULL,
+  title_arabic TEXT,
+  author TEXT,
+  original_language TEXT NOT NULL,
+  work_type TEXT NOT NULL CHECK (work_type IN ('asbab','tafsir','hadith','history','biography','reference','scholarship','other')),
+  subject TEXT
+);
+
+CREATE TABLE source_edition (
+  id TEXT PRIMARY KEY CHECK (length(id) > 0),
+  work_id TEXT NOT NULL REFERENCES source_work(id),
+  edition_label TEXT NOT NULL,
+  editor TEXT,
+  publisher TEXT,
+  published TEXT,
+  identifier TEXT,
+  url TEXT,
+  license_id TEXT NOT NULL REFERENCES license(id),
+  transcription_status TEXT NOT NULL DEFAULT 'unverified' CHECK (transcription_status IN ('verified','unverified','ocr_unverified')),
+  reviewed_on TEXT
+);
+CREATE INDEX idx_source_edition_work ON source_edition(work_id);
+
+CREATE TABLE source_passage (
+  id TEXT PRIMARY KEY CHECK (length(id) > 0),
+  edition_id TEXT NOT NULL REFERENCES source_edition(id),
+  volume TEXT,
+  page TEXT,
+  chapter TEXT,
+  section TEXT,
+  report_number TEXT,
+  hadith_number TEXT,
+  quote TEXT,
+  quote_language TEXT,
+  CHECK (coalesce(volume, page, chapter, section, report_number, hadith_number) IS NOT NULL),
+  CHECK ((quote IS NULL) = (quote_language IS NULL))
+);
+CREATE INDEX idx_source_passage_edition ON source_passage(edition_id);
+
+CREATE TRIGGER source_passage_quote_ins BEFORE INSERT ON source_passage
+WHEN NEW.quote IS NOT NULL AND COALESCE((
+  SELECT l.redistribution FROM source_edition e JOIN license l ON l.id = e.license_id WHERE e.id = NEW.edition_id
+), 'no') <> 'yes'
+BEGIN SELECT RAISE(ABORT, 'quote not allowed: the edition licence does not permit redistribution'); END;
+
+CREATE TRIGGER source_passage_quote_upd BEFORE UPDATE OF quote, edition_id ON source_passage
+WHEN NEW.quote IS NOT NULL AND COALESCE((
+  SELECT l.redistribution FROM source_edition e JOIN license l ON l.id = e.license_id WHERE e.id = NEW.edition_id
+), 'no') <> 'yes'
+BEGIN SELECT RAISE(ABORT, 'quote not allowed: the edition licence does not permit redistribution'); END;
+
+CREATE TRIGGER license_withdrawn BEFORE UPDATE OF redistribution ON license
+WHEN NEW.redistribution <> 'yes' AND EXISTS (
+  SELECT 1 FROM source_passage p JOIN source_edition e ON e.id = p.edition_id
+  WHERE e.license_id = NEW.id AND p.quote IS NOT NULL
+)
+BEGIN SELECT RAISE(ABORT, 'licence cannot stop permitting redistribution while quotations from its editions are stored'); END;
+
+CREATE TABLE claim (
+  id TEXT PRIMARY KEY CHECK (length(id) > 0),
+  claim_type TEXT NOT NULL CHECK (claim_type IN ('direct_textual_report','historical_report','scholarly_interpretation','editorial_synthesis','modern_analysis')),
+  evidence_label TEXT NOT NULL DEFAULT 'unverified' CHECK (evidence_label IN ('primary_text','source_reported','scholarly_interpretation','disputed','unverified','no_established_report_found')),
+  uncertainty_note TEXT,
+  editorial_basis TEXT,
+  editorial_status TEXT NOT NULL DEFAULT 'draft' CHECK (editorial_status IN ('draft','ingested','needs_source_verification','needs_scholarly_review','needs_license_review','approved','published','needs_correction','retracted')),
+  created_by TEXT NOT NULL,
+  reviewed_by TEXT,
+  last_reviewed_at TEXT,
+  dataset_version INTEGER NOT NULL CHECK (dataset_version >= 1),
+  CHECK (evidence_label NOT IN ('disputed','no_established_report_found') OR uncertainty_note IS NOT NULL)
+);
+
+CREATE TABLE claim_text (
+  claim_id TEXT NOT NULL REFERENCES claim(id),
+  lang TEXT NOT NULL CHECK (length(lang) >= 2),
+  text TEXT NOT NULL CHECK (length(trim(text)) > 0),
+  translation_status TEXT NOT NULL DEFAULT 'original' CHECK (translation_status IN ('original','machine_draft','reviewed')),
+  PRIMARY KEY (claim_id, lang)
+) WITHOUT ROWID;
+
+CREATE TABLE claim_passage (
+  claim_id TEXT NOT NULL REFERENCES claim(id),
+  passage_id TEXT NOT NULL REFERENCES source_passage(id),
+  relation TEXT NOT NULL CHECK (relation IN ('supports','contradicts')),
+  PRIMARY KEY (claim_id, passage_id)
+) WITHOUT ROWID;
+CREATE INDEX idx_claim_passage_passage ON claim_passage(passage_id);
+
+CREATE TRIGGER claim_publish_ins BEFORE INSERT ON claim
+WHEN NEW.editorial_status = 'published'
+BEGIN SELECT RAISE(ABORT, 'insert a claim as draft or approved, link its evidence, then publish it'); END;
+
+CREATE TRIGGER claim_publish_upd BEFORE UPDATE OF editorial_status, evidence_label, editorial_basis ON claim
+WHEN NEW.editorial_status = 'published' AND (
+  NEW.evidence_label = 'unverified'
+  OR (NEW.editorial_basis IS NULL AND NOT EXISTS (
+    SELECT 1 FROM claim_passage cp WHERE cp.claim_id = NEW.id AND cp.relation = 'supports'
+  ))
+)
+BEGIN SELECT RAISE(ABORT, 'a published claim needs a supporting passage or an editorial basis, and cannot be unverified'); END;
+
+CREATE VIEW v_published_claims_without_support AS
+SELECT c.id FROM claim c
+WHERE c.editorial_status = 'published' AND c.editorial_basis IS NULL
+  AND NOT EXISTS (SELECT 1 FROM claim_passage cp WHERE cp.claim_id = c.id AND cp.relation = 'supports');
+
+CREATE TABLE entity_kind (id TEXT PRIMARY KEY);
+INSERT INTO entity_kind (id) VALUES ('surah'), ('ayah'), ('claim'), ('source_work'), ('source_edition'), ('source_passage');
+
+CREATE TABLE edge_type (
+  id TEXT PRIMARY KEY,
+  from_kind TEXT NOT NULL REFERENCES entity_kind(id),
+  to_kind TEXT NOT NULL REFERENCES entity_kind(id),
+  description TEXT NOT NULL
+);
+INSERT INTO edge_type (id, from_kind, to_kind, description) VALUES
+  ('REPORT_REFERENCES_AYAH', 'source_passage', 'ayah', 'A source passage (e.g. an occasion-of-revelation report) refers to this ayah'),
+  ('TAFSIR_EXPLAINS_AYAH', 'source_passage', 'ayah', 'A tafsir passage explains this ayah'),
+  ('CLAIM_CONCERNS_AYAH', 'claim', 'ayah', 'The claim is about this ayah'),
+  ('CLAIM_CONCERNS_SURAH', 'claim', 'surah', 'The claim is about this surah');
+
+CREATE TABLE edge (
+  id TEXT PRIMARY KEY CHECK (length(id) > 0),
+  type TEXT NOT NULL REFERENCES edge_type(id),
+  from_kind TEXT NOT NULL REFERENCES entity_kind(id),
+  from_id TEXT NOT NULL CHECK (length(from_id) > 0),
+  to_kind TEXT NOT NULL REFERENCES entity_kind(id),
+  to_id TEXT NOT NULL CHECK (length(to_id) > 0),
+  editorial_status TEXT NOT NULL DEFAULT 'draft' CHECK (editorial_status IN ('draft','ingested','needs_source_verification','needs_scholarly_review','needs_license_review','approved','published','needs_correction','retracted')),
+  uncertainty_note TEXT,
+  editorial_basis TEXT,
+  created_by TEXT NOT NULL,
+  dataset_version INTEGER NOT NULL CHECK (dataset_version >= 1),
+  UNIQUE (type, from_kind, from_id, to_kind, to_id)
+);
+CREATE INDEX idx_edge_from ON edge(from_kind, from_id, type);
+CREATE INDEX idx_edge_to ON edge(to_kind, to_id, type);
+
+CREATE TABLE edge_passage (
+  edge_id TEXT NOT NULL REFERENCES edge(id),
+  passage_id TEXT NOT NULL REFERENCES source_passage(id),
+  PRIMARY KEY (edge_id, passage_id)
+) WITHOUT ROWID;
+
+CREATE TRIGGER edge_kinds_ins BEFORE INSERT ON edge
+WHEN NOT EXISTS (SELECT 1 FROM edge_type t WHERE t.id = NEW.type AND t.from_kind = NEW.from_kind AND t.to_kind = NEW.to_kind)
+BEGIN SELECT RAISE(ABORT, 'edge endpoints do not match the edge type'); END;
+
+CREATE TRIGGER edge_kinds_upd BEFORE UPDATE OF type, from_kind, to_kind ON edge
+WHEN NOT EXISTS (SELECT 1 FROM edge_type t WHERE t.id = NEW.type AND t.from_kind = NEW.from_kind AND t.to_kind = NEW.to_kind)
+BEGIN SELECT RAISE(ABORT, 'edge endpoints do not match the edge type'); END;
+
+CREATE TRIGGER edge_publish_ins BEFORE INSERT ON edge
+WHEN NEW.editorial_status = 'published'
+BEGIN SELECT RAISE(ABORT, 'insert an edge as draft or approved, link its evidence, then publish it'); END;
+
+CREATE TRIGGER edge_publish_upd BEFORE UPDATE OF editorial_status, editorial_basis ON edge
+WHEN NEW.editorial_status = 'published' AND NEW.editorial_basis IS NULL AND NOT EXISTS (
+  SELECT 1 FROM edge_passage ep WHERE ep.edge_id = NEW.id
+)
+BEGIN SELECT RAISE(ABORT, 'a published edge needs a supporting passage or an editorial basis'); END;
+
+CREATE VIEW v_published_edges_without_support AS
+SELECT e.id FROM edge e
+WHERE e.editorial_status = 'published' AND e.editorial_basis IS NULL
+  AND NOT EXISTS (SELECT 1 FROM edge_passage ep WHERE ep.edge_id = e.id);
+
+CREATE TABLE surah_profile (
+  surah_id INTEGER PRIMARY KEY REFERENCES surahs(id),
+  revelation_order INTEGER CHECK (revelation_order BETWEEN 1 AND 114),
+  revelation_order_source TEXT,
+  CHECK ((revelation_order IS NULL) = (revelation_order_source IS NULL))
+);
+CREATE UNIQUE INDEX idx_surah_profile_order ON surah_profile(revelation_order) WHERE revelation_order IS NOT NULL;
+`;
+
+export const CONTENT_MIGRATIONS: readonly Migration[] = [
+  { id: 1, name: "content_core", sql: CONTENT_001 },
+  { id: 2, name: "content_knowledge", sql: CONTENT_002 },
+];
 
 // ------------------------------------------------------------------- USER DB
 // Private, local-only. Migrations here must ALWAYS preserve data.

@@ -26,6 +26,18 @@ These are hard rules. They come from the project spec.
 - Schema changes = a new numbered migration, never an edit to an applied one. Add a test.
 - Every new asset gets an entry in `docs/licensing/INVENTORY.md` in the same PR.
 
+## Historical knowledge (packs, claims, sources)
+- NEVER invent a claim, source, citation, locator, quotation, date, hadith grading, asbab report or scholarly agreement. A statement with no
+  real source stays a `draft` in `data/knowledge/<pack>/`; the app shows "no report" states, never a guess. Do not write or machine-translate
+  religious claims; `machine_draft` text is for human translators to review, never for release.
+- Source content enters ONLY through `data/knowledge/<pack-id>/` (format: `data/knowledge/README.md`) and must pass `npm run build:pack` (release validation).
+  Production packs contain only `published`, evidence-backed, licence-cleared claims. A licence with `redistribution` other than `yes` ships no quotation.
+- Read the real licence and terms of a source before adding it (web pages, LICENSE files), record the result in `docs/licensing/INVENTORY.md`, and
+  treat APIs, datasets, translations, scans and annotations as separate rights-bearing materials. Unclear permission = exclude and document.
+- Never commit a signing private key (`TARTEEL_PACK_SIGNING_KEY` is a GitHub Actions secret). Only the PUBLIC key is committed.
+  `apps/mobile/src/knowledge/config.json` must never hold a test or demo key (`npm run pack:demo` output is for device tests only).
+- Synthetic test fixtures must say "Synthetic" and must never look like real history. Do not present them as facts anywhere in the app.
+
 ## Upstream code (third_party/)
 - Files under `third_party/*/src` are PRISTINE copies of upstream. Never edit them by hand: `npm run upstream:verify`
   (and CI) fails on any difference. Need a change? Wrap the module in `packages/*` (or send it upstream).

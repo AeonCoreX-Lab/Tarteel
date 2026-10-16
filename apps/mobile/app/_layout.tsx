@@ -40,6 +40,9 @@ export default function RootLayout() {
         <Stack.Screen name="surah/[id]" options={{ title: "" }} />
         <Stack.Screen name="listen" options={{ title: t("listen") }} />
         <Stack.Screen name="reciters" options={{ title: t("reciters") }} />
+        <Stack.Screen name="library" options={{ title: t("libraryTitle") }} />
+        <Stack.Screen name="history/[id]" options={{ title: t("historyTitle") }} />
+        <Stack.Screen name="source" options={{ title: t("srcTitle") }} />
       </Stack>
       <AudioDock />
       </View>

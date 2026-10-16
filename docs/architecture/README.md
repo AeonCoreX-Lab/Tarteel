@@ -35,5 +35,8 @@ mobile: `react-native-mmkv`, `expo-sqlite`. web (phase 6): localStorage + SQLite
 `packages/audio` (pure TS, injected `FileStore` / `AudioHttp` / `PlayerPort`) with Expo adapters in `apps/mobile/src/audio`.
 Files live in the filesystem area, preferences in MMKV, nothing in SQLite. See [docs/audio](../audio/README.md).
 
+## Knowledge (history, context, sources)
+Source-linked claims, passages and edges live in `content.db` (migration 2). Model and enforced rules: [KNOWLEDGE.md](KNOWLEDGE.md).
+
 ## Known gaps (tracked, not hidden)
 Notes UI, Juz/Page/Hizb navigation screens, downloadable translation packs, web app, optional cloud.

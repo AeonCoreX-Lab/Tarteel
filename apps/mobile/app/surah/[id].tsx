@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import type { ViewToken } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AyahWithTranslation, Surah } from "@tarteel/types";
 import { followTarget } from "@tarteel/audio";
@@ -13,7 +13,8 @@ import { audio, RECITERS } from "../../src/audio/runtime";
 import { BismillahHeading } from "../../src/components/BismillahHeading";
 import { Icon } from "../../src/components/Icons";
 import { StarBadge } from "../../src/components/Ornaments";
-import { Caption, Segmented } from "../../src/components/ui";
+import { Button, Caption, Segmented } from "../../src/components/ui";
+import { useKnowledgeCoverage } from "../../src/knowledge/hooks";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
@@ -30,12 +31,14 @@ interface RowProps {
   translationSize: number;
   lineSpacing: number;
   th: Theme;
-  labels: { bookmark: string; bookmarked: string; ayah: string; playAyah: string };
+  labels: { bookmark: string; bookmarked: string; ayah: string; playAyah: string; context: string };
   onToggle: (a: AyahWithTranslation) => void;
   /** This ayah is being recited right now. */
   recited: boolean;
   /** Absent when the build offers no recitation. */
   onPlay?: (a: AyahWithTranslation) => void;
+  /** Present only when an installed knowledge pack has context for this ayah. */
+  onContext?: (a: AyahWithTranslation) => void;
 }
 
 const AyahRow = memo(function AyahRow(p: RowProps) {
@@ -54,6 +57,16 @@ const AyahRow = memo(function AyahRow(p: RowProps) {
           >
             <Text style={{ color: th.accentText, fontSize: 16, fontWeight: "700" }}>▶</Text>
             <Text style={{ color: th.accentText, fontSize: 13, fontWeight: "600" }}>{p.labels.playAyah}</Text>
+          </Pressable>
+        ) : null}
+        {p.onContext ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${p.labels.context}, ${p.labels.ayah} ${item.ayahNumber}`}
+            onPress={() => p.onContext?.(item)}
+            style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 8 }}
+          >
+            <Text style={{ color: th.accentText, fontSize: 13, fontWeight: "600" }}>{p.labels.context}</Text>
           </Pressable>
         ) : null}
         <Pressable
@@ -96,8 +109,12 @@ export default function SurahScreen() {
   const { repos, progress } = useApp();
   const th = useTheme();
   const t = useT();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const s = useSettings();
+  const coverage = useKnowledgeCoverage(surahId);
+  const contextAyahs = new Set(coverage?.ayahs ?? []);
+  const openContext = useCallback((a: AyahWithTranslation) => router.push(`/history/${a.surahId}?ayah=${a.ayahNumber}`), [router]);
   const [surah, setSurah] = useState<Surah | undefined>();
   const [ayahs, setAyahs] = useState<AyahWithTranslation[]>([]);
   // Ayah 1:1, shown as the heading of surahs 2-114 (except 9), whose own first ayah does not carry the Bismillah.
@@ -181,6 +198,7 @@ export default function SurahScreen() {
         </View>
       ) : null}
       <SurahAudio surahId={surahId} />
+      {coverage ? <Button label={t("historyOpen")} onPress={() => router.push(`/history/${surahId}`)} /> : null}
       <Segmented
         label={t("readerMode")}
         value={s.readerMode}
@@ -200,7 +218,7 @@ export default function SurahScreen() {
         ref={listRef}
         data={ayahs}
         keyExtractor={(a) => String(a.ayahNumber)}
-        extraData={[marks, recitedAyah]}
+        extraData={[marks, recitedAyah, coverage]}
         ListHeaderComponent={header}
         contentContainerStyle={{ width: "100%", maxWidth: 720, alignSelf: "center", paddingHorizontal: 16, paddingTop: 8, paddingBottom: insets.bottom + 32 }}
         initialNumToRender={12}
@@ -222,10 +240,11 @@ export default function SurahScreen() {
             translationSize={s.translationFontSize}
             lineSpacing={s.lineSpacing}
             th={th}
-            labels={{ bookmark: t("bookmark"), bookmarked: t("bookmarked"), ayah: t("ayah"), playAyah: t("playAyah") }}
+            labels={{ bookmark: t("bookmark"), bookmarked: t("bookmarked"), ayah: t("ayah"), playAyah: t("playAyah"), context: t("contextOpen") }}
             onToggle={toggle}
             recited={recitedAyah?.surahId === item.surahId && recitedAyah.ayahNumber === item.ayahNumber}
             onPlay={RECITERS.length > 0 ? playFrom : undefined}
+            onContext={contextAyahs.has(item.ayahNumber) ? openContext : undefined}
           />
         )}
       />

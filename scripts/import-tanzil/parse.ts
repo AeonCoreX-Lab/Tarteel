@@ -128,6 +128,23 @@ export function parseSurahs(xml: string): SurahMeta[] {
   });
 }
 
+/**
+ * The revelation order Tanzil's metadata file gives each surah (`order`, 1..114). It is Tanzil's order, stored with that
+ * source: it is not presented as the only scholarly view. Throws unless the 114 values are exactly 1..114.
+ */
+export function parseRevelationOrder(xml: string): { surah: number; order: number }[] {
+  const rows = tags(xml, "sura");
+  if (rows.length !== 114) throw new Error(`expected 114 <sura> entries, found ${rows.length}`);
+  const out = rows.map((a, i) => {
+    const ctx = `<sura #${i + 1}>`;
+    if (int(a, "index", ctx) !== i + 1) throw new Error(`${ctx}: index is not sequential`);
+    return { surah: i + 1, order: int(a, "order", ctx) };
+  });
+  const sorted = out.map((r) => r.order).sort((x, y) => x - y);
+  if (sorted.some((v, i) => v !== i + 1)) throw new Error("revelation orders are not exactly 1..114 without repeats");
+  return out;
+}
+
 export interface Marker { index: number; surah: number; ayah: number; type?: string }
 export interface Markers { juz: Marker[]; quarter: Marker[]; page: Marker[]; sajda: Marker[] }
 

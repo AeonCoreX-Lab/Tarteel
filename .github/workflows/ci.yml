@@ -60,6 +60,10 @@ jobs:
             echo "No Quran dataset yet: building the schema-only database to prove migrations + FTS5 still work."
             npm run build:db -- --out build/db --empty
           fi
+      - name: Validate the knowledge tables of the built database
+        run: npm run validate:knowledge -- build/db/quran.db
+      - name: Build knowledge packs (unsigned check with release validation)
+        run: npm run build:pack -- --quran build/db/quran.db --out build/packs
 
   mobile-types:
     # Real TypeScript check of the mobile app against the installed Expo / React Native types. Informational for now

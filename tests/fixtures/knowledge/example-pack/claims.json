@@ -1,0 +1,54 @@
+[
+  {
+    "id": "c-published-1",
+    "claimType": "historical_report",
+    "evidenceLabel": "source_reported",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "reviewedBy": "reviewer",
+    "lastReviewedAt": "2026-10-10",
+    "text": {
+      "en": { "text": "Synthetic claim one.", "status": "original" },
+      "bn": { "text": "কৃত্রিম দাবি এক।", "status": "reviewed" }
+    },
+    "supports": ["p-1"]
+  },
+  {
+    "id": "c-published-2",
+    "claimType": "editorial_synthesis",
+    "evidenceLabel": "scholarly_interpretation",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "editorialBasis": "Synthetic basis: summarises c-published-1 for the example.",
+    "text": { "en": { "text": "Synthetic claim two.", "status": "original" } }
+  },
+  {
+    "id": "c-disputed",
+    "claimType": "scholarly_interpretation",
+    "evidenceLabel": "disputed",
+    "uncertaintyNote": "Synthetic: the two passages disagree.",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "text": { "en": { "text": "Synthetic disputed claim.", "status": "original" } },
+    "supports": ["p-1"],
+    "contradicts": ["p-2"]
+  },
+  {
+    "id": "c-draft",
+    "claimType": "historical_report",
+    "evidenceLabel": "unverified",
+    "editorialStatus": "draft",
+    "createdBy": "tester",
+    "text": { "en": { "text": "Synthetic draft, not shipped.", "status": "machine_draft" } },
+    "supports": ["p-draft"]
+  },
+  {
+    "id": "c-retracted",
+    "claimType": "historical_report",
+    "evidenceLabel": "source_reported",
+    "editorialStatus": "retracted",
+    "createdBy": "tester",
+    "text": { "en": { "text": "Synthetic retracted claim, not shipped.", "status": "original" } },
+    "supports": ["p-2"]
+  }
+]

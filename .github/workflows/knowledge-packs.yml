@@ -1,0 +1,60 @@
+name: Knowledge packs
+
+# Builds, signs and publishes the knowledge packs as a GitHub Release. Run it by pushing a tag `packs-YYYY.MM.DD` or by hand.
+# It needs the repository secret TARTEEL_PACK_SIGNING_KEY (Ed25519 private key, PEM; create one with `npm run pack:keygen`).
+# NOT TESTED YET: it has not run against a real pack. Run it once by hand on a branch before relying on it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create, for example packs-2026.10.15"
+        required: true
+  push:
+    tags: ["packs-*"]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts; fi
+      - name: Check the signing key is configured
+        env:
+          TARTEEL_PACK_SIGNING_KEY: ${{ secrets.TARTEEL_PACK_SIGNING_KEY }}
+        run: |
+          if [ -z "$TARTEEL_PACK_SIGNING_KEY" ]; then echo "Secret TARTEEL_PACK_SIGNING_KEY is not set."; exit 1; fi
+      - name: Build the content database (used to check surah and ayah references)
+        run: npm run build:db -- --out build/db
+      - name: Build and sign the packs
+        env:
+          TARTEEL_PACK_SIGNING_KEY: ${{ secrets.TARTEEL_PACK_SIGNING_KEY }}
+        run: npm run build:pack -- --quran build/db/quran.db --out build/packs --base-url "https://github.com/${{ github.repository }}/releases/download/${TAG}/"
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f build/packs/catalog.json ]; then echo "No signed packs were built."; exit 1; fi
+          gh release create "$TAG" build/packs/*.db build/packs/*.manifest.json build/packs/catalog.json \
+            --title "Knowledge packs $TAG" \
+            --notes "Signed knowledge packs. The app verifies the signature, checksum and every licence before installing."
+          # The app asks ONE fixed address for the catalogue: the asset `catalog.json` of the release tagged `catalog-latest`.
+          # Its tag must not match `packs-*`, or creating it would start this workflow again. The catalogue inside lists the
+          # absolute download addresses of the packs in the tagged release above.
+          if gh release view catalog-latest >/dev/null 2>&1; then
+            gh release upload catalog-latest build/packs/catalog.json --clobber
+          else
+            gh release create catalog-latest build/packs/catalog.json \
+              --title "Knowledge pack catalogue" --latest=false \
+              --notes "The current pack catalogue. Updated automatically by the Knowledge packs workflow. Do not edit."
+          fi
+          echo "Catalogue address for apps/mobile/src/knowledge/config.json:"
+          echo "https://github.com/${{ github.repository }}/releases/download/catalog-latest/catalog.json"

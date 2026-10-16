@@ -1,0 +1,28 @@
+[
+  {
+    "id": "e-1",
+    "type": "REPORT_REFERENCES_AYAH",
+    "fromKind": "source_passage", "fromId": "p-1",
+    "toKind": "ayah", "toId": "1:1",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "passages": ["p-1"]
+  },
+  {
+    "id": "e-2",
+    "type": "CLAIM_CONCERNS_SURAH",
+    "fromKind": "claim", "fromId": "c-published-1",
+    "toKind": "surah", "toId": "1",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "editorialBasis": "Synthetic basis for the example edge."
+  },
+  {
+    "id": "e-draft",
+    "type": "CLAIM_CONCERNS_AYAH",
+    "fromKind": "claim", "fromId": "c-draft",
+    "toKind": "ayah", "toId": "1:2",
+    "editorialStatus": "draft",
+    "createdBy": "tester"
+  }
+]

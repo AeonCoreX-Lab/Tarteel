@@ -1,0 +1,19 @@
+[
+  {
+    "id": "lic-open",
+    "name": "Synthetic open licence",
+    "url": "https://example.invalid/licence",
+    "redistribution": "yes",
+    "nonCommercialOnly": true,
+    "shareAlike": false,
+    "attribution": "Synthetic attribution line",
+    "termsNote": "Made up for tests.",
+    "inventoryRef": "none (synthetic)"
+  },
+  {
+    "id": "lic-pending",
+    "name": "Synthetic licence whose decision is pending",
+    "redistribution": "pending",
+    "attribution": "n/a"
+  }
+]

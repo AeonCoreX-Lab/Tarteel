@@ -34,6 +34,14 @@ async function openContent(): Promise<SqlDriver> {
 }
 
 let ready: Promise<Repositories> | null = null;
+let drivers: { content: SqlDriver; user: SqlDriver } | null = null;
+
+/** The two open databases, for code that needs the SQL drivers themselves (knowledge packs) rather than the repositories. */
+export async function getDatabases(): Promise<{ content: SqlDriver; user: SqlDriver }> {
+  await initDatabases();
+  if (!drivers) throw new Error("Databases are not open.");
+  return drivers;
+}
 
 export function initDatabases(): Promise<Repositories> {
   ready ??= (async () => {
@@ -44,6 +52,7 @@ export function initDatabases(): Promise<Repositories> {
     // Content schema is created at build time; verify the app understands it.
     const schema = await content.get<{ value: string }>("SELECT value FROM content_meta WHERE key = 'schema_version'");
     if (Number(schema?.value) > CONTENT_MIGRATIONS.length) throw new Error("Content database is newer than this app supports.");
+    drivers = { content, user };
     return createRepositories(content, user);
   })();
   return ready;

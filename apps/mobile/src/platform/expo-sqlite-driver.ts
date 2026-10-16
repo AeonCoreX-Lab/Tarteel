@@ -23,3 +23,14 @@ export function wrapExpoDb(db: SQLite.SQLiteDatabase): SqlDriver {
 export async function openExpoDb(name: string): Promise<SqlDriver> {
   return wrapExpoDb(await SQLite.openDatabaseAsync(name));
 }
+
+/**
+ * Opens a database file that is NOT in the default SQLite directory (knowledge packs live in the app's documents
+ * directory). Takes the `file://` address a FileStore gives out and splits it into the directory and file name that
+ * expo-sqlite wants.
+ */
+export async function openExpoDbAtUri(fileUri: string): Promise<SqlDriver> {
+  const path = decodeURI(fileUri.replace(/^file:\/\//, ""));
+  const slash = path.lastIndexOf("/");
+  return wrapExpoDb(await SQLite.openDatabaseAsync(path.slice(slash + 1), undefined, path.slice(0, slash)));
+}

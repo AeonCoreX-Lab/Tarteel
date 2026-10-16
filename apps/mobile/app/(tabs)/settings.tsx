@@ -9,6 +9,7 @@ import { BRAND } from "../../src/brand";
 import { Button, Caption, Card, Heading, Row, ScreenScroll, Segmented } from "../../src/components/ui";
 import { LocationError, deviceRegion, detectLocation } from "../../src/platform/location";
 import { RECITERS, selectedReciter } from "../../src/audio/runtime";
+import { knowledgeConfigured } from "../../src/knowledge/runtime";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
@@ -165,6 +166,13 @@ export default function SettingsTab() {
         <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("recitationPrivacy")}</Text>
         <Row><Button label={t("reciters")} onPress={() => router.push("/reciters")} /></Row>
       </Group>
+
+      {knowledgeConfigured ? (
+        <Group title={t("libraryTitle")}>
+          <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("libraryIntro")}</Text>
+          <Row><Button label={t("libraryTitle")} onPress={() => router.push("/library")} /></Row>
+        </Group>
+      ) : null}
 
       <Group title={t("privacy")}>
         <Text style={{ color: th.text, fontSize: 15, lineHeight: 22 }}>{t("privacyNote")}</Text>

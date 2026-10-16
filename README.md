@@ -19,6 +19,8 @@ UI (Expo Router)  ->  Zustand (UI state)  ->  repositories  ->  storage abstract
 `SQLite = structured data` · `MMKV = small preferences` · `Filesystem = large binaries`.
 Details and the reasons for two SQLite files: [docs/architecture](docs/architecture/README.md).
 
+Historical knowledge (optional, signed offline packs): [docs/architecture/KNOWLEDGE.md](docs/architecture/KNOWLEDGE.md) · status against the plan: [KNOWLEDGE-SPEC-STATUS](docs/roadmap/KNOWLEDGE-SPEC-STATUS.md) · authoring format: [data/knowledge](data/knowledge/README.md) · device tests: [checklist](docs/testing/KNOWLEDGE-DEVICE-CHECKLIST.md)
+
 Brand: [BRAND](docs/design/BRAND.md) · UI kit: [UI-KIT](docs/design/UI-KIT.md) · Roadmap: [Mihrab feature parity](docs/roadmap/FEATURE-PARITY.md) · Design: [direction](docs/design/DESIGN-DIRECTION.md)
 
 ## Layout

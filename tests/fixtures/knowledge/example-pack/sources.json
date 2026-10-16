@@ -1,0 +1,14 @@
+{
+  "works": [
+    { "id": "work-1", "title": "Synthetic Work One", "originalLanguage": "ar", "workType": "tafsir", "author": "Synthetic Author" }
+  ],
+  "editions": [
+    { "id": "ed-1", "workId": "work-1", "editionLabel": "Synthetic edition", "licenseId": "lic-open", "transcriptionStatus": "verified", "reviewedOn": "2026-10-01" },
+    { "id": "ed-pending", "workId": "work-1", "editionLabel": "Edition whose licence is pending", "licenseId": "lic-pending" }
+  ],
+  "passages": [
+    { "id": "p-1", "editionId": "ed-1", "volume": "1", "page": "10", "quote": "synthetic quotation", "quoteLanguage": "en" },
+    { "id": "p-2", "editionId": "ed-1", "page": "11" },
+    { "id": "p-draft", "editionId": "ed-pending", "page": "5" }
+  ]
+}

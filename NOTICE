@@ -38,3 +38,9 @@ Attribution 3.0 under Tanzil's terms: verbatim copies only, source credited with
 tanzil.net) and Quran translations by Muhiuddin Khan (Bengali) and Saheeh International (English),
 which Tanzil provides for non-commercial use. See data/*/**/COPYRIGHT-TANZIL.txt and
 docs/licensing/INVENTORY.md.
+
+KNOWLEDGE PACKS AND THEIR DATA
+------------------------------
+The AGPL applies to Tarteel's code. Downloadable knowledge packs carry their own data licences and credit lines: each pack's manifest
+lists every licence it uses, and the app shows the credit in Library and Source Detail. The rights decision for every source is recorded in
+docs/licensing/INVENTORY.md. No pack is published with a source whose redistribution is undecided.

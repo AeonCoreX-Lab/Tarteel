@@ -27,6 +27,19 @@ export class QuranRepository {
     return (await this.getSurahs()).find((s) => s.id === id);
   }
 
+  /** Revelation order of a surah, with where it comes from. Undefined when this content database has no profile for it. */
+  async getSurahProfile(surahId: number): Promise<{ revelationOrder: number; source: string } | undefined> {
+    try {
+      const r = await this.db.get<{ revelation_order: number | null; source: string | null }>(
+        "SELECT revelation_order AS revelation_order, revelation_order_source AS source FROM surah_profile WHERE surah_id = ?",
+        [surahId],
+      );
+      return r && r.revelation_order !== null && r.source !== null ? { revelationOrder: r.revelation_order, source: r.source } : undefined;
+    } catch {
+      return undefined; // a content database built before the profile table existed
+    }
+  }
+
   /** Ayahs of a surah, optionally joined with one translation dataset. */
   getSurahAyahs(surahId: number, translationId: string | null = null): Promise<AyahWithTranslation[]> {
     return this.db.all<AyahWithTranslation>(
