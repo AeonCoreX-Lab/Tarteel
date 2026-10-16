@@ -76,7 +76,8 @@ async function world(): Promise<World> {
 }
 
 const json = (v: unknown): { status: number; bytes: Uint8Array } => ({ status: 200, bytes: new TextEncoder().encode(JSON.stringify(v)) });
-const catalogOf = (...packs: { manifest: PackManifest; url: string }[]): unknown => ({ schema: 1, packs });
+// `manifest` is `unknown` on purpose: the tests feed it malformed entries, and the parser must cope with anything a catalogue file holds.
+const catalogOf = (...packs: { manifest: unknown; url: string }[]): unknown => ({ schema: 1, packs });
 const dbUrl = (v: number): string => `https://packs.example.invalid/example-pack.v${v}.db`;
 
 test("the manifest carries the optional title and description, and rejects malformed ones", async () => {

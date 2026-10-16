@@ -14,3 +14,4 @@ build/
 # Ignore Android & IDE trashed temporary files
 **/*.trashed-*
 
+private.pem

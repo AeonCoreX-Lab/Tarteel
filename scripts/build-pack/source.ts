@@ -379,3 +379,12 @@ function crossCheck(s: PackSource, r: Reader): void {
   }
   for (const dep of s.meta.requires) if (dep.packId === s.meta.packId) r.err("source-field", "pack.json: a pack cannot require itself");
 }
+
+/**
+ * A directory starting with "." or "_" under data/knowledge/ is not a pack. `_incoming/` holds raw third-party material
+ * waiting to be turned into a pack (with its own LICENSE.md), and it must never be built or shipped as it is. A pack named
+ * on the command line is always built, whatever its directory is called.
+ */
+export function isStagingDir(name: string): boolean {
+  return name.startsWith(".") || name.startsWith("_");
+}

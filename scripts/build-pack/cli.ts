@@ -7,7 +7,7 @@ import { openNodeSqlite } from "../lib/node-sqlite-driver.ts";
 import { printIssues } from "../lib/dataset-loader.ts";
 import { signManifest } from "../lib/pack-tools.ts";
 import { buildPackDatabase, makePackManifest } from "./build.ts";
-import { loadPackSource } from "./source.ts";
+import { isStagingDir, loadPackSource } from "./source.ts";
 
 // Usage: npm run build:pack -- [<pack-id> ...] [--out build/packs] [--quran <content.db>] [--base-url <https://.../>] [--root data/knowledge]
 //
@@ -41,7 +41,7 @@ if (baseUrl && !baseUrl.startsWith("https://")) {
 const dirs: string[] = [];
 if (named.length > 0) for (const id of named) dirs.push(join(ROOT, id));
 else if (existsSync(ROOT))
-  for (const e of (await readdir(ROOT)).sort()) if (!e.startsWith(".") && (await stat(join(ROOT, e))).isDirectory()) dirs.push(join(ROOT, e));
+  for (const e of (await readdir(ROOT)).sort()) if (!isStagingDir(e) && (await stat(join(ROOT, e))).isDirectory()) dirs.push(join(ROOT, e));
 if (dirs.length === 0) {
   console.log(`No knowledge packs in ${ROOT}/ yet. Nothing to build.`);
   process.exit(0);

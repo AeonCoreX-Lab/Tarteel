@@ -4,6 +4,9 @@ One directory per pack: `data/knowledge/<pack-id>/`. Everything in it is plain J
 `npm run build:pack` turns it into a signed SQLite file (see `docs/architecture/KNOWLEDGE.md`). Nothing here is Quran text:
 claims are *about* the Quran and cite *sources*. Never copy a source's text unless its licence row says `redistribution: "yes"`.
 
+Directories whose name starts with `_` or `.` are **not packs** and are skipped by `build:pack`. `data/knowledge/_incoming/` is the
+staging area for raw third-party material (keep its `LICENSE.md` next to it) until someone turns it into a real pack directory.
+
 A complete synthetic example (no real religious content) is in `tests/fixtures/knowledge/example-pack/`.
 
 ## Files
