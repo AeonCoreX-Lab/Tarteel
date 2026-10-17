@@ -318,7 +318,6 @@ async function prepareDatabase(ports: PackPorts, manifest: PackManifest, part: s
   } catch (e) {
     throw new PackError("schema-error", `the file cannot be opened as a database: ${e instanceof Error ? e.message : String(e)}`);
   }
-  let failed = false;
   try {
     throwIfCancelled(signal);
     let built: number | null | undefined;
@@ -345,14 +344,19 @@ async function prepareDatabase(ports: PackPorts, manifest: PackManifest, part: s
     const errors = issues.filter((i) => i.severity === "error");
     if (errors.length > 0) throw new PackError("validation-failed", errors.map((i) => `[${i.code}] ${i.message}`).join("; "), issues);
   } catch (e) {
-    failed = true;
-    throw e;
-  } finally {
+    // Validation failed: release the file, but the validation error is the one worth reporting, so a close error is dropped.
     try {
       await db.close();
-    } catch (e) {
-      if (!failed) throw new PackError("storage-error", `the validated file could not be released: ${e instanceof Error ? e.message : String(e)}`);
+    } catch {
+      /* intentionally ignored */
     }
+    throw e;
+  }
+  // Validation succeeded: a file that cannot be released is an error, nothing may be installed from a file that is still open.
+  try {
+    await db.close();
+  } catch (e) {
+    throw new PackError("storage-error", `the validated file could not be released: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 
