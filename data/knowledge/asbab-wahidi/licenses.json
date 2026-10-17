@@ -1,0 +1,13 @@
+[
+  {
+    "id": "quranpedia-dump",
+    "name": "Quranpedia.net data licence (dump 2026-10-15)",
+    "url": "https://quranpedia.net/dumps/LICENSE.md",
+    "redistribution": "yes",
+    "nonCommercialOnly": false,
+    "shareAlike": false,
+    "attribution": "الموسوعة القرآنية quranpedia.net, https://quranpedia.net, dump version 2026-10-15",
+    "termsNote": "Republishing the data as a downloadable dataset needs credit to Quranpedia.net with a link and the dump version (stated here and in PROVENANCE.md). The classical text is heritage nobody claims; the digitisation is Quranpedia's. Covers this book only: other books in the dump carry their authors' and publishers' rights, and the dump's word-morphology (GPL) and i'rab (MIT) fields have their own licences and are not used. Commercial use is not addressed by the terms; Tarteel is non-commercial. Source file asbab-book-2919.json.gz built 2026-08-10T20:36:19+00:00. Not confirmed with Quranpedia in writing.",
+    "inventoryRef": "docs/licensing/INVENTORY.md: Quranpedia dumps (book 2919)"
+  }
+]

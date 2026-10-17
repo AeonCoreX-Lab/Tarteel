@@ -1,0 +1,17 @@
+{
+  "packId": "asbab-wahidi",
+  "packVersion": 1,
+  "languages": [
+    "ar"
+  ],
+  "title": {
+    "en": "Occasions of revelation: al-Wahidi (source passages)",
+    "ar": "أسباب نزول القرآن - الواحدي"
+  },
+  "description": {
+    "en": "The reports of al-Wahidi's Asbab al-Nuzul, each linked to the ayahs Quranpedia.net lists it under. Source passages only: no explanation is added. Text from Quranpedia.net (dump 2026-10-15), links imported as listed there and not yet reviewed by Tarteel editors."
+  },
+  "requires": [],
+  "publishedAt": "2026-10-15T03:32:26+00:00",
+  "changelog": "First version: 447 passages of book 2919 linked to 564 ayah references, imported unchanged from the Quranpedia.net dump 2026-10-15. No claims."
+}

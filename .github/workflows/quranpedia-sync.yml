@@ -1,0 +1,97 @@
+name: Quranpedia sync
+
+# Keeps the raw Quranpedia files in data/knowledge/_incoming/quranpedia/ and the pack data/knowledge/asbab-wahidi/ current.
+# Every week (or by hand) it asks Quranpedia's official dump whether the book changed. If it did, it downloads the new files
+# (3 small requests, checksum-verified), re-runs the importer, checks the pack, and opens ONE pull request for a person to review.
+# It never publishes anything: the signed release is still made by the "Knowledge packs" workflow after the pull request is merged.
+#
+# One-time setting needed: Settings -> Actions -> General -> Workflow permissions -> tick "Allow GitHub Actions to create and
+# approve pull requests". Pull requests opened with the built-in token do not start the CI workflow, so this job runs the
+# important checks itself; close and reopen the pull request if you also want the full CI on it.
+# NOT TESTED YET against the live site: run it once by hand (Actions -> Quranpedia sync -> Run workflow) and read the log.
+
+on:
+  schedule:
+    - cron: "23 3 * * 1" # Mondays 03:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: quranpedia-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      QURANPEDIA_USER_AGENT: "Tarteel-dump-sync (+https://github.com/${{ github.repository }}; 3 small files per run)"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts; fi
+
+      - name: Fetch the official dump files if they changed
+        id: sync
+        run: npm run sync:quranpedia
+
+      - name: Convert into the pack
+        if: steps.sync.outputs.changed == 'true'
+        run: npm run import:quranpedia
+
+      - name: Anything to review?
+        id: diff
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git add -A data/knowledge
+          if git diff --cached --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+          git diff --cached --stat | tail -8
+
+      - name: Check the pack before asking for review
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          node --no-warnings --import ./scripts/lib/register-extless.mjs --test scripts/import-quranpedia/*.test.ts
+          npm run build:db -- --out build/db
+          npm run build:pack -- --quran build/db/quran.db --out build/packs
+
+      - name: Open or update the pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FROM: ${{ steps.sync.outputs.from }}
+          TO: ${{ steps.sync.outputs.to }}
+          LICENSE_CHANGED: ${{ steps.sync.outputs.license_changed }}
+        run: |
+          BRANCH=quranpedia-sync
+          PACKV=$(node -p "require('./data/knowledge/asbab-wahidi/pack.json').packVersion")
+          {
+            echo "Automatic update from Quranpedia.net's official dump: \`${FROM:-none}\` to \`${TO}\`."
+            echo
+            if [ "$LICENSE_CHANGED" = "true" ]; then
+              echo "## READ FIRST: the licence text changed"
+              echo "\`data/knowledge/_incoming/quranpedia/LICENSE.md\` is different from the one we agreed to. Read the diff and update \`docs/licensing/INVENTORY.md\` before merging, or close this pull request."
+              echo
+            fi
+            echo "Pack \`asbab-wahidi\` is now at version ${PACKV}. If the version did not change, only the raw files moved and the pack is identical."
+            echo
+            echo "## Before merging"
+            echo "- [ ] Look at the diff of \`data/knowledge/asbab-wahidi/\` (passages that were corrected or added, links that appeared or went)."
+            echo "- [ ] The importer's own checks and a release-mode \`build:pack\` passed in this job (see the log). The full CI did not run on this branch."
+            echo "- [ ] After merging: run the **Knowledge packs** workflow with a new \`packs-YYYY.MM.DD\` tag to sign and publish."
+            echo
+            echo "Nothing here was written by a person: text and links are exactly what Quranpedia lists. No claims are created."
+          } > pr-body.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git commit -m "Quranpedia dump ${TO}: update raw files and asbab-wahidi pack"
+          git push --force origin "$BRANCH"
+          if gh pr view "$BRANCH" --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$BRANCH" --title "Quranpedia dump ${TO}" --body-file pr-body.md
+          else
+            gh pr create --head "$BRANCH" --base "${{ github.event.repository.default_branch }}" --title "Quranpedia dump ${TO}" --body-file pr-body.md
+          fi

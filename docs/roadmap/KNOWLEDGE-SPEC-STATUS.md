@@ -31,7 +31,7 @@ Legend: **Done** (implemented and tested) · **Partial** · **Not started** · *
 ## Source by source
 | Source | Decision | Evidence |
 |---|---|---|
-| Quranpedia, Wahidi *Asbab Nuzul al-Quran* (book 2919) | Usable with credit (Quranpedia.net, link, dump version). Not yet confirmed in writing; raw file schema unseen | INVENTORY |
+| Quranpedia, Wahidi *Asbab Nuzul al-Quran* (book 2919) | Usable with credit (Quranpedia.net, link, dump version). Not yet confirmed in writing. Raw file read; imported as pack `asbab-wahidi` by `npm run import:quranpedia` | INVENTORY |
 | Quranpedia, other books (modern compilations, translations) | Not cleared: author or publisher copyright | INVENTORY |
 | Quran Foundation (Quran.com) API | Rejected for packs: no redistribution, no bundled database | INVENTORY |
 | fawazahmed0 hadith-api | Rejected for hadith text: the Unlicense covers the repository, not the scraped sources, which state no terms | INVENTORY |
@@ -41,7 +41,7 @@ Legend: **Done** (implemented and tested) · **Partial** · **Not started** · *
 | OpenITI, narrator datasets, Wikidata | Not decided | INVENTORY / this file |
 
 ## Remaining blockers
-1. **Real content.** The Wahidi asbab importer needs the real file layout. The sandbox cannot reach quranpedia.net and the fetch tool cannot read `.json.gz`, so it needs `manifest.json`, `asbab.json.gz`, `asbab-book-2919.json.gz`, `surahs.json.gz` and `LICENSE.md` supplied (about 0.5 MB). Claims must still be written and reviewed by people: nothing may be machine-written religious content.
+1. **Real content.** Done for the passages: `npm run import:quranpedia` builds pack `asbab-wahidi` (source passages and ayah links only). Still open: people-written claims. (Earlier note: the Wahidi asbab importer needed the real file layout.) The sandbox cannot reach quranpedia.net and the fetch tool cannot read `.json.gz`, so it needs `manifest.json`, `asbab.json.gz`, `asbab-book-2919.json.gz`, `surahs.json.gz` and `LICENSE.md` supplied (about 0.5 MB). Claims must still be written and reviewed by people: nothing may be machine-written religious content.
 2. **Toolchain.** typecheck, lint and the Android build must run in CI, and the `@noble` lockfile entries must be committed.
 3. **Device.** `docs/testing/KNOWLEDGE-DEVICE-CHECKLIST.md` has not been run.
 4. **Publisher key and catalogue address.** Not generated, so the feature is correctly hidden in every build.
