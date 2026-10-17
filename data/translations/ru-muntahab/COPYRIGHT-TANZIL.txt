@@ -1,0 +1,11 @@
+# --------------------------------------------------------------------
+#
+#  Quran Translation
+#  Name: Аль-Мунтахаб
+#  Translator: Ministry of Awqaf, Egypt
+#  Language: Russian
+#  ID: ru.muntahab
+#  Last Update: May 29, 2011
+#  Source: Tanzil.net
+#
+# --------------------------------------------------------------------

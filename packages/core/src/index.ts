@@ -126,3 +126,4 @@ export class ReadingProgress {
   }
 }
 export * from "./setup.ts";
+export * from "./translations.ts";

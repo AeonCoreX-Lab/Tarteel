@@ -1,6 +1,4 @@
 {
-  "catalogUrl": "https://github.com/AeonCoreX-Lab/Tarteel/releases/download/catalog-latest/catalog.json",
-  "publisherKeys": [
-    "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAxzYZtc2C2Qb37eQ2pxgl+2wOtvjkcpCaqLlETSla6j8=\n-----END PUBLIC KEY-----\n"
-  ]
+  "catalogUrl": "",
+  "publisherKeys": []
 }

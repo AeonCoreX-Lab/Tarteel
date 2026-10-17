@@ -8,6 +8,7 @@ import type { SetupStepId } from "@tarteel/core";
 import { METHODS, previewAsrBySchool, resolveMethod, validateCoordinates } from "@tarteel/prayer";
 import { LocationError, deviceRegion, detectLocation } from "../src/platform/location";
 import { suggestedUiLanguage } from "../src/platform/locale";
+import { TranslationPicker } from "../src/components/TranslationPicker";
 import { WelcomeCarousel } from "../src/components/WelcomeCarousel";
 import { calculateTimes } from "../src/platform/prayer-adapter";
 import { to12h } from "../src/prayer/format";
@@ -162,12 +163,11 @@ export default function Setup() {
       <>
         <Text accessibilityRole="header" style={h1}>{t("translationTitle")}</Text>
         <Text style={body}>{t("translationBody")}</Text>
-        <Row>
-          <Button label={t("none")} selected={s.selectedTranslationId === null} onPress={() => { s.set("selectedTranslationId", null); s.set("readerMode", "arabic"); }} />
-          {translations.map((tr) => (
-            <Button key={tr.id} label={`${tr.languageName} · ${tr.translator}`} selected={s.selectedTranslationId === tr.id} onPress={() => { s.set("selectedTranslationId", tr.id); s.set("readerMode", "both"); }} />
-          ))}
-        </Row>
+        <TranslationPicker
+          translations={translations}
+          selectedId={s.selectedTranslationId}
+          onSelect={(id) => { s.set("selectedTranslationId", id); s.set("readerMode", id === null ? "arabic" : "both"); }}
+        />
       </>
     );
   } else {

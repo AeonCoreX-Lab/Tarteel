@@ -1,0 +1,27 @@
+{
+  "id": "ru-muntahab",
+  "kind": "translation",
+  "version": "2011-05-29",
+  "language": "ru",
+  "languageName": "Russian",
+  "direction": "ltr",
+  "translator": "Ministry of Awqaf, Egypt",
+  "source": {
+    "name": "Tanzil Project: Quran translations, ru.muntahab",
+    "url": "https://tanzil.net/trans/"
+  },
+  "license": {
+    "name": "Tanzil translation terms: non-commercial use; otherwise permission from the translator or publisher is required",
+    "url": "https://tanzil.net/trans/"
+  },
+  "copyright": "Ministry of Awqaf, Egypt (translator); text as compiled by the Tanzil Project. Rights remain with the translator and publisher.",
+  "attribution": "Russian translation by Аль-Мунтахаб (Министерство вакфов Египта), via the Tanzil Project, https://tanzil.net/trans/ (last update May 29, 2011)",
+  "numberingConvention": "hafs-6236",
+  "redistributionPermitted": true,
+  "importedAt": "2026-10-17",
+  "files": {
+    "ayahs.json": "019b6a7cbb00a17c26612a42002f0892de4122c3f7811e5274405b1269de16c8",
+    "COPYRIGHT-TANZIL.txt": "cdfd9bb662984d2e3aac0a877477fe8bb94447e3c820c58055f95d1d5ca461a0",
+    "PROVENANCE.md": "80250f760854083ec00893f98ec8c1d12a84189e9c905e55df3b9f988598309d"
+  }
+}

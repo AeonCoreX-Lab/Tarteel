@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import { LIMITS, clamp } from "@tarteel/core";
 import { METHODS, resolveMethod, validateCoordinates } from "@tarteel/prayer";
 import { BRAND } from "../../src/brand";
+import { TranslationPicker } from "../../src/components/TranslationPicker";
 import { Button, Caption, Card, Heading, Row, ScreenScroll, Segmented } from "../../src/components/ui";
 import { LocationError, deviceRegion, detectLocation } from "../../src/platform/location";
 import { RECITERS, selectedReciter } from "../../src/audio/runtime";
@@ -104,12 +105,7 @@ export default function SettingsTab() {
           options={[{ value: "arabic", label: t("arabicOnly") }, { value: "translation", label: t("translationOnly") }, { value: "both", label: t("both") }]}
         />
         <Text style={{ color: th.text, fontWeight: "600" }}>{t("translation")}</Text>
-        <Row>
-          <Button label={t("none")} selected={s.selectedTranslationId === null} onPress={() => s.set("selectedTranslationId", null)} />
-        {translations.map((tr) => (
-          <Button key={tr.id} label={`${tr.languageName} · ${tr.translator}`} selected={s.selectedTranslationId === tr.id} onPress={() => s.set("selectedTranslationId", tr.id)} />
-        ))}
-        </Row>
+        <TranslationPicker translations={translations} selectedId={s.selectedTranslationId} onSelect={(id) => s.set("selectedTranslationId", id)} />
         <Stepper label={t("arabicSize")} value={s.arabicFontSize} step={2} {...LIMITS.arabicFontSize} onChange={(n) => s.set("arabicFontSize", n)} />
         <Stepper label={t("translationSize")} value={s.translationFontSize} step={1} {...LIMITS.translationFontSize} onChange={(n) => s.set("translationFontSize", n)} />
         <Stepper label={t("lineSpacing")} value={s.lineSpacing} step={0.1} {...LIMITS.lineSpacing} format={(n) => n.toFixed(1)} onChange={(n) => s.set("lineSpacing", n)} />

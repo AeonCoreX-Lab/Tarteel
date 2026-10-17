@@ -29,6 +29,45 @@ export interface SqlDriver {
 }
 
 /**
+ * Wraps the raw operations of a native database so that closing it is always safe:
+ *  - an operation that has started is allowed to finish before the native close runs (the native layer does not wait for
+ *    running queries, and closing under a running query can free memory the query is still using);
+ *  - an operation that starts after `close()` was called is refused with an ordinary error, never sent to a closed handle;
+ *  - `close()` is idempotent: every call returns the same promise, so the native close runs at most once.
+ * A native close that fails is reported to every caller of `close()`, and the handle then counts as closed.
+ */
+export function createGuardedDriver(raw: Omit<SqlDriver, "transaction">): SqlDriver {
+  let inFlight = 0;
+  let closing: Promise<void> | null = null;
+  let idle: (() => void) | null = null;
+  const track = async <T>(op: () => Promise<T>): Promise<T> => {
+    if (closing) throw new Error("the database is closed");
+    inFlight++;
+    try {
+      return await op();
+    } finally {
+      inFlight--;
+      if (inFlight === 0) idle?.();
+    }
+  };
+  const exec = (sql: string): Promise<void> => track(() => raw.exec(sql));
+  return {
+    exec,
+    run: (sql, params) => track(() => raw.run(sql, params)),
+    all: <T>(sql: string, params?: readonly SqlValue[]) => track(() => raw.all<T>(sql, params)),
+    get: <T>(sql: string, params?: readonly SqlValue[]) => track(() => raw.get<T>(sql, params)),
+    transaction: createTransactionRunner(exec),
+    close(): Promise<void> {
+      closing ??= (async () => {
+        if (inFlight > 0) await new Promise<void>((resolve) => (idle = resolve));
+        await raw.close();
+      })();
+      return closing;
+    },
+  };
+}
+
+/**
  * Shared transaction helper so every adapter behaves identically.
  * Adapters supply a depth counter and raw exec.
  */

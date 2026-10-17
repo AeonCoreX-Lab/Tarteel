@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { HAFS_6236 } from "@tarteel/quran-data";
 import type { AyahMetaRecord, AyahRecord } from "@tarteel/types";
 import { loadAndValidate } from "../lib/dataset-loader.ts";
-import { SOURCE_DIR, SOURCE_FILES, buildAll } from "./build.ts";
+import { SOURCE_DIR, SOURCE_FILES, TRANSLATIONS, buildAll } from "./build.ts";
 import { buildAyahMeta, commentBlock, isoFromTanzilDate, parseMarkers, parseSurahs, parseVerseLines, stripPrefixedBismillah } from "./parse.ts";
 
 // ---- unit tests: synthetic placeholder text, NOT Quran content ----
@@ -62,7 +62,9 @@ const haveSources = existsSync(join(ROOT, SOURCE_DIR, SOURCE_FILES.quran));
 const src = (name: string): Promise<string> => readFile(join(ROOT, SOURCE_DIR, name), "utf8");
 
 test("committed datasets are exactly what the importer produces from data/sources/tanzil", { skip: !haveSources }, async () => {
-  const built = buildAll({ quran: await src(SOURCE_FILES.quran), metadata: await src(SOURCE_FILES.metadata), bn: await src(SOURCE_FILES.bn), en: await src(SOURCE_FILES.en) });
+  const translations: Record<string, string> = {};
+  for (const t of TRANSLATIONS) translations[t.file] = await src(t.file);
+  const built = buildAll({ quran: await src(SOURCE_FILES.quran), metadata: await src(SOURCE_FILES.metadata), translations });
   for (const [rel, expected] of built.files) assert.equal(await readFile(join(ROOT, rel), "utf8"), expected, `${rel} differs from the importer's output (run: npm run import:tanzil)`);
   assert.equal(built.report.ayahs, 6236);
   assert.equal(built.report.stripped.length, 112);
@@ -83,8 +85,13 @@ test("Quran text is the Tanzil text, verse for verse, minus only the prepended B
 });
 
 test("every committed dataset passes the project's own validation (hashes, numbering, manifest)", { skip: !haveSources }, async () => {
-  for (const [dir, kind] of [["quran/tanzil-uthmani", "quran"], ["translations/bn-muhiuddin-khan", "translation"], ["translations/en-saheeh-international", "translation"]] as const) {
+  const dirs: [string, "quran" | "translation"][] = [["quran/tanzil-uthmani", "quran"], ...TRANSLATIONS.map((t): [string, "translation"] => [`translations/${t.id}`, "translation"])];
+  for (const [dir, kind] of dirs) {
     const d = await loadAndValidate(join(ROOT, dir), HAFS_6236, kind);
-    assert.deepEqual(d.issues, [], dir);
+    // Datasets are verbatim copies. The one thing the validator notes is a space at the edge of Ma Jian's ayah 55:25 in Tanzil's
+    // own file; it is kept as downloaded (warning, not error) and listed here so any new warning is noticed.
+    const known = dir === "translations/zh-majian" ? ["untrimmed 55:25"] : [];
+    assert.deepEqual(d.issues.filter((i) => i.severity === "error"), [], dir);
+    assert.deepEqual(d.issues.map((i) => `${i.code} ${i.message.split(":").slice(0, 2).join(":").replace(/: .*/, "")}`), known, dir);
   }
 });

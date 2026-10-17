@@ -27,8 +27,10 @@ deliberately updated, which makes silent text changes impossible.
 - [ ] `npm run validate:quran && npm run validate:translations && npm run build:db` pass
 
 ## What is committed now: Tanzil
-Quran text (Uthmani v1.1), Bengali (Muhiuddin Khan) and English (Saheeh International) come from https://tanzil.net.
-The four downloads are kept untouched in `data/sources/tanzil/` (hashes in `SHA256SUMS`); everything under
+Quran text (Uthmani v1.1) and the Tanzil translations (Bengali, English, French, Indonesian, Russian, Chinese: the list is `TRANSLATIONS` in
+`scripts/import-tanzil/build.ts`) come from https://tanzil.net. To add one, put its untouched download in `data/sources/tanzil/`, add a row there
+and run `npm run import:tanzil`; the importer refuses a file whose `ID:` or `Translator:` header does not match its row.
+The downloads are kept untouched in `data/sources/tanzil/` (hashes in `SHA256SUMS`); everything under
 `data/quran/tanzil-uthmani/` and `data/translations/*/` is generated from them by:
 
 ```

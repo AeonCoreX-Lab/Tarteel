@@ -379,3 +379,125 @@ test("packStatus: what the Library screen shows for an available pack", async ()
   assert.equal(packStatus(m, [rec("base", 1), rec("pack-a", 2)], 2), "installed");
   assert.equal(packStatus({ ...m, schemaVersion: 3 }, [rec("base", 1)], 2), "app-too-old");
 });
+
+// ---- database lifecycle: the staged file is opened once, used by nobody else, and closed exactly once ----
+// (an Android crash came from closing a pack database that had FTS tables: docs/architecture/KNOWLEDGE.md, "Database lifecycle")
+
+/** Replaces `openDb` with one that counts opens and closes, and can fail the close or run a hook on the first query. */
+function trackDb(w: World, o: { failClose?: boolean; onFirstQuery?: () => void } = {}) {
+  const stats = { opened: 0, closed: 0, closeCalls: 0, queriesAfterClose: 0 };
+  const inner = w.ports.openDb;
+  w.ports.openDb = async (rel) => {
+    const db = await inner(rel);
+    stats.opened++;
+    let isClosed = false;
+    let first = true;
+    const guard = <A extends unknown[], R>(f: (...a: A) => Promise<R>) => async (...a: A): Promise<R> => {
+      if (isClosed) stats.queriesAfterClose++;
+      if (first) {
+        first = false;
+        o.onFirstQuery?.();
+      }
+      return f(...a);
+    };
+    return {
+      exec: guard(db.exec.bind(db)), run: guard(db.run.bind(db)), all: guard(db.all.bind(db)) as SqlDriver["all"], get: guard(db.get.bind(db)) as SqlDriver["get"],
+      transaction: db.transaction.bind(db),
+      close: async () => {
+        stats.closeCalls++;
+        if (o.failClose) throw new Error("native close failed");
+        isClosed = true;
+        stats.closed++;
+        await db.close();
+      },
+    };
+  };
+  return stats;
+}
+
+test("the validation database is closed exactly once, and never used after, on success and on every failure", async () => {
+  for (const [label, opts, ok] of [
+    ["success", {}, true],
+    ["unsupported content", { broken: "unsupported" as const }, false],
+    ["pending licence", { broken: "pending-licence" as const }, false],
+    ["schema newer than the manifest says", { schemaVersion: 1, manifest: { schemaVersion: 2 } }, false],
+  ] as const) {
+    const w = await world();
+    const stats = trackDb(w);
+    const r = await install(w, opts);
+    assert.equal(r.ok, ok, label);
+    assert.deepEqual([stats.opened, stats.closeCalls, stats.closed, stats.queriesAfterClose], [1, 1, 1, 0], label);
+  }
+});
+
+test("a database that cannot be closed after a successful validation is not installed, and the old version stays", async () => {
+  const w = await world();
+  must(await install(w, { version: 1 }));
+  const stats = trackDb(w, { failClose: true });
+  const r = failure(await install(w, { version: 2 }));
+  assert.equal(r.code, "storage-error");
+  assert.match(r.message, /could not be released/);
+  assert.equal(stats.closeCalls, 1, "the close is attempted once, not retried in a loop");
+  assert.deepEqual((await w.ports.registry.list()).map((p) => p.packVersion), [1]);
+  assert.deepEqual(await leftovers(w), ["pack-a.v1.db", "pack-a.v1.manifest.json"], "the staged file is removed");
+});
+
+test("a close failure never hides the error that came first", async () => {
+  const w = await world();
+  trackDb(w, { failClose: true });
+  const r = failure(await install(w, { broken: "pending-licence" }));
+  assert.equal(r.code, "validation-failed");
+  assert.match(r.message, /pending/);
+});
+
+test("cancelling while the file is being validated: nothing is installed, the connection is closed once, the old version stays", async () => {
+  const w = await world();
+  must(await install(w, { version: 1 }));
+  const controller = new AbortController();
+  const stats = trackDb(w, { onFirstQuery: () => controller.abort() });
+  const bytes = await buildPackBytes(w.dir, { version: 2 });
+  w.serve(bytes);
+  const r = await installPack(w.ports, await manifestFor(bytes, { packVersion: 2 }), URL_A, { signal: controller.signal });
+  assert.equal(failure(r).code, "cancelled");
+  assert.deepEqual([stats.opened, stats.closeCalls, stats.closed, stats.queriesAfterClose], [1, 1, 1, 0]);
+  assert.deepEqual((await w.ports.registry.list()).map((p) => p.packVersion), [1]);
+  assert.deepEqual(await leftovers(w), ["pack-a.v1.db", "pack-a.v1.manifest.json"]);
+});
+
+test("a cancel that arrives after validation but before the commit still installs nothing", async () => {
+  const w = await world();
+  const controller = new AbortController();
+  const inner = w.ports.files.move.bind(w.ports.files);
+  let moved = 0;
+  w.ports.files.move = async (...a: Parameters<typeof inner>) => {
+    moved++;
+    return inner(...a);
+  };
+  const stats = trackDb(w);
+  const realClose = w.ports.openDb;
+  w.ports.openDb = async (rel) => {
+    const db = await realClose(rel);
+    const close = db.close.bind(db);
+    db.close = async () => {
+      await close();
+      controller.abort(); // the user taps Cancel while validation is finishing
+    };
+    return db;
+  };
+  const bytes = await buildPackBytes(w.dir);
+  w.serve(bytes);
+  const r = await installPack(w.ports, await manifestFor(bytes), URL_A, { signal: controller.signal });
+  assert.equal(failure(r).code, "cancelled");
+  assert.equal(moved, 0, "the file was never moved into place");
+  assert.equal(stats.closed, 1);
+  assert.deepEqual(await w.ports.registry.list(), []);
+  assert.deepEqual(await leftovers(w), []);
+});
+
+test("recovery: a file left behind by a crash during validation is swept, an installed pack is not", async () => {
+  const w = await world();
+  must(await install(w));
+  await w.ports.files.write("packages", "knowledge-packs/pack-a.v2.part", new Uint8Array([1, 2, 3]));
+  assert.deepEqual(await sweepPacks(w.ports), ["pack-a.v2.part"]);
+  assert.deepEqual(await leftovers(w), ["pack-a.v1.db", "pack-a.v1.manifest.json"]);
+});

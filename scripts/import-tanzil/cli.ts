@@ -1,20 +1,17 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { SOURCE_DIR, SOURCE_FILES, buildAll } from "./build.ts";
+import { SOURCE_DIR, SOURCE_FILES, TRANSLATIONS, buildAll } from "./build.ts";
 
 // Usage: npm run import:tanzil
-// Reads the four untouched Tanzil downloads in data/sources/tanzil/ and (re)writes data/quran/tanzil-uthmani/ and
+// Reads the untouched Tanzil downloads (Quran text, metadata and every translation listed in TRANSLATIONS) in data/sources/tanzil/ and (re)writes data/quran/tanzil-uthmani/ and
 // data/translations/{bn-muhiuddin-khan,en-saheeh-international}/ with manifests and sha256 hashes.
 // See docs/data-sources/README.md for where the downloads come from.
 const root = "data";
 const read = (name: string): Promise<string> => readFile(join(root, SOURCE_DIR, name), "utf8");
 
-const built = buildAll({
-  quran: await read(SOURCE_FILES.quran),
-  metadata: await read(SOURCE_FILES.metadata),
-  bn: await read(SOURCE_FILES.bn),
-  en: await read(SOURCE_FILES.en),
-});
+const translations: Record<string, string> = {};
+for (const t of TRANSLATIONS) translations[t.file] = await read(t.file);
+const built = buildAll({ quran: await read(SOURCE_FILES.quran), metadata: await read(SOURCE_FILES.metadata), translations });
 
 for (const [rel, content] of built.files) {
   const path = join(root, rel);

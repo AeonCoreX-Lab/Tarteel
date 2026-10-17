@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   createMemoryFileStore, createMemoryKeyValueStore, createPreferencesStore,
-  createTransactionRunner, createWebKeyValueStore, assertSafeRelativePath,
+  createGuardedDriver, createTransactionRunner, createWebKeyValueStore, assertSafeRelativePath,
 } from "../src/index.ts";
 
 const defaults = { theme: "system" as string, size: 24, last: null as { s: number } | null, flag: false };
@@ -78,4 +78,78 @@ test("transaction runner nests with savepoints and rolls back", async () => {
   log.length = 0;
   await assert.rejects(tx(async () => { throw new Error("boom"); }));
   assert.deepEqual(log, ["BEGIN IMMEDIATE", "ROLLBACK"]);
+});
+
+// ---- guarded driver: closing a native database must never overlap a running query or happen twice ----
+
+/** A fake native database that records what happened and lets a test hold an operation open. */
+function fakeNative() {
+  const log: string[] = [];
+  let release: (() => void) | null = null;
+  let closes = 0;
+  const raw = {
+    exec: async (sql: string) => void log.push(`exec ${sql}`),
+    run: async () => ({ changes: 1, lastInsertRowId: 1 }),
+    all: async <T>(sql: string) => {
+      log.push(`all ${sql} start`);
+      if (sql === "SLOW") await new Promise<void>((r) => (release = r));
+      log.push(`all ${sql} end`);
+      return [] as T[];
+    },
+    get: async <T>() => undefined as T | undefined,
+    close: async () => {
+      closes++;
+      log.push("native close");
+    },
+  };
+  return { raw, log, finishSlow: () => release?.(), closes: () => closes };
+}
+
+test("guarded driver: close waits for a running query, then closes once", async () => {
+  const n = fakeNative();
+  const db = createGuardedDriver(n.raw);
+  const slow = db.all("SLOW");
+  await Promise.resolve();
+  const closed = db.close();
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(n.closes(), 0, "the native close must not run while a query is in flight");
+  n.finishSlow();
+  await slow;
+  await closed;
+  assert.deepEqual(n.log, ["all SLOW start", "all SLOW end", "native close"]);
+});
+
+test("guarded driver: close is idempotent and operations after close are refused, not forwarded", async () => {
+  const n = fakeNative();
+  const db = createGuardedDriver(n.raw);
+  await db.exec("A");
+  await Promise.all([db.close(), db.close()]);
+  await db.close();
+  assert.equal(n.closes(), 1);
+  await assert.rejects(db.exec("B"), /closed/);
+  await assert.rejects(db.all("C"), /closed/);
+  await assert.rejects(db.transaction(async () => 1), /closed/);
+  assert.deepEqual(n.log, ["exec A", "native close"]);
+});
+
+test("guarded driver: a close that fails is reported to every caller, and is not retried", async () => {
+  let closes = 0;
+  const db = createGuardedDriver({
+    exec: async () => undefined, run: async () => ({ changes: 0, lastInsertRowId: 0 }), all: async () => [], get: async () => undefined,
+    close: async () => { closes++; throw new Error("native close failed"); },
+  });
+  const a = db.close();
+  const b = db.close();
+  await assert.rejects(a, /native close failed/);
+  await assert.rejects(b, /native close failed/);
+  assert.equal(closes, 1);
+});
+
+test("guarded driver: operations run normally, transactions commit and roll back through the guard", async () => {
+  const n = fakeNative();
+  const db = createGuardedDriver(n.raw);
+  assert.equal(await db.transaction(async () => "ok"), "ok");
+  await assert.rejects(db.transaction(async () => { throw new Error("boom"); }), /boom/);
+  assert.deepEqual(n.log, ["exec BEGIN IMMEDIATE", "exec COMMIT", "exec BEGIN IMMEDIATE", "exec ROLLBACK"]);
+  await db.close();
 });

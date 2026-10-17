@@ -1,0 +1,27 @@
+{
+  "id": "id-kemenag",
+  "kind": "translation",
+  "version": "2010-06-04",
+  "language": "id",
+  "languageName": "Indonesian",
+  "direction": "ltr",
+  "translator": "Indonesian Ministry of Religious Affairs",
+  "source": {
+    "name": "Tanzil Project: Quran translations, id.indonesian",
+    "url": "https://tanzil.net/trans/"
+  },
+  "license": {
+    "name": "Tanzil translation terms: non-commercial use; otherwise permission from the translator or publisher is required",
+    "url": "https://tanzil.net/trans/"
+  },
+  "copyright": "Indonesian Ministry of Religious Affairs (translator); text as compiled by the Tanzil Project. Rights remain with the translator and publisher.",
+  "attribution": "Indonesian translation by Kementerian Agama Republik Indonesia, via the Tanzil Project, https://tanzil.net/trans/ (last update June 4, 2010)",
+  "numberingConvention": "hafs-6236",
+  "redistributionPermitted": true,
+  "importedAt": "2026-10-17",
+  "files": {
+    "ayahs.json": "45434bd15f1a3ae33b925bcacb0a74117b32eb4aae0892ed405482584993d277",
+    "COPYRIGHT-TANZIL.txt": "01fa761d8dc78b92187fc95061450a9bdfed6edf9912c4a9b45cb78feb21a65f",
+    "PROVENANCE.md": "5c9dfe409c58f96af0537048adce1593bd8c2cdf82601ef5ac70f34da1afbdc4"
+  }
+}

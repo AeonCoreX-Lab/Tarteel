@@ -1,0 +1,27 @@
+{
+  "id": "fr-hamidullah",
+  "kind": "translation",
+  "version": "2011-07-18",
+  "language": "fr",
+  "languageName": "French",
+  "direction": "ltr",
+  "translator": "Muhammad Hamidullah",
+  "source": {
+    "name": "Tanzil Project: Quran translations, fr.hamidullah",
+    "url": "https://tanzil.net/trans/"
+  },
+  "license": {
+    "name": "Tanzil translation terms: non-commercial use; otherwise permission from the translator or publisher is required",
+    "url": "https://tanzil.net/trans/"
+  },
+  "copyright": "Muhammad Hamidullah (translator); text as compiled by the Tanzil Project. Rights remain with the translator and publisher.",
+  "attribution": "French translation by Muhammad Hamidullah, via the Tanzil Project, https://tanzil.net/trans/ (last update July 18, 2011)",
+  "numberingConvention": "hafs-6236",
+  "redistributionPermitted": true,
+  "importedAt": "2026-10-17",
+  "files": {
+    "ayahs.json": "9b6ccadbf8670d394941b5db4b7f25f4efc9560f52cb13704bbba3a45a9594d0",
+    "COPYRIGHT-TANZIL.txt": "e2f1eaeb0e215d9bec4d07c848fa059142a0c2998b8bd3d23970480ddbcc469c",
+    "PROVENANCE.md": "ec4926cb4a7c6ad2938f757b207e2051b805dfc0bf1489217d4ba0e84c8009cd"
+  }
+}

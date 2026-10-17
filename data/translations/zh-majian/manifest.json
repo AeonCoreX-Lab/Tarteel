@@ -1,0 +1,27 @@
+{
+  "id": "zh-majian",
+  "kind": "translation",
+  "version": "2011-01-07",
+  "language": "zh",
+  "languageName": "Chinese (Traditional)",
+  "direction": "ltr",
+  "translator": "Ma Jian",
+  "source": {
+    "name": "Tanzil Project: Quran translations, zh.majian",
+    "url": "https://tanzil.net/trans/"
+  },
+  "license": {
+    "name": "Tanzil translation terms: non-commercial use; otherwise permission from the translator or publisher is required",
+    "url": "https://tanzil.net/trans/"
+  },
+  "copyright": "Ma Jian (translator); text as compiled by the Tanzil Project. Rights remain with the translator and publisher.",
+  "attribution": "Chinese (Traditional) translation by 馬堅 (Ma Jian), via the Tanzil Project, https://tanzil.net/trans/ (last update January 7, 2011)",
+  "numberingConvention": "hafs-6236",
+  "redistributionPermitted": true,
+  "importedAt": "2026-10-17",
+  "files": {
+    "ayahs.json": "5720a9589541652ac35d7643b98d82991e4355f359891018e6b31c8dd61dbf50",
+    "COPYRIGHT-TANZIL.txt": "1e39437d75046f2fa5ba2b376ec1846d48beacba165fffa5c389953627753545",
+    "PROVENANCE.md": "a060b26b79c3096e61d2e92a51e96c8677c4958bb5255e753117df3524c2037c"
+  }
+}

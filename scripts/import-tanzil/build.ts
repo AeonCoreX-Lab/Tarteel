@@ -8,9 +8,27 @@ import { buildAyahMeta, commentBlock, headerField, isoFromTanzilDate, parseMarke
 
 export const IMPORTED_AT = "2026-10-12";
 export const SOURCE_DIR = "sources/tanzil";
-export const SOURCE_FILES = { quran: "quran-uthmani.txt", metadata: "quran-data.xml", bn: "bn_bengali.txt", en: "en_sahih.txt" } as const;
+export const SOURCE_FILES = { quran: "quran-uthmani.txt", metadata: "quran-data.xml" } as const;
 
-export interface TanzilSources { quran: string; metadata: string; bn: string; en: string }
+/**
+ * The Tanzil translations this project ships. Adding one is: put its untouched download in data/sources/tanzil/, add a row here,
+ * run `npm run import:tanzil`. `translator` must equal the file's own "Translator:" header and `tanzilId` its "ID:" header, so a
+ * wrong file is refused instead of imported under another name. `importedAt` is when the row was first imported (it is not "today").
+ */
+export interface TranslationSpec {
+  file: string; tanzilId: string; id: string; language: string; languageName: string; translator: string; nameNative: string; importedAt: string;
+}
+export const TRANSLATIONS: readonly TranslationSpec[] = [
+  { file: "bn_bengali.txt", tanzilId: "bn.bengali", id: "bn-muhiuddin-khan", language: "bn", languageName: "Bengali", translator: "Muhiuddin Khan", nameNative: "মুহিউদ্দীন খান", importedAt: "2026-10-12" },
+  { file: "en_sahih.txt", tanzilId: "en.sahih", id: "en-saheeh-international", language: "en", languageName: "English", translator: "Saheeh International", nameNative: "Saheeh International", importedAt: "2026-10-12" },
+  { file: "fr_hamidullah.txt", tanzilId: "fr.hamidullah", id: "fr-hamidullah", language: "fr", languageName: "French", translator: "Muhammad Hamidullah", nameNative: "Muhammad Hamidullah", importedAt: "2026-10-17" },
+  { file: "id_indonesian.txt", tanzilId: "id.indonesian", id: "id-kemenag", language: "id", languageName: "Indonesian", translator: "Indonesian Ministry of Religious Affairs", nameNative: "Kementerian Agama Republik Indonesia", importedAt: "2026-10-17" },
+  { file: "ru_muntahab.txt", tanzilId: "ru.muntahab", id: "ru-muntahab", language: "ru", languageName: "Russian", translator: "Ministry of Awqaf, Egypt", nameNative: "Аль-Мунтахаб (Министерство вакфов Египта)", importedAt: "2026-10-17" },
+  { file: "zh_majian.txt", tanzilId: "zh.majian", id: "zh-majian", language: "zh", languageName: "Chinese (Traditional)", translator: "Ma Jian", nameNative: "馬堅 (Ma Jian)", importedAt: "2026-10-17" },
+];
+
+/** `translations` is keyed by the file name in data/sources/tanzil/. */
+export interface TanzilSources { quran: string; metadata: string; translations: Readonly<Record<string, string>> }
 
 export interface BuildReport { ayahs: number; stripped: number[]; variants: number[] }
 export interface Built {
@@ -30,13 +48,16 @@ function expectHeader(source: string, label: string, field: string, expected: st
   if (got !== expected) throw new Error(`${label}: header "${field}" is "${got}", expected "${expected}": wrong file?`);
 }
 
-function manifest(m: Omit<DatasetManifest, "files" | "numberingConvention" | "redistributionPermitted" | "importedAt">, files: Record<string, string>): DatasetManifest {
-  return { ...m, numberingConvention: HAFS_6236.id, redistributionPermitted: true, importedAt: IMPORTED_AT, files };
+function manifest(m: Omit<DatasetManifest, "files" | "numberingConvention" | "redistributionPermitted" | "importedAt">, files: Record<string, string>, importedAt: string = IMPORTED_AT): DatasetManifest {
+  return { ...m, numberingConvention: HAFS_6236.id, redistributionPermitted: true, importedAt, files };
 }
 
 export function buildAll(src: TanzilSources): Built {
   const out = new Map<string, string>();
-  const sumsOf = { [SOURCE_FILES.quran]: sha256(src.quran), [SOURCE_FILES.metadata]: sha256(src.metadata), [SOURCE_FILES.bn]: sha256(src.bn), [SOURCE_FILES.en]: sha256(src.en) };
+  for (const spec of TRANSLATIONS) if (src.translations[spec.file] === undefined) throw new Error(`${spec.file}: missing from the sources (data/${SOURCE_DIR}/)`);
+  for (const name of Object.keys(src.translations)) if (!TRANSLATIONS.some((t) => t.file === name)) throw new Error(`${name}: not listed in TRANSLATIONS (scripts/import-tanzil/build.ts)`);
+  const sumsOf: Record<string, string> = { [SOURCE_FILES.quran]: sha256(src.quran), [SOURCE_FILES.metadata]: sha256(src.metadata) };
+  for (const spec of TRANSLATIONS) sumsOf[spec.file] = sha256(src.translations[spec.file] as string);
   out.set(`${SOURCE_DIR}/SHA256SUMS`, Object.entries(sumsOf).sort(([a], [b]) => a.localeCompare(b)).map(([n, h]) => `${h}  ${n}\n`).join(""));
 
   // ---------------------------------------------------------------- Quran text
@@ -99,17 +120,8 @@ export function buildAll(src: TanzilSources): Built {
   }, hashes(qFiles))));
 
   // ------------------------------------------------------------- translations
-  const translations = [
-    {
-      text: src.bn, file: SOURCE_FILES.bn, dir: "translations/bn-muhiuddin-khan", tanzilId: "bn.bengali",
-      id: "bn-muhiuddin-khan", language: "bn", languageName: "Bengali", translator: "Muhiuddin Khan", nameNative: "মুহিউদ্দীন খান",
-    },
-    {
-      text: src.en, file: SOURCE_FILES.en, dir: "translations/en-saheeh-international", tanzilId: "en.sahih",
-      id: "en-saheeh-international", language: "en", languageName: "English", translator: "Saheeh International", nameNative: "Saheeh International",
-    },
-  ];
-  for (const t of translations) {
+  for (const spec of TRANSLATIONS) {
+    const t = { ...spec, text: src.translations[spec.file] as string, dir: `translations/${spec.id}` };
     expectHeader(t.text, t.file, "ID", t.tanzilId);
     expectHeader(t.text, t.file, "Translator", t.translator);
     const updated = headerField(t.text, "Last Update");
@@ -139,7 +151,7 @@ export function buildAll(src: TanzilSources): Built {
       license: { name: "Tanzil translation terms: non-commercial use; otherwise permission from the translator or publisher is required", url: "https://tanzil.net/trans/" },
       copyright: `${t.translator} (translator); text as compiled by the Tanzil Project. Rights remain with the translator and publisher.`,
       attribution: `${t.languageName} translation by ${t.nameNative}, via the Tanzil Project, https://tanzil.net/trans/ (last update ${updated})`,
-    }, hashes(files))));
+    }, hashes(files), t.importedAt)));
   }
 
   return { files: out, report: { ayahs: ayahs.length, stripped, variants } };

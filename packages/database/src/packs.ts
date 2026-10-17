@@ -232,9 +232,12 @@ export async function installPack(ports: PackPorts, rawManifest: unknown, url: s
       throw new PackError("not-newer", `version ${current.packVersion} is already installed`);
 
     const bytes = await download(ports, url, manifest, opts);
+    throwIfCancelled(opts.signal);
     await ports.files.write(AREA, part, bytes);
     partWritten = true;
-    await prepareDatabase(ports, manifest, part);
+    await prepareDatabase(ports, manifest, part, opts.signal);
+    // A cancel that arrived while the file was being validated is honoured here, before anything becomes visible as installed.
+    throwIfCancelled(opts.signal);
 
     const finalBytes = await ports.files.read(AREA, part);
     const dbPath = packDbPath(manifest.packId, manifest.packVersion);
@@ -295,15 +298,29 @@ async function download(ports: PackPorts, url: string, manifest: PackManifest, o
   throw new PackError("download-failed", `the download failed after ${attempts} attempts: ${last}`);
 }
 
-/** Opens the downloaded file, brings it to this app's schema, and runs the release validation on it. */
-async function prepareDatabase(ports: PackPorts, manifest: PackManifest, part: string): Promise<void> {
+function throwIfCancelled(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) throw new PackError("cancelled", "cancelled");
+}
+
+/**
+ * Opens the downloaded file, brings it to this app's schema, and runs the release validation on it.
+ *
+ * Ownership: this function opens ONE connection to the staged file, is the only user of it, and closes it exactly once, after
+ * every query has finished (all queries are awaited one at a time; nothing runs concurrently on it). Cancellation is checked
+ * only between phases, never by closing the connection under a running query. A failure to close is never allowed to hide the
+ * error that came first; when validation itself succeeded, a close that fails is an error, because the file is not known to be
+ * released and nothing may be installed from a file that is still open.
+ */
+async function prepareDatabase(ports: PackPorts, manifest: PackManifest, part: string, signal?: AbortSignal): Promise<void> {
   let db: SqlDriver;
   try {
     db = await ports.openDb(part);
   } catch (e) {
     throw new PackError("schema-error", `the file cannot be opened as a database: ${e instanceof Error ? e.message : String(e)}`);
   }
+  let failed = false;
   try {
+    throwIfCancelled(signal);
     let built: number | null | undefined;
     try {
       built = (await db.get<{ v: number | null }>("SELECT MAX(id) AS v FROM schema_migrations"))?.v;
@@ -316,17 +333,26 @@ async function prepareDatabase(ports: PackPorts, manifest: PackManifest, part: s
     } catch (e) {
       throw new PackError("schema-error", `migration failed: ${e instanceof Error ? e.message : String(e)}`);
     }
+    throwIfCancelled(signal);
     const quick = await db.all<{ quick_check: string }>("PRAGMA quick_check");
     if (quick.length !== 1 || quick[0]?.quick_check !== "ok")
       throw new PackError("validation-failed", "the database file is damaged", [{ severity: "error", code: "database-corrupt", message: "PRAGMA quick_check did not return ok" }]);
+    throwIfCancelled(signal);
     const issues = await validateKnowledgeDb(db, { release: true, quran: ports.quran });
     const declared = new Set(manifest.licenses.map((l) => l.id));
     for (const l of await db.all<{ id: string }>("SELECT id FROM license"))
       if (!declared.has(l.id)) issues.push({ severity: "error", code: "licence-not-declared", message: `licence ${l.id} is used by the database but not declared in the manifest` });
     const errors = issues.filter((i) => i.severity === "error");
     if (errors.length > 0) throw new PackError("validation-failed", errors.map((i) => `[${i.code}] ${i.message}`).join("; "), issues);
+  } catch (e) {
+    failed = true;
+    throw e;
   } finally {
-    await db.close();
+    try {
+      await db.close();
+    } catch (e) {
+      if (!failed) throw new PackError("storage-error", `the validated file could not be released: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }
 }
 

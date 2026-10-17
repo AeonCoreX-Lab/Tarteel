@@ -1,0 +1,11 @@
+# --------------------------------------------------------------------
+#
+#  Quran Translation
+#  Name: Ma Jian (Traditional)
+#  Translator: Ma Jian
+#  Language: Chinese
+#  ID: zh.majian
+#  Last Update: January 7, 2011
+#  Source: Tanzil.net
+#
+# --------------------------------------------------------------------
