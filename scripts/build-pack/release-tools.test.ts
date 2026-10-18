@@ -108,7 +108,7 @@ test("the demo packs behave like the device checklist expects: install v1, updat
 
   const lib = createPackLibrary(ports(demo.publicKeyPem), { catalogUrl: "https://demo.example.invalid/tarteel/catalog.json" });
   const reader = createKnowledgeReader({ registry: createSqlPackRegistry(userDb), openDb: async (rel) => openNodeSqlite(files.resolve("packages", rel)) });
-  assert.deepEqual(await reader.coverage(1), { surahClaims: 0, ayahs: [] }, "nothing installed yet");
+  assert.deepEqual(await reader.coverage(1), { surahClaims: 0, surahEntities: 0, ayahs: [] }, "nothing installed yet");
 
   const first = await lib.refreshCatalog();
   assert.ok(first.ok && first.entries.length === 1);
@@ -119,7 +119,7 @@ test("the demo packs behave like the device checklist expects: install v1, updat
   assert.equal(disputed.evidenceLabel, "disputed");
   assert.ok(disputed.uncertaintyNote && disputed.contradicts.length === 1 && disputed.supports.length === 1);
   assert.equal((await reader.surah(1, "en")).some((c) => c.text === "Synthetic claim one."), true);
-  assert.deepEqual((await reader.coverage(1)).ayahs, [1]);
+  assert.deepEqual((await reader.coverage(1)).ayahs, [1, 2], "ayah 1 by a report, claim and event; ayah 2 by the place that is mentioned in it");
   assert.equal((await reader.surah(1, "bn")).find((c) => c.key === "example-pack:c-published-1")?.text, "কৃত্রিম দাবি এক।");
 
   // version 2 is published: the catalogue changes, the Library offers an update, the reader shows the edit and the retraction

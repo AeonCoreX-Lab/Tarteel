@@ -2,26 +2,110 @@
   {
     "id": "e-1",
     "type": "REPORT_REFERENCES_AYAH",
-    "fromKind": "source_passage", "fromId": "p-1",
-    "toKind": "ayah", "toId": "1:1",
+    "fromKind": "source_passage",
+    "fromId": "p-1",
+    "toKind": "ayah",
+    "toId": "1:1",
     "editorialStatus": "published",
     "createdBy": "tester",
-    "passages": ["p-1"]
+    "passages": [
+      "p-1"
+    ]
   },
   {
     "id": "e-2",
     "type": "CLAIM_CONCERNS_SURAH",
-    "fromKind": "claim", "fromId": "c-published-1",
-    "toKind": "surah", "toId": "1",
+    "fromKind": "claim",
+    "fromId": "c-published-1",
+    "toKind": "surah",
+    "toId": "1",
     "editorialStatus": "published",
     "createdBy": "tester",
     "editorialBasis": "Synthetic basis for the example edge."
   },
   {
+    "id": "e-ent-1",
+    "type": "EVENT_AT_PLACE",
+    "fromKind": "event",
+    "fromId": "ent-ev-1",
+    "toKind": "place",
+    "toId": "ent-pl-1",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "editorialBasis": "Synthetic basis for the example edge."
+  },
+  {
+    "id": "e-ent-2",
+    "type": "PERSON_IN_EVENT",
+    "fromKind": "person",
+    "fromId": "ent-per-1",
+    "toKind": "event",
+    "toId": "ent-ev-1",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "editorialBasis": "Synthetic basis for the example edge."
+  },
+  {
+    "id": "e-ent-3",
+    "type": "EVENT_CONCERNS_AYAH",
+    "fromKind": "event",
+    "fromId": "ent-ev-1",
+    "toKind": "ayah",
+    "toId": "1:1",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "editorialBasis": "Synthetic basis for the example edge."
+  },
+  {
+    "id": "e-ent-4",
+    "type": "CLAIM_CONCERNS_EVENT",
+    "fromKind": "claim",
+    "fromId": "c-published-1",
+    "toKind": "event",
+    "toId": "ent-ev-1",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "editorialBasis": "Synthetic basis for the example edge."
+  },
+  {
+    "id": "e-ent-5",
+    "type": "EVENT_CONCERNS_SURAH",
+    "fromKind": "event",
+    "fromId": "ent-ev-2",
+    "toKind": "surah",
+    "toId": "1",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "editorialBasis": "Synthetic basis for the example edge."
+  },
+  {
+    "id": "e-ent-6",
+    "type": "PLACE_MENTIONED_IN_AYAH",
+    "fromKind": "place",
+    "fromId": "ent-pl-1",
+    "toKind": "ayah",
+    "toId": "1:2",
+    "editorialStatus": "published",
+    "createdBy": "tester",
+    "editorialBasis": "Synthetic basis for the example edge."
+  },
+  {
+    "id": "e-ent-draft",
+    "type": "EVENT_CONCERNS_AYAH",
+    "fromKind": "event",
+    "fromId": "ent-draft",
+    "toKind": "ayah",
+    "toId": "1:2",
+    "editorialStatus": "draft",
+    "createdBy": "tester"
+  },
+  {
     "id": "e-draft",
     "type": "CLAIM_CONCERNS_AYAH",
-    "fromKind": "claim", "fromId": "c-draft",
-    "toKind": "ayah", "toId": "1:2",
+    "fromKind": "claim",
+    "fromId": "c-draft",
+    "toKind": "ayah",
+    "toId": "1:2",
     "editorialStatus": "draft",
     "createdBy": "tester"
   }

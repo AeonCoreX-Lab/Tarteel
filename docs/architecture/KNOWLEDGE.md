@@ -1,6 +1,6 @@
 # Knowledge model (history, context, sources)
 
-Status: schema (content migration 2), validator, pack installer, surah revelation order (from Tanzil) and the `build-pack` tool. The Library screen, the pack reader and the Surah History / Ayah Context screen exist but are untested on a device. No content packs yet. Product plan: *Tarteel Historical Knowledge System*.
+Status: schema (content migrations 2 and 3: claims and sources; events, people and places), validator, pack installer, surah revelation order (from Tanzil) and the `build-pack` tool. The Library screen, the pack reader and the Surah History / Ayah Context screen exist but are untested on a device. No content packs yet. Product plan: *Tarteel Historical Knowledge System*.
 
 ## Idea
 Every historical statement is a **claim**. A claim is backed by **source passages** (a locator inside an edition of a work),
@@ -32,9 +32,18 @@ There is no foreign key from edges to ayahs: the Quran rows may live in another 
 `AYAH_BELONGS_TO_SURAH` is `ayahs.surah_id`. `CLAIM_SUPPORTED_BY_PASSAGE` and `CLAIM_CONTRADICTED_BY_PASSAGE` are `claim_passage`. `PASSAGE_CITES_WORK` is the passage -> edition -> work chain.
 They keep real foreign keys instead of becoming a second copy.
 
-## Not in this migration (later phases, each a new numbered migration)
-Hadith, narrators and narrations, scholarly assessments (grading with its evaluator), events, people, places, timeline dates with precision,
-Tafsir passages as entities, FTS over claim text. Each adds `entity_kind` / `edge_type` rows with its tables.
+## Events, people and places (content migration 3)
+One table, `entity`, holds all three (`kind`: `event`, `person`, `place`), with `entity_text` (name and optional summary per language, with the same `original` / `machine_draft` / `reviewed` status as claims) and `entity_passage` (the passages it rests on). Entities follow the claim rules: they cannot be inserted as published, need a supporting passage or an `editorial_basis`, cannot be published as `unverified`, and `disputed` needs an `uncertainty_note`. Subtypes are fixed per kind by a CHECK.
+
+**Dates are never more exact than the source.** `date_precision` is `year`, `decade`, `century`, `approximate` or `unknown`; `date_calendar` is `ah` or `ce`; `date_start` and `date_end` are the years as the source gives them (for a person: birth and death; a place has no date). `sort_year` is an approximate Gregorian year (`approxCeYear` in `knowledge-dates.ts`: Hijri year x 0.970224 + 621.5744) used only to put entries in order; it is never shown as a date. A CHECK ties precision, calendar, years and sort year together, so an entry cannot have a precision without a year or the reverse.
+
+New node kinds `event`, `person`, `place` and edge types `EVENT_CONCERNS_AYAH`, `EVENT_CONCERNS_SURAH`, `PERSON_MENTIONED_IN_AYAH`, `PLACE_MENTIONED_IN_AYAH`, `EVENT_AT_PLACE`, `PERSON_IN_EVENT`, `CLAIM_CONCERNS_EVENT`, `CLAIM_CONCERNS_PERSON`, `CLAIM_CONCERNS_PLACE`. The validator checks that an edge's `event` / `person` / `place` end exists *as that kind* and is published (`edge-endpoint-missing`, `edge-to-unpublished-entity`), and the entity rules (`published-entity-unsupported`, `published-entity-unverified`, `published-entity-no-reviewed-text`). A pack built before migration 3 has none of these tables: the validator and the reader skip them instead of failing, and an app brings a downloaded older pack up to its schema on install.
+
+Reading: `entityCounts`, `entities(kind, lang)` (dated first, oldest first), `entity(packId, id, lang)`, `entitiesFor(surah / ayah, lang)`; `coverage`, `browse` and `search` include entities. Screens: Timeline (`app/timeline.tsx`), Details (`app/entity.tsx`), and a linked-entries section on the History screen.
+
+## Not yet built (later phases, each a new numbered migration)
+Hadith as stored data (see `HADITH.md` for the live lookup), narrators and narrations, scholarly assessments (grading with its evaluator), coordinates and a map for places,
+Tafsir passages as entities, a token index for searching a very large pack (packs have no FTS), person-to-person relations. Each adds `entity_kind` / `edge_type` rows with its tables.
 
 ## Validation (`npm run validate:knowledge`)
 `validateKnowledgeDb` (in `@tarteel/database`) is the second line behind the triggers. It reports dangling references (`PRAGMA foreign_key_check`),
@@ -81,6 +90,53 @@ Mobile: `apps/mobile/src/knowledge/` (`runtime.ts` builds the ports, `crypto.ts`
 - **Trust.** The catalogue is not signed; each pack manifest is. An entry whose signature does not verify is never shown, and `installPack` checks it again. A tampered catalogue can hide packs, but it cannot make the app install something the publisher did not sign (file size and sha256 are inside the signed manifest), and it cannot downgrade an installed pack.
 - A catalogue with an unknown `schema` is refused whole; a bad single entry is skipped.
 - Packs show a `title` and `description` per language from the manifest (optional fields in `pack.json`), falling back to English, then to the pack id.
+
+## Database lifecycle (and the Android close crash)
+
+**What happened.** Installing a pack on Android aborted the whole app (`SIGABRT`, Scudo "invalid chunk state when deallocating", frames
+`exsqlite3_finalize` <- `NativeDatabaseBinding::sqlite3_close` <- `SQLiteModule.closeDatabase` in `libexpo-sqlite.so`) at the moment the
+validation database was closed. A JavaScript `try/catch` cannot catch a native abort, so the fix is to never reach it.
+
+**Cause (upstream defect, matches the trace; not reproduced on a device from here).** expo-sqlite 15.2.0 and later, on close, finalizes every
+statement it finds with `sqlite3_next_stmt`. That list also contains statements owned by virtual tables (FTS5, R-tree). SQLite finalizes the
+same statements again inside `sqlite3_close`: a double free. It needs no concurrency and no mistake in the caller. Reported and still open for
+SDK 57 at https://github.com/expo/expo/issues/38168. Our pack files were built from the shared schema, which contains two FTS5 tables, so
+they had virtual tables. (Which query first connected the FTS5 table, for example `PRAGMA quick_check`, is not established; it does not
+matter, because the close is what crashes.)
+
+**Ruled out by reading the code.** A race inside the installer: `prepareDatabase` runs one query at a time on one connection that nobody else
+holds, and closes it once, after the last query. There is no `Promise.all` on a database anywhere in the pack path, and the library already
+serializes installs, repairs and removals (`pack-library.ts`, tested). Separate, smaller risks were found and fixed below.
+
+**Three layers of defence** (any one of them removes the crash for pack files; they are independent on purpose):
+1. *Open every database with `finalizeUnusedStatementsBeforeClosing: false`* (`apps/mobile/src/platform/expo-sqlite-driver.ts`). SQLite then frees
+   virtual-table statements once, inside `sqlite3_close`. Safe because the adapter never keeps a statement: each call prepares, runs and
+   finalizes its own. The option is `@hidden` in expo-sqlite, so re-check it on every Expo upgrade. Upstream reports of this workaround are
+   mixed on some versions, which is why layers 2 and 3 exist.
+2. *Pack files contain no virtual tables.* `build:pack` drops the unused FTS tables and their triggers (`scripts/build-pack/build.ts`, tested).
+   Without a virtual table there is nothing for the double finalize to hit. Packs built before this change must be rebuilt and re-released.
+3. *Guarded close* (`createGuardedDriver`, `packages/storage`): `close()` waits for queries that are already running, runs the native close at
+   most once (every caller gets the same promise, including a failure), and refuses any later query with an ordinary error. This protects
+   against closing under a running query, the other documented expo-sqlite crash (https://github.com/expo/expo/pull/49798, iOS, unmerged).
+
+**Ownership rules.**
+- The connection a function opens is closed by that function, once, in its `finally`. Nobody else closes it.
+- The app's two long-lived databases (content, user) are opened once at start-up and never closed while the app runs.
+- A pack database opened for reading is kept open by the reader and closed when its pack is removed or replaced, or on `reader.close()`.
+- Never keep a prepared statement (`prepareAsync`) without finalizing it, now that the unused-statement cleanup is off.
+- A close that fails never hides the error that came first. If validation succeeded and the close fails, the install fails (`storage-error`):
+  the file is not known to be released, and nothing is installed from it.
+
+**Cancellation.** It is cooperative. `installPack` checks the signal before it writes the staged file, between validation phases, and again
+before the file is moved into place; it never closes a connection under a running query. A cancel that arrives during validation therefore
+installs nothing, removes the staged file, and leaves the previous version and the registry untouched (tested).
+
+**Duplicate taps.** The Library hook ignores a second tap while an operation runs (a synchronous flag, not the re-rendered state), the library
+serializes operations, and an unexpected exception puts the card back to idle with an error instead of leaving it on "Installing...".
+
+**Tests.** Node tests use the real `node:sqlite` plus fault injection (fail on close, cancel during a query, cancel before the commit, double
+close, use after close). They cannot reproduce the native Android crash: that needs the device check in `docs/testing/KNOWLEDGE-DEVICE-CHECKLIST.md`
+("Install and close on Android").
 
 ## Reading packs (Surah History, Ayah Context)
 Pure logic: `packages/database/src/knowledge-reader.ts` (`createKnowledgeReader`). Mobile: `getReader()` in `apps/mobile/src/knowledge/runtime.ts`, hooks in `hooks.ts`, the screen `apps/mobile/app/history/[id].tsx` (`?ayah=N` adds the ayah's context), and entry points on the reading screen: a "History and context" button when the installed packs hold anything for the surah, and a "Context" link on each ayah that has something.

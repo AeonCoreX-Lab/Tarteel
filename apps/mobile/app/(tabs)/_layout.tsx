@@ -2,6 +2,7 @@ import type { ColorValue } from "react-native";
 import { Redirect, Tabs } from "expo-router";
 import { Icon } from "../../src/components/Icons";
 import type { IconName } from "../../src/components/Icons";
+import { knowledgeConfigured } from "../../src/knowledge/runtime";
 import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
 import { useTheme } from "../../src/theme";
@@ -28,6 +29,8 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: t("today"), tabBarIcon: icon("today") }} />
       <Tabs.Screen name="quran" options={{ title: t("quran"), tabBarIcon: icon("quran") }} />
+      {/* Hidden (not just empty) in a build with no pack catalogue address and publisher key, as the Library is. */}
+      <Tabs.Screen name="knowledge" options={{ title: t("tabKnowledge"), tabBarIcon: icon("knowledge"), href: knowledgeConfigured ? undefined : null }} />
       <Tabs.Screen name="bookmarks" options={{ title: t("bookmarks"), tabBarIcon: icon("bookmark") }} />
       <Tabs.Screen name="settings" options={{ title: t("settings"), tabBarIcon: icon("settings") }} />
     </Tabs>

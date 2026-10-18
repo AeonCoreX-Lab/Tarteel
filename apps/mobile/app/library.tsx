@@ -51,7 +51,10 @@ export default function LibraryScreen() {
         </View>
       </Card>
       {lib.message ? (
-        <Text accessibilityLiveRegion="polite" style={{ color: lib.message.tone === "error" ? th.text : th.muted, fontSize: 14, lineHeight: 20, fontWeight: lib.message.tone === "error" ? "700" : "400" }}>{t(lib.message.text)}</Text>
+        <View style={{ gap: 4 }}>
+          <Text accessibilityLiveRegion="polite" style={{ color: lib.message.tone === "error" ? th.text : th.muted, fontSize: 14, lineHeight: 20, fontWeight: lib.message.tone === "error" ? "700" : "400" }}>{t(lib.message.text)}</Text>
+          {lib.message.detail ? <Text selectable style={{ color: th.muted, fontSize: 12, lineHeight: 17 }}>{lib.message.detail}</Text> : null}
+        </View>
       ) : null}
     </View>
   );

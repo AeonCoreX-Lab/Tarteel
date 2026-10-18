@@ -83,7 +83,7 @@ for (const dir of dirs) {
   const found = await validateKnowledgeDb(db, { release: true, quran });
   await db.close();
   const c = built.counts;
-  console.log(`  ${c.claims} claims, ${c.edges} edges, ${c.passages} passages, ${c.editions} editions, ${c.licenses} licences; left out: ${built.selection.excluded.claims} claims and ${built.selection.excluded.edges} edges that are not published`);
+  console.log(`  ${c.claims} claims, ${c.entities} events, people and places, ${c.edges} edges, ${c.passages} passages, ${c.editions} editions, ${c.licenses} licences; left out: ${built.selection.excluded.claims} claims, ${built.selection.excluded.entities} entities and ${built.selection.excluded.edges} edges that are not published`);
   if (printIssues(found) > 0) {
     await rm(building, { force: true });
     failed = true;

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { SqlDriver } from "@tarteel/storage";
 import { openNodeSqlite } from "../../../scripts/lib/node-sqlite-driver.ts";
-import { CONTENT_MIGRATIONS, USER_MIGRATIONS, chooseClaimText, createKnowledgeReader, locatorParts, migrate, createRepositories } from "../src/index.ts";
+import { CONTENT_MIGRATIONS, USER_MIGRATIONS, chooseClaimText, createKnowledgeReader, foldWithMap, locatorParts, migrate, createRepositories, parseAyahTarget, parseSurahTarget, searchTerms, snippetAround } from "../src/index.ts";
 import type { InstalledPack, PackRegistry } from "../src/index.ts";
 
 // ALL text below is synthetic placeholder text. No Quran, hadith or tafsir content belongs in tests.
@@ -166,10 +166,10 @@ test("coverage lists the surah's claims and the ayahs that have something, ignor
   const dir = await tmp();
   const path = await makePack(dir, "a.db");
   const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", path)]), openDb: async (p) => openNodeSqlite(p) });
-  assert.deepEqual(await reader.coverage(1), { surahClaims: 1, ayahs: [1, 2] });
-  assert.deepEqual(await reader.coverage(2), { surahClaims: 1, ayahs: [] });
-  assert.deepEqual(await reader.coverage(3), { surahClaims: 0, ayahs: [] });
-  assert.deepEqual(await reader.coverage(11), { surahClaims: 0, ayahs: [] }, "surah 11 must not match ayahs of surah 1");
+  assert.deepEqual(await reader.coverage(1), { surahClaims: 1, surahEntities: 0, ayahs: [1, 2] });
+  assert.deepEqual(await reader.coverage(2), { surahClaims: 1, surahEntities: 0, ayahs: [] });
+  assert.deepEqual(await reader.coverage(3), { surahClaims: 0, surahEntities: 0, ayahs: [] });
+  assert.deepEqual(await reader.coverage(11), { surahClaims: 0, surahEntities: 0, ayahs: [] }, "surah 11 must not match ayahs of surah 1");
   await reader.close();
 });
 
@@ -231,7 +231,7 @@ test("a pack that will not open, or whose tables are damaged, is skipped and the
 
 test("with no pack installed the reader returns nothing and touches nothing", async () => {
   const reader = createKnowledgeReader({ registry: fakeRegistry([]), openDb: async () => { throw new Error("must not open"); } });
-  assert.deepEqual(await reader.coverage(1), { surahClaims: 0, ayahs: [] });
+  assert.deepEqual(await reader.coverage(1), { surahClaims: 0, surahEntities: 0, ayahs: [] });
   assert.deepEqual(await reader.surah(1, "en"), []);
   assert.deepEqual(await reader.ayah(1, 1, "en"), { claims: [], reports: [] });
 });
@@ -315,4 +315,156 @@ test("trust: a pack that fails the check is never opened, and is checked again w
   assert.deepEqual(await strict.surah(1, "en"), []);
   await reader.close();
   await strict.close();
+});
+
+
+// ------------------------------------------------------------------- browse and search
+
+/** Adds a passage with an Arabic-script text and a published report link, the way a built pack has it. */
+const withArabicPassage = async (db: SqlDriver): Promise<void> => {
+  await db.run("INSERT INTO source_passage (id, edition_id, page, quote, quote_language) VALUES ('p-ar', 'ed-open', '3', ?, 'ar')", ["\u0643\u064E\u0644\u0650\u0645\u064E\u0629 \u062A\u062C\u0631\u064A\u0628\u064A\u0629 \u0623\u064E\u062D\u064E\u062F"]);
+  await db.run("INSERT INTO edge (id, type, from_kind, from_id, to_kind, to_id, editorial_status, editorial_basis, created_by, dataset_version) VALUES ('e-ar', 'REPORT_REFERENCES_AYAH', 'source_passage', 'p-ar', 'ayah', '2:5', 'approved', 'basis', 't', 1)");
+  await db.run("INSERT INTO edge_passage (edge_id, passage_id) VALUES ('e-ar', 'p-ar')");
+  await db.run("UPDATE edge SET editorial_status = 'published' WHERE id = 'e-ar'");
+};
+
+test("browse: every surah with something, in surah order, counting claims about the surah and ayahs with a claim or report", async () => {
+  const dir = await tmp();
+  const path = await makePack(dir, "a.db");
+  const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", path)]), openDb: async (p) => openNodeSqlite(p) });
+  // Surah 1: one claim about the surah; ayahs 1:1 (a report) and 1:2 (a claim and a tafsir passage). Surah 2: one claim, no ayah.
+  assert.deepEqual(await reader.browse(), [{ surahId: 1, surahClaims: 1, surahEntities: 0, ayahs: 2 }, { surahId: 2, surahClaims: 1, surahEntities: 0, ayahs: 0 }]);
+  await reader.close();
+});
+
+test("browse across packs adds the claims and counts an ayah once", async () => {
+  const dir = await tmp();
+  const a = await makePack(dir, "a.db");
+  const b = await makePack(dir, "b.db", { prefix: "b-" });
+  const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", a), installed("pack-b", b)]), openDb: async (p) => openNodeSqlite(p) });
+  assert.deepEqual(await reader.browse(), [{ surahId: 1, surahClaims: 2, surahEntities: 0, ayahs: 2 }, { surahId: 2, surahClaims: 2, surahEntities: 0, ayahs: 0 }]);
+  await reader.close();
+});
+
+test("browse is empty with no packs, and a damaged pack contributes nothing", async () => {
+  const dir = await tmp();
+  const empty = createKnowledgeReader({ registry: fakeRegistry([]), openDb: async (p) => openNodeSqlite(p) });
+  assert.deepEqual(await empty.browse(), []);
+  assert.deepEqual(await empty.search("synthetic", "en"), { hits: [], truncated: false });
+  const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-x", join(dir, "missing.db"))]), openDb: async () => { throw new Error("cannot open"); } });
+  assert.deepEqual(await reader.browse(), []);
+});
+
+test("search finds published claims and quotable passages and says where each leads", async () => {
+  const dir = await tmp();
+  const path = await makePack(dir, "a.db");
+  const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", path)]), openDb: async (p) => openNodeSqlite(p) });
+  const claims = await reader.search("ayah claim", "en");
+  assert.equal(claims.truncated, false);
+  assert.deepEqual(claims.hits.map((h) => [h.kind, h.surahId, h.ayahNumber, h.evidenceLabel, h.snippet]), [["claim", 1, 2, "disputed", "Synthetic ayah claim."]]);
+  const quote = await reader.search("SYNTHETIC quote", "en"); // case is ignored
+  assert.deepEqual(quote.hits.map((h) => [h.kind, h.passageId, h.surahId, h.ayahNumber, h.workTitle, h.snippet]), [["passage", "p-open", 1, 2, "Synthetic Work", "synthetic quote"]]);
+  // "synthetic" is in every claim and in a quote: claims come first, then passages, each in Quran order.
+  const all = await reader.search("synthetic", "en");
+  assert.deepEqual(all.hits.map((h) => h.key), ["pack-a:claim:c-surah", "pack-a:claim:c-ayah", "pack-a:claim:c-other", "pack-a:passage:p-open"]);
+  assert.equal((await reader.search("a", "en")).hits.length, 0, "one letter is not a search");
+  assert.equal((await reader.search("   ", "en")).hits.length, 0);
+  assert.equal((await reader.search("no such words", "en")).hits.length, 0);
+  assert.equal((await reader.search("synthetic nonexistent", "en")).hits.length, 0, "every word must appear");
+  await reader.close();
+});
+
+test("search honours the limit and says when there was more", async () => {
+  const dir = await tmp();
+  const path = await makePack(dir, "a.db");
+  const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", path)]), openDb: async (p) => openNodeSqlite(p) });
+  const r = await reader.search("synthetic", "en", 2);
+  assert.equal(r.hits.length, 2);
+  assert.equal(r.truncated, true);
+  await reader.close();
+});
+
+test("search never shows what the reader would not: a draft claim, a retracted claim, or a quote whose licence forbids redistribution", async () => {
+  const dir = await tmp();
+  const path = await makePack(dir, "a.db", {
+    extra: async (db) => {
+      await db.exec("DROP TRIGGER source_passage_quote_ins; DROP TRIGGER source_passage_quote_upd;");
+      await db.exec(`
+        UPDATE source_passage SET quote = 'forbidden quote', quote_language = 'en' WHERE id = 'p-closed';
+        INSERT INTO edge (id, type, from_kind, from_id, to_kind, to_id, editorial_status, editorial_basis, created_by, dataset_version) VALUES ('e-closed', 'REPORT_REFERENCES_AYAH', 'source_passage', 'p-closed', 'ayah', '1:3', 'approved', 'basis', 't', 1);
+        INSERT INTO edge_passage (edge_id, passage_id) VALUES ('e-closed', 'p-closed');
+        UPDATE edge SET editorial_status = 'published' WHERE id = 'e-closed';
+        INSERT INTO claim (id, claim_type, evidence_label, editorial_status, created_by, dataset_version) VALUES ('c-draft', 'historical_report', 'source_reported', 'draft', 't', 1);
+        INSERT INTO claim_text (claim_id, lang, text) VALUES ('c-draft', 'en', 'Hidden draft words.');
+        INSERT INTO edge (id, type, from_kind, from_id, to_kind, to_id, created_by, dataset_version) VALUES ('e-draft', 'CLAIM_CONCERNS_SURAH', 'claim', 'c-draft', 'surah', '1', 't', 1);
+        UPDATE claim SET editorial_status = 'retracted' WHERE id = 'c-other';
+      `);
+    },
+  });
+  const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", path)]), openDb: async (p) => openNodeSqlite(p) });
+  assert.equal((await reader.search("forbidden", "en")).hits.length, 0);
+  assert.equal((await reader.search("hidden draft", "en")).hits.length, 0);
+  assert.equal((await reader.search("another surah", "en")).hits.length, 0, "a retracted claim is not searchable");
+  await reader.close();
+});
+
+test("search matches the language the claim has: the asked one, else English, else any, and a Bengali word finds the Bengali text", async () => {
+  const dir = await tmp();
+  const path = await makePack(dir, "a.db");
+  const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", path)]), openDb: async (p) => openNodeSqlite(p) });
+  const bn = await reader.search("\u0995\u09C3\u09A4\u09CD\u09B0\u09BF\u09AE", "en"); // a Bengali word of the synthetic text
+  assert.deepEqual(bn.hits.map((h) => [h.key, h.snippet]), [["pack-a:claim:c-surah", "\u0995\u09C3\u09A4\u09CD\u09B0\u09BF\u09AE \u09B8\u09C2\u09B0\u09BE \u09A6\u09BE\u09AC\u09BF\u0964"]]);
+  await reader.close();
+});
+
+test("Arabic search ignores vowel marks and folds alef variants, in both the text and the query", async () => {
+  const dir = await tmp();
+  const path = await makePack(dir, "a.db", { extra: withArabicPassage });
+  const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", path)]), openDb: async (p) => openNodeSqlite(p) });
+  for (const q of ["\u0643\u0644\u0645\u0629", "\u0643\u064E\u0644\u0650\u0645\u064E\u0629", "\u0627\u062D\u062F", "\u0623\u062D\u062F"]) {
+    const r = await reader.search(q, "ar");
+    assert.deepEqual(r.hits.map((h) => [h.passageId, h.surahId, h.ayahNumber]), [["p-ar", 2, 5]], q);
+  }
+  // The snippet is the original text, vowel marks and all.
+  const hit = (await reader.search("\u0643\u0644\u0645\u0629", "ar")).hits[0];
+  assert.equal(hit?.snippet, "\u0643\u064E\u0644\u0650\u0645\u064E\u0629 \u062A\u062C\u0631\u064A\u0628\u064A\u0629 \u0623\u064E\u062D\u064E\u062F");
+  await reader.close();
+});
+
+test("foldWithMap: folds, and points each folded character back into the original text", () => {
+  assert.equal(foldWithMap("  Hello,   WORLD ").folded, "hello, world ");
+  assert.equal(foldWithMap("\u0671\u0644\u0652\u062D\u064E\u0645\u0652\u062F\u064F").folded, "\u0627\u0644\u062D\u0645\u062F");
+  assert.equal(foldWithMap("\u0649").folded, "\u064A");
+  // The map: the folded "c" of "a\u064Bbc" was the original's fourth code unit (index 3).
+  const m = foldWithMap("a\u064Bbc");
+  assert.equal(m.folded, "abc");
+  assert.deepEqual(m.map, [0, 2, 3]);
+  // Bengali vowel signs are kept: they change the word.
+  assert.notEqual(foldWithMap("\u0995\u09BE").folded, foldWithMap("\u0995").folded);
+  assert.deepEqual(searchTerms(" Foo  foo  BAR "), ["foo", "bar"]);
+  assert.deepEqual(searchTerms(""), []);
+});
+
+test("snippetAround: a cut of the original around the match, marked with an ellipsis, never splitting a mark from its letter", () => {
+  assert.equal(snippetAround("short text", "text"), "short text");
+  const long = `${"word ".repeat(80)}NEEDLE ${"tail ".repeat(80)}`;
+  const s = snippetAround(long, "needle");
+  assert.match(s, /^…/);
+  assert.match(s, /…$/);
+  assert.match(s, /NEEDLE/);
+  assert.ok(s.length <= 170);
+  // No term, or a term that is not there: the start of the text.
+  assert.equal(snippetAround("alpha beta", ""), "alpha beta");
+  assert.equal(snippetAround("alpha beta", "zzz"), "alpha beta");
+  // A cut that would start on a vowel mark moves on to the next letter.
+  const arabic = `${"\u0628".repeat(60)}\u064E\u0643\u0644\u0645\u0629`;
+  assert.doesNotMatch(snippetAround(arabic, "\u0643\u0644\u0645\u0629"), /^…[\u064B-\u065F]/);
+});
+
+test("parseSurahTarget and parseAyahTarget accept only real references", () => {
+  assert.equal(parseSurahTarget("1"), 1);
+  assert.equal(parseSurahTarget("114"), 114);
+  for (const bad of ["0", "115", "x", "1:1", "", "01x"]) assert.equal(parseSurahTarget(bad), null, bad);
+  assert.deepEqual(parseAyahTarget("2:255"), { surahId: 2, ayahNumber: 255 });
+  for (const bad of ["2", "0:1", "115:1", "2:0", "2:x", "2:1:1", ""]) assert.equal(parseAyahTarget(bad), null, bad);
 });

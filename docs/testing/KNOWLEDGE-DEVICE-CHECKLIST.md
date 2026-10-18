@@ -47,3 +47,48 @@ Note the step, the message shown, and `adb logcat | grep -i tarteel`. The most l
 2. The `@noble` imports under Metro (`apps/mobile/src/knowledge/crypto.ts`): a package-exports resolution error at launch.
 3. File moves inside the app's documents directory (`apps/mobile/src/audio/fileStore.ts`, `move`).
 4. SHA-256 speed in JavaScript for larger packs.
+
+## Install and close on Android (regression for the expo-sqlite close crash)
+Needs a build made after the fix (a new native build is not required, the fix is JavaScript, but the app must be rebuilt) and a pack built after the fix.
+1. Install the app, open Settings -> Knowledge library -> Check for packs.
+2. Install "Occasions of revelation: al-Wahidi" once. Expect: "Installing..." then the installed message. The app must stay open.
+3. Repeat with airplane mode on after the download starts (expect a download error, no crash), then again normally.
+4. Tap Install twice quickly: only one install runs.
+5. Tap Cancel while "Installing..." shows: expect "Cancelled", no crash, and the pack is not installed.
+6. Remove the pack, install it again, then open a surah with the pack and an ayah that has a report (for example 105:1). Expect the source passage.
+7. Force-stop the app during "Installing...", reopen the Library: expect no stuck card and no leftover pack.
+8. While it runs, `adb logcat | grep -E "Scudo|SIGABRT|libexpo-sqlite"` must print nothing.
+If step 2 still crashes, send the logcat lines around `Fatal signal 6`: the trace tells whether it is still the close path.
+
+## Knowledge tab (added 2026-10-18; not yet run on a device)
+With a test app that has a catalogue address and key, and the Wahidi pack (or a demo pack) installed:
+- [ ] **Tab.** A "Knowledge" tab sits between Quran and Bookmarks. With the original empty `config.json` there is **no** such tab.
+- [ ] **Empty.** With no pack installed the tab says "No knowledge packs installed" and its button opens the Library.
+- [ ] **Browse.** After installing a pack and coming back to the tab (no restart), the surahs with context are listed in surah order, each with the number of ayahs; tapping one opens its History screen.
+- [ ] **Search.** Typing two letters or more shows results after a short pause; one letter shows the surah list. An Arabic word typed with and without vowel marks finds the same passages. Nothing found says so. Clearing the box brings the list back.
+- [ ] **Result.** Tapping a result opens the ayah's context (or the source page for a passage that no ayah links to).
+- [ ] **Ayah with nothing.** Open the History screen for an ayah with no pack content (`/history/1?ayah=1` style): it says nothing is installed for it, and does **not** say nothing is known.
+- [ ] **Failure.** With a pack file deleted by hand (Library shows it damaged), the tab shows either the list without it or "could not be read" with a working "Try again".
+- [ ] **Checksum error detail.** A failed install shows a small grey line under the message (error code, and for a checksum failure both digests).
+
+## Timeline (events, people, places). Needs a pack with entities: the demo packs from `npm run pack:demo` have a few synthetic ones
+- [ ] With no pack installed: the Knowledge tab has no Timeline card; opening `/timeline` shows the empty state with a Library button.
+- [ ] Install the demo pack: the Knowledge tab shows a "Timeline" card. Open it. Events are listed oldest first; the undated event is last and says "Date unknown".
+- [ ] Dates read as exactly as the source: "2–3 AH", "c. 610 CE", never a more exact year. People show birth–death; places show no date.
+- [ ] Switch Events / People / Places. A disputed entry shows the "Disputed" label. Bengali UI: dates, kinds and subtypes are in Bengali.
+- [ ] Open an entry: date card with its note, summary, links to related events / people / places (they open), "In the Quran" links open the History screen on the right surah or ayah, claims show their sources, sources open the Source screen.
+- [ ] The History screen of surah 1 (and the ayah) lists the linked events, people and places under "Events, people and places".
+- [ ] Search for a word from an entry's name: a "Timeline entry" result opens it.
+- [ ] Install an older pack file (built before migration 3, if you have one) next to a new one: both still work, and the old one adds no entries.
+- [ ] Remove the pack while the Details screen is open elsewhere in the stack: it says the entry is not available.
+
+## Online Hadith (only after `apps/mobile/src/hadith/config.json` is set to `true` in a test build)
+- [ ] With the flag `false`: no Hadith row in the Knowledge tab, no Settings group, no request to api.islamic.app (check with a network monitor).
+- [ ] With the flag `true`, setting off: opening Hadith shows the consent card and makes no request.
+- [ ] Turn on: collections load; open a collection, a book, a hadith. Arabic is right-to-left and readable; English is labelled as given by Sunnah.com.
+- [ ] Grading shows the grader's name, or "grader not named"; the note that the chain of narrators is missing is visible.
+- [ ] Search in English and Arabic: matched words are bold; results open the hadith; under two characters nothing is requested.
+- [ ] Airplane mode: a clear "could not reach" message and a working retry.
+- [ ] "Open on Sunnah.com" appears only for Bukhari, Muslim, Nasai, Abu Dawud, Tirmidhi, Ibn Majah and the Forty, and opens the right hadith.
+- [ ] Credit and "not reviewed by Tarteel" are on every hadith screen. Bengali UI shows the Arabic/English-only note on a hadith.
+- [ ] Nothing hadith-related is on disk after use (app storage shows no new files).

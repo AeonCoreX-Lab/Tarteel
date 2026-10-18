@@ -52,17 +52,18 @@ test("the example pack loads without problems", async () => {
 test("only published claims and edges are shipped, with only the sources they cite", async () => {
   const sel = selectForPack(await load());
   assert.deepEqual(sel.claims.map((c) => c.id).sort(), ["c-disputed", "c-published-1", "c-published-2"]);
-  assert.deepEqual(sel.edges.map((e) => e.id).sort(), ["e-1", "e-2"]);
+  assert.deepEqual(sel.edges.map((e) => e.id).sort(), ["e-1", "e-2", "e-ent-1", "e-ent-2", "e-ent-3", "e-ent-4", "e-ent-5", "e-ent-6"]);
+  assert.deepEqual(sel.entities.map((n) => n.id).sort(), ["ent-ev-1", "ent-ev-2", "ent-ev-undated", "ent-per-1", "ent-pl-1"], "the draft entity is left out");
   assert.deepEqual([...sel.passageIds].sort(), ["p-1", "p-2"], "the passage cited only by a draft is left out");
   assert.deepEqual(sel.licenses.map((l) => l.id), ["lic-open"], "the pending licence is not shipped, because nothing shipped depends on it");
-  assert.deepEqual(sel.excluded, { claims: 2, edges: 1 });
+  assert.deepEqual(sel.excluded, { claims: 2, edges: 2, entities: 1 });
 });
 
 test("the built database holds exactly that, passes the release validation, and records the pack", async () => {
   const s = await load();
   const dir = await tmp();
   const built = await buildPackDatabase(s, join(dir, "p.db"));
-  assert.deepEqual(built.counts, { claims: 3, edges: 2, passages: 2, editions: 1, works: 1, licenses: 1 });
+  assert.deepEqual(built.counts, { claims: 3, edges: 8, entities: 5, passages: 2, editions: 1, works: 1, licenses: 1 });
   const db = openNodeSqlite(built.dbPath, { readOnly: true });
   const ids = async (sql: string) => (await db.all<{ id: string }>(sql)).map((r) => r.id);
   assert.deepEqual(await ids("SELECT id FROM claim WHERE editorial_status = 'published' ORDER BY id"), ["c-disputed", "c-published-1", "c-published-2"]);
@@ -71,9 +72,20 @@ test("the built database holds exactly that, passes the release validation, and 
   assert.deepEqual((await db.all<{ lang: string; translation_status: string }>("SELECT lang, translation_status FROM claim_text WHERE claim_id = 'c-published-1' ORDER BY lang")).map((r) => [r.lang, r.translation_status]), [["bn", "reviewed"], ["en", "original"]]);
   assert.equal((await db.get<{ dataset_version: number }>("SELECT dataset_version FROM claim WHERE id = 'c-published-1'"))?.dataset_version, 1);
   assert.deepEqual((await db.all<{ key: string; value: string }>("SELECT key, value FROM content_meta ORDER BY key")).map((r) => [r.key, r.value]),
-    [["pack_id", "example-pack"], ["pack_version", "1"], ["schema_version", "2"]]);
+    [["pack_id", "example-pack"], ["pack_version", "1"], ["schema_version", "3"]]);
   const quran = await quranDb();
   assert.deepEqual(await validateKnowledgeDb(db, { release: true, quran }), []);
+  await db.close();
+});
+
+test("a built pack contains no virtual tables (the expo-sqlite close crash needs one) and no triggers that feed them", async () => {
+  const dir = await tmp();
+  const built = await buildPackDatabase(await load(), join(dir, "p.db"));
+  const db = openNodeSqlite(built.dbPath, { readOnly: true });
+  assert.deepEqual(await db.all("SELECT name FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE%'"), []);
+  assert.deepEqual(await db.all("SELECT name FROM sqlite_master WHERE name LIKE '%\\_fts%' ESCAPE '\\'"), []);
+  assert.deepEqual(await db.all("SELECT name FROM sqlite_master WHERE type = 'trigger' AND name IN ('translation_ayahs_ai', 'translation_ayahs_ad')"), []);
+  assert.equal((await db.get<{ ok: string }>("PRAGMA quick_check"))?.ok ?? "ok", "ok");
   await db.close();
 });
 

@@ -22,7 +22,25 @@ A complete synthetic example (no real religious content) is in `tests/fixtures/k
 | `licenses.json` | yes | array of rights decisions: `id`, `name`, `redistribution` (`yes` / `no` / `pending`), `nonCommercialOnly`, `shareAlike`, `attribution`, optional `url`, `termsNote`, `inventoryRef` |
 | `sources.json` | yes | `{ works, editions, passages }`. A passage is a locator (volume, page, chapter, section, report or hadith number: at least one), plus an optional `quote` |
 | `claims.json` | yes | array of statements: `claimType`, `evidenceLabel`, `editorialStatus`, `createdBy`, `text` per language, `supports` and `contradicts` (passage ids) |
-| `edges.json` | no | typed links: `REPORT_REFERENCES_AYAH`, `TAFSIR_EXPLAINS_AYAH` (passage -> ayah), `CLAIM_CONCERNS_AYAH`, `CLAIM_CONCERNS_SURAH` (claim -> ayah / surah) |
+| `edges.json` | no | typed links: `REPORT_REFERENCES_AYAH`, `TAFSIR_EXPLAINS_AYAH` (passage -> ayah), `CLAIM_CONCERNS_AYAH`, `CLAIM_CONCERNS_SURAH` (claim -> ayah / surah); with `entities.json`: `EVENT_CONCERNS_AYAH`, `EVENT_CONCERNS_SURAH`, `PERSON_MENTIONED_IN_AYAH`, `PLACE_MENTIONED_IN_AYAH`, `EVENT_AT_PLACE`, `PERSON_IN_EVENT`, `CLAIM_CONCERNS_EVENT`, `CLAIM_CONCERNS_PERSON`, `CLAIM_CONCERNS_PLACE`. Use `fromKind` / `toKind` `event`, `person` or `place` and the entity's id |
+| `entities.json` | no | events, people and places (see below) |
+
+### entities.json
+```json
+{
+  "id": "ev-example", "kind": "event", "subtype": "battle",
+  "evidenceLabel": "source_reported", "editorialStatus": "published", "createdBy": "your-name",
+  "uncertaintyNote": "needed for disputed / no_established_report_found",
+  "editorialBasis": "or list passage ids in supports",
+  "date": { "calendar": "ah", "start": 2, "end": 3, "precision": "year", "note": "why this date" },
+  "text": { "en": { "name": "...", "summary": "optional, one short neutral paragraph", "status": "original" } },
+  "supports": ["passage-id"]
+}
+```
+- `kind`: `event`, `person`, `place`. `subtype` (optional) is one of: event `revelation migration battle treaty birth death gathering other`; person `prophet companion family scholar ruler other`; place `city region mountain building water other`.
+- `date` is optional (leave it out when unknown; a place never has one). **Write the date as exactly as the source does, no more.** `precision`: `year` (a year or a span of years), `decade` (give the first year, e.g. 620), `century` (give any year in it), `approximate`. `calendar`: `ah` or `ce`. For a person, `start` is the birth and `end` the death. Do not convert Hijri to Gregorian yourself; the build works out an approximate year for ordering only.
+- Same rules as claims: published needs `supports` or an `editorialBasis`, label other than `unverified`, and a name that is `original` or `reviewed`. Ids share one namespace across the three kinds.
+- Do not invent dates, people, places or events. If a fact has no source yet, it stays a draft.
 
 Ids are lower-case (`a-z 0-9 . _ : -`). Ayah ids are `"surah:ayah"` (`"2:255"`), surah ids are `"9"`.
 

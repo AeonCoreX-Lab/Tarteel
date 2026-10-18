@@ -27,9 +27,11 @@ const REQUIRED = [
   "v_published_claims_without_support", "v_published_edges_without_support",
 ] as const;
 
-/** Entity kinds stored in the checked database itself, and the column that identifies them. */
-const LOCAL_KINDS: Readonly<Record<string, string>> = {
-  claim: "claim", source_work: "source_work", source_edition: "source_edition", source_passage: "source_passage",
+/** Node kinds stored in the checked database itself: the table, and a condition that picks the kind out of it. */
+const LOCAL_KINDS: Readonly<Record<string, { table: string; where: string }>> = {
+  claim: { table: "claim", where: "1" }, source_work: { table: "source_work", where: "1" }, source_edition: { table: "source_edition", where: "1" },
+  source_passage: { table: "source_passage", where: "1" },
+  event: { table: "entity", where: "kind = 'event'" }, person: { table: "entity", where: "kind = 'person'" }, place: { table: "entity", where: "kind = 'place'" },
 };
 
 const LIST_LIMIT = 10;
@@ -75,10 +77,27 @@ export async function validateKnowledgeDb(db: SqlDriver, opts: KnowledgeValidati
        (e.from_kind = 'claim' AND NOT EXISTS (SELECT 1 FROM claim c WHERE c.id = e.from_id AND c.editorial_status = 'published')) OR
        (e.to_kind = 'claim' AND NOT EXISTS (SELECT 1 FROM claim c WHERE c.id = e.to_id AND c.editorial_status = 'published'))) ORDER BY e.id`));
 
-  for (const [kind, table] of Object.entries(LOCAL_KINDS)) {
+  const hasEntities = present.has("entity") && present.has("entity_text") && present.has("entity_passage");
+  for (const [kind, { table, where }] of Object.entries(LOCAL_KINDS)) {
+    if (table === "entity" && !hasEntities) continue; // a pack older than content migration 3 has no events, people or places
     report("error", "edge-endpoint-missing", `edges that end at a ${kind} that does not exist`, await ids(
-      `SELECT e.id FROM edge e WHERE (e.from_kind = '${kind}' AND e.from_id NOT IN (SELECT id FROM ${table}))
-          OR (e.to_kind = '${kind}' AND e.to_id NOT IN (SELECT id FROM ${table})) ORDER BY e.id`));
+      `SELECT e.id FROM edge e WHERE (e.from_kind = '${kind}' AND e.from_id NOT IN (SELECT id FROM ${table} WHERE ${where}))
+          OR (e.to_kind = '${kind}' AND e.to_id NOT IN (SELECT id FROM ${table} WHERE ${where})) ORDER BY e.id`));
+  }
+
+  if (hasEntities) {
+    report("error", "published-entity-unsupported", "published events, people and places with no supporting passage and no editorial basis", await ids("SELECT id FROM v_published_entities_without_support ORDER BY id"));
+    report("error", "published-entity-unverified", "published events, people and places still labelled unverified", await ids("SELECT id FROM entity WHERE editorial_status = 'published' AND evidence_label = 'unverified' ORDER BY id"));
+    report("error", "published-entity-no-reviewed-text", "published events, people and places with no original or reviewed name", await ids(
+      `SELECT e.id FROM entity e WHERE e.editorial_status = 'published'
+         AND NOT EXISTS (SELECT 1 FROM entity_text t WHERE t.entity_id = e.id AND t.translation_status IN ('original','reviewed')) ORDER BY e.id`));
+    report("warning", "published-entity-machine-translation", "machine-drafted text on published events, people and places (entity and language)", await ids(
+      `SELECT e.id || ' (' || t.lang || ')' AS id FROM entity e JOIN entity_text t ON t.entity_id = e.id
+        WHERE e.editorial_status = 'published' AND t.translation_status = 'machine_draft' ORDER BY e.id, t.lang`));
+    report("error", "edge-to-unpublished-entity", "published edges that end at an event, person or place which is not published", await ids(
+      `SELECT e.id FROM edge e WHERE e.editorial_status = 'published' AND (
+         (e.from_kind IN ('event','person','place') AND NOT EXISTS (SELECT 1 FROM entity n WHERE n.id = e.from_id AND n.kind = e.from_kind AND n.editorial_status = 'published')) OR
+         (e.to_kind IN ('event','person','place') AND NOT EXISTS (SELECT 1 FROM entity n WHERE n.id = e.to_id AND n.kind = e.to_kind AND n.editorial_status = 'published'))) ORDER BY e.id`));
   }
 
   await checkQuranEndpoints(db, opts.quran ?? db, release, issues, report);

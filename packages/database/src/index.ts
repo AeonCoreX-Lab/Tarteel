@@ -2,6 +2,7 @@ export * from "./migrations.ts";
 export * from "./repositories.ts";
 export * from "./importer.ts";
 export * from "./knowledge.ts";
+export * from "./knowledge-dates.ts";
 export * from "./packs.ts";
 export * from "./pack-key.ts";
 export * from "./pack-library.ts";

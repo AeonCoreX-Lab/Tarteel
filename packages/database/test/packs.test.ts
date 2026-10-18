@@ -172,7 +172,10 @@ test("a failed update keeps the last known-good pack: bad download, invalid cont
   const damaged = v2.slice();
   damaged[damaged.length - 1] = (damaged[damaged.length - 1] ?? 0) ^ 0xff;
   w.serve(damaged);
-  assert.equal(failure(await installPack(w.ports, await manifestFor(v2, { packVersion: 2 }), URL_A)).code, "checksum-mismatch");
+  const mismatch = failure(await installPack(w.ports, await manifestFor(v2, { packVersion: 2 }), URL_A));
+  assert.equal(mismatch.code, "checksum-mismatch");
+  // The message carries both digests, so a report from a phone tells a stale catalogue from a damaged transfer.
+  assert.match(mismatch.message, /got [0-9a-f]{16} \(\d+ bytes\), the manifest says [0-9a-f]{16}/);
   await keepsV1();
 
   const bad = failure(await install(w, { version: 2, broken: "unsupported" }));
@@ -234,14 +237,14 @@ test("schema compatibility: older packs are migrated, newer ones and lying manif
   const w = await world();
   const old = must(await install(w, { schemaVersion: 1 }));
   const db = await w.ports.openDb(old.installed.path);
-  assert.equal((await db.get<{ v: number }>("SELECT MAX(id) AS v FROM schema_migrations"))?.v, 2);
+  assert.equal((await db.get<{ v: number }>("SELECT MAX(id) AS v FROM schema_migrations"))?.v, CONTENT_MIGRATIONS.length);
   await db.close();
   const diskHash = await sha256Hex(await w.ports.files.read("packages", old.installed.path));
   assert.equal(old.installed.sha256, diskHash, "the registry holds the hash of the file as installed (after migration)");
   assert.equal(await verifyInstalledPack(w.ports, old.installed), "ok");
 
   const w2 = await world();
-  assert.equal(failure(await install(w2, { schemaVersion: 2, manifest: { schemaVersion: 3 } })).code, "app-too-old");
+  assert.equal(failure(await install(w2, { schemaVersion: 2, manifest: { schemaVersion: CONTENT_MIGRATIONS.length + 1 } })).code, "app-too-old");
   assert.equal(failure(await install(w2, { schemaVersion: 2, manifest: { schemaVersion: 1 } })).code, "schema-error");
   const junk = new TextEncoder().encode("this is not a database".repeat(20));
   w2.serve(junk);

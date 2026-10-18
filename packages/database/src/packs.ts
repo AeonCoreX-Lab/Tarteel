@@ -286,7 +286,9 @@ async function download(ports: PackPorts, url: string, manifest: PackManifest, o
       if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
       if (res.bytes.length !== manifest.file.size) throw new PackError("size-mismatch", `downloaded ${res.bytes.length} bytes, the manifest says ${manifest.file.size}`);
       const hash = await ports.sha256(res.bytes);
-      if (hash !== manifest.file.sha256) throw new PackError("checksum-mismatch", "the downloaded file does not match the manifest checksum");
+      // Both digests are shown (first 16 hex digits) so a failure can be told apart: a stale catalogue, a replaced file or a damaged transfer.
+      if (hash !== manifest.file.sha256)
+        throw new PackError("checksum-mismatch", `the downloaded file does not match the manifest checksum: got ${hash.slice(0, 16)} (${res.bytes.length} bytes), the manifest says ${manifest.file.sha256.slice(0, 16)}`);
       return res.bytes;
     } catch (e) {
       if (e instanceof PackError) throw e;
@@ -318,6 +320,7 @@ async function prepareDatabase(ports: PackPorts, manifest: PackManifest, part: s
   } catch (e) {
     throw new PackError("schema-error", `the file cannot be opened as a database: ${e instanceof Error ? e.message : String(e)}`);
   }
+  let failed = false;
   try {
     throwIfCancelled(signal);
     let built: number | null | undefined;
@@ -344,19 +347,14 @@ async function prepareDatabase(ports: PackPorts, manifest: PackManifest, part: s
     const errors = issues.filter((i) => i.severity === "error");
     if (errors.length > 0) throw new PackError("validation-failed", errors.map((i) => `[${i.code}] ${i.message}`).join("; "), issues);
   } catch (e) {
-    // Validation failed: release the file, but the validation error is the one worth reporting, so a close error is dropped.
+    failed = true;
+    throw e;
+  } finally {
     try {
       await db.close();
-    } catch {
-      /* intentionally ignored */
+    } catch (e) {
+      if (!failed) throw new PackError("storage-error", `the validated file could not be released: ${e instanceof Error ? e.message : String(e)}`);
     }
-    throw e;
-  }
-  // Validation succeeded: a file that cannot be released is an error, nothing may be installed from a file that is still open.
-  try {
-    await db.close();
-  } catch (e) {
-    throw new PackError("storage-error", `the validated file could not be released: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 

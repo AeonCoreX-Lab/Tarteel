@@ -43,6 +43,11 @@ export default function RootLayout() {
         <Stack.Screen name="library" options={{ title: t("libraryTitle") }} />
         <Stack.Screen name="history/[id]" options={{ title: t("historyTitle") }} />
         <Stack.Screen name="source" options={{ title: t("srcTitle") }} />
+        <Stack.Screen name="timeline" options={{ title: t("tlTitle") }} />
+        <Stack.Screen name="entity" options={{ title: t("entTitle") }} />
+        <Stack.Screen name="hadith/index" options={{ title: t("hadTitle") }} />
+        <Stack.Screen name="hadith/[collection]" options={{ title: t("hadTitle") }} />
+        <Stack.Screen name="hadith/view" options={{ title: t("hadTitle") }} />
       </Stack>
       <AudioDock />
       </View>

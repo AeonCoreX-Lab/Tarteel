@@ -1,0 +1,42 @@
+[
+  {
+    "id": "ent-ev-1", "kind": "event", "subtype": "gathering",
+    "evidenceLabel": "source_reported", "editorialStatus": "published", "createdBy": "tester",
+    "date": { "calendar": "ah", "start": 2, "end": 3, "precision": "year", "note": "Synthetic dating note." },
+    "text": {
+      "en": { "name": "Synthetic gathering", "summary": "A made-up event used to test the tools.", "status": "original" },
+      "bn": { "name": "কৃত্রিম সমাবেশ", "status": "reviewed" }
+    },
+    "supports": ["p-1"]
+  },
+  {
+    "id": "ent-ev-2", "kind": "event", "subtype": "treaty",
+    "evidenceLabel": "disputed", "uncertaintyNote": "Synthetic: the sources disagree about the year.", "editorialStatus": "published", "createdBy": "tester",
+    "editorialBasis": "Synthetic basis for the example event.",
+    "date": { "calendar": "ce", "start": 610, "precision": "approximate" },
+    "text": { "en": { "name": "Synthetic agreement", "summary": "Another made-up event, dated only approximately.", "status": "original" } },
+    "supports": []
+  },
+  {
+    "id": "ent-ev-undated", "kind": "event", "evidenceLabel": "scholarly_interpretation", "editorialStatus": "published", "createdBy": "tester",
+    "editorialBasis": "Synthetic basis for the undated event.",
+    "text": { "en": { "name": "Synthetic undated event", "status": "original" } },
+    "supports": []
+  },
+  {
+    "id": "ent-per-1", "kind": "person", "subtype": "companion", "evidenceLabel": "source_reported", "editorialStatus": "published", "createdBy": "tester",
+    "date": { "calendar": "ce", "start": 600, "end": 660, "precision": "decade" },
+    "text": { "en": { "name": "Synthetic person", "summary": "A made-up person.", "status": "original" } },
+    "supports": ["p-2"]
+  },
+  {
+    "id": "ent-pl-1", "kind": "place", "subtype": "city", "evidenceLabel": "source_reported", "editorialStatus": "published", "createdBy": "tester",
+    "text": { "en": { "name": "Synthetic city", "status": "original" } },
+    "supports": ["p-1"]
+  },
+  {
+    "id": "ent-draft", "kind": "event", "evidenceLabel": "unverified", "editorialStatus": "draft", "createdBy": "tester",
+    "text": { "en": { "name": "Synthetic draft event", "status": "original" } },
+    "supports": []
+  }
+]

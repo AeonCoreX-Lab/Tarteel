@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import type { AyahContext, CatalogEntry, HistoryClaim, KnowledgeCoverage, LibraryRow, PackFailureCode, PackIntegrity, SourceDetail } from "@tarteel/database";
+import type { AyahContext, CatalogEntry, EntityDetail, EntityKind, EntityRef, EntitySummary, HistoryClaim, KnowledgeCoverage, KnowledgeSearchResult, LibraryRow, PackFailureCode, PackIntegrity, SourceDetail, SurahKnowledge } from "@tarteel/database";
 import type { StringKey } from "../i18n";
 import { getLibrary, getReader, knowledgeConfigured } from "./runtime";
 
 export interface LibraryMessage {
   tone: "ok" | "error";
   text: StringKey;
+  /** Technical detail of a failure (in English, for a bug report), shown small under the message. Never contains personal data. */
+  detail?: string;
 }
 
 /** What to tell the person for each way an install can fail. Every message also says whether the installed packs were touched. */
@@ -67,6 +69,8 @@ export function useKnowledgeLibrary(): KnowledgeLibraryState & {
     available: knowledgeConfigured, ready: false, rows: [], damaged: new Map(), catalog: "idle", busyId: null, message: null,
   });
   const abort = useRef<AbortController | null>(null);
+  /** Set synchronously on a tap, so a second tap before the screen re-renders cannot start a second operation. */
+  const working = useRef(false);
   const alive = useRef(true);
   const patch = useCallback((p: Partial<KnowledgeLibraryState>) => {
     if (alive.current) setState((s) => ({ ...s, ...p }));
@@ -110,31 +114,51 @@ export function useKnowledgeLibrary(): KnowledgeLibraryState & {
   }, [patch, reload]);
 
   const install = useCallback((entry: CatalogEntry, repair = false) => {
+    if (working.current) return;
+    working.current = true;
     void (async () => {
       patch({ busyId: entry.manifest.packId, message: null });
-      const lib = await getLibrary();
-      const controller = new AbortController();
-      abort.current = controller;
-      const r = await lib.install(entry, { signal: controller.signal, allowSameVersion: repair });
-      abort.current = null;
-      await reload();
-      if (r.ok) {
-        setState((s) => {
-          const damaged = new Map(s.damaged);
-          damaged.delete(entry.manifest.packId);
-          return { ...s, damaged, busyId: null, message: { tone: "ok", text: "libInstalledOk" } };
-        });
-      } else patch({ busyId: null, message: { tone: r.code === "cancelled" ? "ok" : "error", text: failureKey(r.code) } });
+      try {
+        const lib = await getLibrary();
+        const controller = new AbortController();
+        abort.current = controller;
+        const r = await lib.install(entry, { signal: controller.signal, allowSameVersion: repair });
+        abort.current = null;
+        working.current = false;
+        await reload();
+        if (r.ok) {
+          setState((s) => {
+            const damaged = new Map(s.damaged);
+            damaged.delete(entry.manifest.packId);
+            return { ...s, damaged, busyId: null, message: { tone: "ok", text: "libInstalledOk" } };
+          });
+        } else patch({ busyId: null, message: r.code === "cancelled" ? { tone: "ok", text: failureKey(r.code) } : { tone: "error", text: failureKey(r.code), detail: `${r.code}: ${r.message}` } });
+      } catch {
+        // installPack reports expected failures as results; this is something unexpected. Never leave the card on "Installing...".
+        patch({ busyId: null, message: { tone: "error", text: "libErrGeneric" } });
+      } finally {
+        abort.current = null;
+        working.current = false;
+      }
     })();
   }, [patch, reload]);
 
   const remove = useCallback((packId: string) => {
+    if (working.current) return;
+    working.current = true;
     void (async () => {
       patch({ busyId: packId, message: null });
-      const lib = await getLibrary();
-      const r = await lib.remove(packId);
-      await reload();
-      patch({ busyId: null, message: r.ok ? { tone: "ok", text: "libRemovedOk" } : { tone: "error", text: r.code === "required-by" ? "libRequiredBy" : "libErrGeneric" } });
+      try {
+        const lib = await getLibrary();
+        const r = await lib.remove(packId);
+        working.current = false;
+        await reload();
+        patch({ busyId: null, message: r.ok ? { tone: "ok", text: "libRemovedOk" } : { tone: "error", text: r.code === "required-by" ? "libRequiredBy" : "libErrGeneric" } });
+      } catch {
+        patch({ busyId: null, message: { tone: "error", text: "libErrGeneric" } });
+      } finally {
+        working.current = false;
+      }
     })();
   }, [patch, reload]);
 
@@ -145,30 +169,100 @@ export function useKnowledgeLibrary(): KnowledgeLibraryState & {
 
 // ------------------------------------------------------------------- reading
 
+/** A read of the installed packs: still loading, done, or failed (so a screen can offer a retry instead of waiting for ever). */
+export type Loaded<T> = { status: "loading" } | { status: "ready"; value: T } | { status: "error" };
+
 /**
  * Runs `load` on the installed packs every time the screen comes into focus (so a pack installed in the Library shows up
- * when the person comes back) and returns the result, or null while loading, when packs are not offered, or when reading fails.
+ * when the person comes back). `retry` runs it again after a failure.
  */
-function useFromPacks<T>(load: (reader: Awaited<ReturnType<typeof getReader>>) => Promise<T>, deps: readonly unknown[]): T | null {
-  const [value, setValue] = useState<T | null>(null);
+function usePacksQuery<T>(load: (reader: Awaited<ReturnType<typeof getReader>>) => Promise<T>, deps: readonly unknown[]): { state: Loaded<T>; retry: () => void } {
+  const [state, setState] = useState<Loaded<T>>({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
   const run = useCallback(load, deps);
   useFocusEffect(
     useCallback(() => {
       if (!knowledgeConfigured) return undefined;
       let cancelled = false;
-      void getReader().then(run).then((v) => !cancelled && setValue(v), () => !cancelled && setValue(null));
+      void getReader().then(run).then(
+        (value) => !cancelled && setState({ status: "ready", value }),
+        () => !cancelled && setState({ status: "error" }),
+      );
       return () => {
         cancelled = true;
       };
-    }, [run]),
+    }, [run, attempt]),
   );
-  return value;
+  const retry = useCallback(() => {
+    setState({ status: "loading" });
+    setAttempt((a) => a + 1);
+  }, []);
+  return { state, retry };
+}
+
+/** The value, or null while loading, when packs are not offered, or when reading fails. */
+function useFromPacks<T>(load: (reader: Awaited<ReturnType<typeof getReader>>) => Promise<T>, deps: readonly unknown[]): T | null {
+  const { state } = usePacksQuery(load, deps);
+  return state.status === "ready" ? state.value : null;
 }
 
 /** What the installed packs hold for a surah: drives the "History and context" entry points. Null when there is nothing to show. */
 export function useKnowledgeCoverage(surahId: number): KnowledgeCoverage | null {
   const c = useFromPacks((r) => r.coverage(surahId), [surahId]);
-  return c && (c.surahClaims > 0 || c.ayahs.length > 0) ? c : null;
+  return c && (c.surahClaims > 0 || c.surahEntities > 0 || c.ayahs.length > 0) ? c : null;
+}
+
+/** Every surah with something in an installed pack: the Knowledge tab's list. */
+export function useKnowledgeBrowse(): { state: Loaded<SurahKnowledge[]>; retry: () => void } {
+  return usePacksQuery((r) => r.browse(), []);
+}
+
+/**
+ * Search of the installed packs as the person types: nothing under two characters, then one search 300 ms after the last
+ * keystroke. A search that has been overtaken is dropped, so results never arrive for an older query.
+ */
+export function useKnowledgeSearch(query: string, lang: string): { status: "idle" | "searching" | "done" | "error"; result: KnowledgeSearchResult | null } {
+  const [s, setS] = useState<{ status: "idle" | "searching" | "done" | "error"; result: KnowledgeSearchResult | null }>({ status: "idle", result: null });
+  useEffect(() => {
+    const q = query.trim();
+    if (!knowledgeConfigured || q.length < 2) {
+      setS({ status: "idle", result: null });
+      return undefined;
+    }
+    let cancelled = false;
+    setS((prev) => ({ ...prev, status: "searching" }));
+    const timer = setTimeout(() => {
+      void getReader().then((r) => r.search(q, lang)).then(
+        (result) => !cancelled && setS({ status: "done", result }),
+        () => !cancelled && setS({ status: "error", result: null }),
+      );
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, lang]);
+  return s;
+}
+
+/** How many published events, people and places the installed packs hold. */
+export function useEntityCounts(): { state: Loaded<Record<EntityKind, number>>; retry: () => void } {
+  return usePacksQuery((r) => r.entityCounts(), []);
+}
+
+/** Every published event, person or place of one kind, dated ones first. */
+export function useEntities(kind: EntityKind, lang: string): { state: Loaded<EntitySummary[]>; retry: () => void } {
+  return usePacksQuery((r) => r.entities(kind, lang), [kind, lang]);
+}
+
+/** One entry with everything its pack says about it. `ready` with null means it is not there (pack removed, or not published). */
+export function useEntityDetail(packId: string, id: string, lang: string): { state: Loaded<EntityDetail | null>; retry: () => void } {
+  return usePacksQuery((r) => r.entity(packId, id, lang), [packId, id, lang]);
+}
+
+/** The events, people and places linked to an ayah, or to a surah (and its ayahs) when `ayahNumber` is null. */
+export function useEntitiesFor(surahId: number, ayahNumber: number | null, lang: string): { state: Loaded<EntityRef[]>; retry: () => void } {
+  return usePacksQuery((r) => r.entitiesFor(ayahNumber === null ? { surahId } : { surahId, ayahNumber }, lang), [surahId, ayahNumber, lang]);
 }
 
 export function useSurahHistory(surahId: number, lang: string): HistoryClaim[] | null {
@@ -177,6 +271,15 @@ export function useSurahHistory(surahId: number, lang: string): HistoryClaim[] |
 
 export function useAyahContext(surahId: number, ayahNumber: number | null, lang: string): AyahContext | null {
   return useFromPacks(async (r) => (ayahNumber === null ? { claims: [], reports: [] } : r.ayah(surahId, ayahNumber, lang)), [surahId, ayahNumber, lang]);
+}
+
+/** The same two reads with their state, for the History screen's loading, failure and retry. */
+export function useSurahHistoryState(surahId: number, lang: string): { state: Loaded<HistoryClaim[]>; retry: () => void } {
+  return usePacksQuery((r) => r.surah(surahId, lang), [surahId, lang]);
+}
+
+export function useAyahContextState(surahId: number, ayahNumber: number | null, lang: string): { state: Loaded<AyahContext>; retry: () => void } {
+  return usePacksQuery(async (r) => (ayahNumber === null ? { claims: [], reports: [] } : r.ayah(surahId, ayahNumber, lang)), [surahId, ayahNumber, lang]);
 }
 
 /** The work, edition and licence behind a citation, and the claims that cite that edition. Null while loading or when not found. */

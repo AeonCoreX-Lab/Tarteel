@@ -35,12 +35,12 @@ const addClaim = (db: SqlDriver, id: string, over: Record<string, string | numbe
 };
 const publish = (db: SqlDriver, id: string) => db.run("UPDATE claim SET editorial_status = 'published' WHERE id = ?", [id]);
 
-test("migration 2 applies on top of an existing v1 content database without touching its data", async () => {
-  assert.deepEqual(CONTENT_MIGRATIONS.map((m) => m.id), [1, 2]);
+test("migrations 2 and 3 apply on top of an existing v1 content database without touching its data", async () => {
+  assert.deepEqual(CONTENT_MIGRATIONS.map((m) => m.id), [1, 2, 3]);
   const db = openNodeSqlite();
   await migrate(db, CONTENT_MIGRATIONS.slice(0, 1));
   await db.exec("INSERT INTO surahs (id, name_arabic, name_transliteration, name_english, revelation_place, ayah_count) VALUES (1, 'a', 'One', 'First', 'makkah', 2)");
-  assert.deepEqual((await migrate(db, CONTENT_MIGRATIONS)).applied, [2]);
+  assert.deepEqual((await migrate(db, CONTENT_MIGRATIONS)).applied, [2, 3]);
   assert.deepEqual((await migrate(db, CONTENT_MIGRATIONS)).applied, []);
   assert.equal((await db.all("SELECT id FROM surahs")).length, 1);
   assert.equal((await db.all("SELECT * FROM v_published_claims_without_support")).length, 0);

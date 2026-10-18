@@ -327,9 +327,98 @@ CREATE TABLE surah_profile (
 CREATE UNIQUE INDEX idx_surah_profile_order ON surah_profile(revelation_order) WHERE revelation_order IS NOT NULL;
 `;
 
+
+/**
+ * Content migration 3: events, people and places, with careful dates.
+ *
+ * One table, `entity`, holds all three kinds (`kind`). Every entity follows the same rules as a claim: it is published only
+ * with a supporting passage or an editorial basis, it cannot be published while its evidence label is "unverified", and
+ * it needs name text that a person wrote or reviewed. Dates are never more exact than the source: `date_precision` says how
+ * exact, `date_calendar` says which calendar the years are in, and `sort_year` is an APPROXIMATE Gregorian year used only to
+ * put things in order (see knowledge-dates.ts). For a person, `date_start` is the birth and `date_end` the death. A place has no date.
+ * There are no virtual tables here: packs must stay free of them (see KNOWLEDGE.md, "the close crash").
+ */
+const CONTENT_003 = `
+CREATE TABLE entity (
+  id TEXT PRIMARY KEY CHECK (length(id) > 0),
+  kind TEXT NOT NULL CHECK (kind IN ('event','person','place')),
+  subtype TEXT,
+  evidence_label TEXT NOT NULL DEFAULT 'unverified' CHECK (evidence_label IN ('primary_text','source_reported','scholarly_interpretation','disputed','unverified','no_established_report_found')),
+  uncertainty_note TEXT,
+  editorial_basis TEXT,
+  editorial_status TEXT NOT NULL DEFAULT 'draft' CHECK (editorial_status IN ('draft','ingested','needs_source_verification','needs_scholarly_review','needs_license_review','approved','published','needs_correction','retracted')),
+  date_calendar TEXT CHECK (date_calendar IN ('ah','ce')),
+  date_start INTEGER CHECK (date_start BETWEEN -5000 AND 3000),
+  date_end INTEGER CHECK (date_end BETWEEN -5000 AND 3000),
+  date_precision TEXT NOT NULL DEFAULT 'unknown' CHECK (date_precision IN ('year','decade','century','approximate','unknown')),
+  sort_year INTEGER CHECK (sort_year BETWEEN -5000 AND 3000),
+  dating_note TEXT,
+  created_by TEXT NOT NULL,
+  reviewed_by TEXT,
+  last_reviewed_at TEXT,
+  dataset_version INTEGER NOT NULL CHECK (dataset_version >= 1),
+  CHECK (subtype IS NULL
+    OR (kind = 'event' AND subtype IN ('revelation','migration','battle','treaty','birth','death','gathering','other'))
+    OR (kind = 'person' AND subtype IN ('prophet','companion','family','scholar','ruler','other'))
+    OR (kind = 'place' AND subtype IN ('city','region','mountain','building','water','other'))),
+  CHECK (evidence_label NOT IN ('disputed','no_established_report_found') OR uncertainty_note IS NOT NULL),
+  CHECK ((date_precision = 'unknown') = (date_start IS NULL)),
+  CHECK ((date_start IS NULL) = (date_calendar IS NULL) AND (date_start IS NULL) = (sort_year IS NULL)),
+  CHECK (date_end IS NULL OR (date_start IS NOT NULL AND date_end >= date_start)),
+  CHECK (kind <> 'place' OR date_start IS NULL)
+);
+CREATE INDEX idx_entity_kind ON entity(kind, sort_year);
+
+CREATE TABLE entity_text (
+  entity_id TEXT NOT NULL REFERENCES entity(id),
+  lang TEXT NOT NULL CHECK (length(lang) >= 2),
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  summary TEXT CHECK (summary IS NULL OR length(trim(summary)) > 0),
+  translation_status TEXT NOT NULL DEFAULT 'original' CHECK (translation_status IN ('original','machine_draft','reviewed')),
+  PRIMARY KEY (entity_id, lang)
+) WITHOUT ROWID;
+
+CREATE TABLE entity_passage (
+  entity_id TEXT NOT NULL REFERENCES entity(id),
+  passage_id TEXT NOT NULL REFERENCES source_passage(id),
+  PRIMARY KEY (entity_id, passage_id)
+) WITHOUT ROWID;
+CREATE INDEX idx_entity_passage_passage ON entity_passage(passage_id);
+
+CREATE TRIGGER entity_publish_ins BEFORE INSERT ON entity
+WHEN NEW.editorial_status = 'published'
+BEGIN SELECT RAISE(ABORT, 'insert an entity as draft or approved, link its evidence, then publish it'); END;
+
+CREATE TRIGGER entity_publish_upd BEFORE UPDATE OF editorial_status, evidence_label, editorial_basis ON entity
+WHEN NEW.editorial_status = 'published' AND (
+  NEW.evidence_label = 'unverified'
+  OR (NEW.editorial_basis IS NULL AND NOT EXISTS (SELECT 1 FROM entity_passage ep WHERE ep.entity_id = NEW.id))
+)
+BEGIN SELECT RAISE(ABORT, 'a published entity needs a supporting passage or an editorial basis, and cannot be unverified'); END;
+
+CREATE VIEW v_published_entities_without_support AS
+SELECT e.id FROM entity e
+WHERE e.editorial_status = 'published' AND e.editorial_basis IS NULL
+  AND NOT EXISTS (SELECT 1 FROM entity_passage ep WHERE ep.entity_id = e.id);
+
+INSERT INTO entity_kind (id) VALUES ('event'), ('person'), ('place');
+
+INSERT INTO edge_type (id, from_kind, to_kind, description) VALUES
+  ('EVENT_CONCERNS_AYAH', 'event', 'ayah', 'The event is connected to this ayah'),
+  ('EVENT_CONCERNS_SURAH', 'event', 'surah', 'The event is connected to this surah'),
+  ('PERSON_MENTIONED_IN_AYAH', 'person', 'ayah', 'The person is mentioned in this ayah'),
+  ('PLACE_MENTIONED_IN_AYAH', 'place', 'ayah', 'The place is mentioned in this ayah'),
+  ('EVENT_AT_PLACE', 'event', 'place', 'The event took place here'),
+  ('PERSON_IN_EVENT', 'person', 'event', 'The person took part in, or is named in connection with, the event'),
+  ('CLAIM_CONCERNS_EVENT', 'claim', 'event', 'The claim is about this event'),
+  ('CLAIM_CONCERNS_PERSON', 'claim', 'person', 'The claim is about this person'),
+  ('CLAIM_CONCERNS_PLACE', 'claim', 'place', 'The claim is about this place');
+`;
+
 export const CONTENT_MIGRATIONS: readonly Migration[] = [
   { id: 1, name: "content_core", sql: CONTENT_001 },
   { id: 2, name: "content_knowledge", sql: CONTENT_002 },
+  { id: 3, name: "content_entities", sql: CONTENT_003 },
 ];
 
 // ------------------------------------------------------------------- USER DB

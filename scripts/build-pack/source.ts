@@ -12,7 +12,8 @@ import { openNodeSqlite } from "../lib/node-sqlite-driver.ts";
 //   licenses.json   one rights decision per source edition licence (mirrors docs/licensing/INVENTORY.md)
 //   sources.json    { works, editions, passages }: what the claims cite
 //   claims.json     the statements, with their text per language and the passages that support or contradict them
-//   edges.json      (optional) typed links between claims, passages, surahs and ayahs
+//   edges.json      (optional) typed links between claims, passages, surahs, ayahs and entities
+//   entities.json   (optional) events, people and places, with dates as exact as the source and no more
 
 export const WORK_TYPES = ["asbab", "tafsir", "hadith", "history", "biography", "reference", "scholarship", "other"] as const;
 export const TRANSCRIPTION_STATUSES = ["verified", "unverified", "ocr_unverified"] as const;
@@ -21,6 +22,15 @@ export const EVIDENCE_LABELS = ["primary_text", "source_reported", "scholarly_in
 export const EDITORIAL_STATUSES = ["draft", "ingested", "needs_source_verification", "needs_scholarly_review", "needs_license_review", "approved", "published", "needs_correction", "retracted"] as const;
 export const TEXT_STATUSES = ["original", "machine_draft", "reviewed"] as const;
 export const REDISTRIBUTIONS = ["yes", "no", "pending"] as const;
+export const ENTITY_KINDS = ["event", "person", "place"] as const;
+/** The subtypes each kind may carry; the database enforces the same lists. */
+export const ENTITY_SUBTYPES: Readonly<Record<(typeof ENTITY_KINDS)[number], readonly string[]>> = {
+  event: ["revelation", "migration", "battle", "treaty", "birth", "death", "gathering", "other"],
+  person: ["prophet", "companion", "family", "scholar", "ruler", "other"],
+  place: ["city", "region", "mountain", "building", "water", "other"],
+};
+export const DATE_CALENDARS = ["ah", "ce"] as const;
+export const DATED_PRECISIONS = ["year", "decade", "century", "approximate"] as const;
 
 export interface PackMeta {
   packId: string;
@@ -55,6 +65,14 @@ export interface SourceEdge {
   id: string; type: string; fromKind: string; fromId: string; toKind: string; toId: string; editorialStatus: (typeof EDITORIAL_STATUSES)[number];
   uncertaintyNote?: string; editorialBasis?: string; createdBy: string; passages: string[];
 }
+export interface SourceEntityText { name: string; summary?: string; status: (typeof TEXT_STATUSES)[number] }
+/** The date of an entity as the authors give it. Absent means undated. For a person, start is the birth and end the death. */
+export interface SourceDate { calendar: (typeof DATE_CALENDARS)[number]; start: number; end?: number; precision: (typeof DATED_PRECISIONS)[number]; note?: string }
+export interface SourceEntity {
+  id: string; kind: (typeof ENTITY_KINDS)[number]; subtype?: string; evidenceLabel: (typeof EVIDENCE_LABELS)[number]; uncertaintyNote?: string; editorialBasis?: string;
+  editorialStatus: (typeof EDITORIAL_STATUSES)[number]; createdBy: string; reviewedBy?: string; lastReviewedAt?: string;
+  date?: SourceDate; text: Record<string, SourceEntityText>; supports: string[];
+}
 export interface PackSource {
   dir: string;
   meta: PackMeta;
@@ -64,6 +82,7 @@ export interface PackSource {
   passages: SourcePassage[];
   claims: SourceClaim[];
   edges: SourceEdge[];
+  entities: SourceEntity[];
 }
 
 const ID = /^[a-z0-9][a-z0-9._:-]{0,99}$/;
@@ -163,9 +182,9 @@ async function readJson(dir: string, name: string, required: boolean, r: Reader)
 /** Reads and checks one pack directory. `source` is null when anything is wrong; every problem is in `issues`. */
 export async function loadPackSource(dir: string): Promise<{ source: PackSource | null; issues: Issue[] }> {
   const r = new Reader();
-  const [metaRaw, licRaw, srcRaw, claimRaw, edgeRaw] = [
+  const [metaRaw, licRaw, srcRaw, claimRaw, edgeRaw, entityRaw] = [
     await readJson(dir, "pack.json", true, r), await readJson(dir, "licenses.json", true, r), await readJson(dir, "sources.json", true, r),
-    await readJson(dir, "claims.json", true, r), await readJson(dir, "edges.json", false, r),
+    await readJson(dir, "claims.json", true, r), await readJson(dir, "edges.json", false, r), await readJson(dir, "entities.json", false, r),
   ];
   if (r.issues.length > 0) return { source: null, issues: r.issues };
   const types = await knownEdgeTypes();
@@ -297,6 +316,67 @@ export async function loadPackSource(dir: string): Promise<{ source: PackSource 
     return [{ id, claimType, evidenceLabel, editorialStatus, createdBy, text, ...claim }];
   });
 
+  // entities.json
+  const entities = (entityRaw === undefined ? [] : r.list(entityRaw, "entities.json")).flatMap((v, i): SourceEntity[] => {
+    const ctx = `entities.json[${i}]`;
+    const o = r.obj(v, ctx);
+    if (!o) return [];
+    const id = r.id(o, "id", ctx);
+    const where = `${ctx} (${id ?? "?"})`;
+    const kind = r.one(o, "kind", ctx, ENTITY_KINDS);
+    const evidenceLabel = r.one(o, "evidenceLabel", ctx, EVIDENCE_LABELS);
+    const editorialStatus = r.one(o, "editorialStatus", ctx, EDITORIAL_STATUSES);
+    const createdBy = r.str(o, "createdBy", ctx);
+    const subtype = r.optStr(o, "subtype", ctx);
+    if (kind && subtype !== undefined && !ENTITY_SUBTYPES[kind].includes(subtype)) r.err("source-field", `${where}: subtype "${subtype}" is not one of ${ENTITY_SUBTYPES[kind].join(", ")} for a ${kind}`);
+
+    let date: SourceDate | undefined;
+    if (o.date !== undefined) {
+      const d = r.obj(o.date, `${where} date`);
+      if (d) {
+        const calendar = r.one(d, "calendar", `${where} date`, DATE_CALENDARS);
+        const precision = r.one(d, "precision", `${where} date`, DATED_PRECISIONS);
+        const year = (key: "start" | "end", required: boolean): number | undefined => {
+          const x = d[key];
+          if (x === undefined && !required) return undefined;
+          if (typeof x === "number" && Number.isInteger(x) && x >= -5000 && x <= 3000) return x;
+          r.err("source-field", `${where} date: "${key}" must be a whole year between -5000 and 3000`);
+          return undefined;
+        };
+        const start = year("start", true);
+        const end = year("end", false);
+        if (start !== undefined && end !== undefined && end < start) r.err("source-field", `${where} date: end (${end}) is before start (${start})`);
+        if (kind === "place") r.err("source-field", `${where}: a place has no date`);
+        const note = r.optStr(d, "note", `${where} date`);
+        if (calendar && precision && start !== undefined) date = { calendar, start, precision, ...(end !== undefined ? { end } : {}), ...(note ? { note } : {}) };
+      }
+    }
+    const text: Record<string, SourceEntityText> = {};
+    const t = r.obj(o.text, `${where} text`);
+    for (const [lang, entry] of Object.entries(t ?? {})) {
+      const e = r.obj(entry, `${where} text.${lang}`);
+      if (!e) continue;
+      if (!LANG.test(lang)) r.err("source-field", `${where} text: "${lang}" is not a language code`);
+      const name = r.str(e, "name", `${where} text.${lang}`);
+      const summary = r.optStr(e, "summary", `${where} text.${lang}`);
+      const status = r.one(e, "status", `${where} text.${lang}`, TEXT_STATUSES);
+      if (name && status) text[lang] = { name, status, ...(summary ? { summary } : {}) };
+    }
+    if (t && Object.keys(t).length === 0) r.err("source-field", `${where}: text needs at least one language`);
+    const uncertaintyNote = r.optStr(o, "uncertaintyNote", ctx);
+    if ((evidenceLabel === "disputed" || evidenceLabel === "no_established_report_found") && !uncertaintyNote)
+      r.err("source-field", `${where}: a "${evidenceLabel}" entity needs an uncertaintyNote`);
+    const editorialBasis = r.optStr(o, "editorialBasis", ctx);
+    const reviewedBy = r.optStr(o, "reviewedBy", ctx);
+    const lastReviewedAt = r.optStr(o, "lastReviewedAt", ctx);
+    if (!id || !kind || !evidenceLabel || !editorialStatus || !createdBy) return [];
+    return [{
+      id, kind, evidenceLabel, editorialStatus, createdBy, text, supports: r.ids(o, "supports", ctx),
+      ...(subtype ? { subtype } : {}), ...(uncertaintyNote ? { uncertaintyNote } : {}), ...(editorialBasis ? { editorialBasis } : {}),
+      ...(reviewedBy ? { reviewedBy } : {}), ...(lastReviewedAt ? { lastReviewedAt } : {}), ...(date ? { date } : {}),
+    }];
+  });
+
   // edges.json
   const edges = (edgeRaw === undefined ? [] : r.list(edgeRaw, "edges.json")).flatMap((v, i): SourceEdge[] => {
     const ctx = `edges.json[${i}]`;
@@ -318,8 +398,8 @@ export async function loadPackSource(dir: string): Promise<{ source: PackSource 
   });
 
   if (!meta || r.issues.length > 0) return { source: null, issues: r.issues };
-  crossCheck({ dir, meta, licenses, works, editions, passages, claims, edges }, r);
-  return r.issues.length > 0 ? { source: null, issues: r.issues } : { source: { dir, meta, licenses, works, editions, passages, claims, edges }, issues: [] };
+  crossCheck({ dir, meta, licenses, works, editions, passages, claims, edges, entities }, r);
+  return r.issues.length > 0 ? { source: null, issues: r.issues } : { source: { dir, meta, licenses, works, editions, passages, claims, edges, entities }, issues: [] };
 }
 
 /** References and rules that span files. */
@@ -337,13 +417,24 @@ function crossCheck(s: PackSource, r: Reader): void {
   dup("sources.json passages", s.passages.map((x) => x.id));
   dup("claims.json", s.claims.map((x) => x.id));
   dup("edges.json", s.edges.map((x) => x.id));
+  dup("entities.json", s.entities.map((x) => x.id));
 
   const licenses = new Map(s.licenses.map((x) => [x.id, x]));
   const works = new Set(s.works.map((x) => x.id));
   const editions = new Map(s.editions.map((x) => [x.id, x]));
   const passages = new Set(s.passages.map((x) => x.id));
   const claims = new Map(s.claims.map((x) => [x.id, x]));
+  const entities = new Map(s.entities.map((x) => [x.id, x]));
 
+  for (const n of s.entities) {
+    for (const pid of n.supports) if (!passages.has(pid)) r.err("source-reference", `entity ${n.id}: passage ${pid} is not in sources.json`);
+    for (const lang of Object.keys(n.text)) if (!s.meta.languages.includes(lang)) r.err("source-field", `entity ${n.id}: text in "${lang}", which pack.json does not list in languages`);
+    if (n.editorialStatus === "published") {
+      if (n.evidenceLabel === "unverified") r.err("source-publish", `entity ${n.id}: a published entity cannot be labelled unverified`);
+      if (n.supports.length === 0 && !n.editorialBasis) r.err("source-publish", `entity ${n.id}: a published entity needs a supporting passage or an editorialBasis`);
+      if (!Object.values(n.text).some((t) => t.status !== "machine_draft")) r.err("source-publish", `entity ${n.id}: a published entity needs a name that is original or reviewed, not only machine drafts`);
+    }
+  }
   for (const e of s.editions) {
     if (!works.has(e.workId)) r.err("source-reference", `edition ${e.id}: work ${e.workId} is not in sources.json`);
     if (!licenses.has(e.licenseId)) r.err("source-reference", `edition ${e.id}: licence ${e.licenseId} is not in licenses.json`);
@@ -372,6 +463,10 @@ function crossCheck(s: PackSource, r: Reader): void {
         const target = claims.get(id);
         if (!target) r.err("source-reference", `edge ${e.id}: claim ${id} is not in claims.json`);
         else if (e.editorialStatus === "published" && target.editorialStatus !== "published") r.err("source-publish", `edge ${e.id}: published, but claim ${id} is ${target.editorialStatus}`);
+      } else if (kind === "event" || kind === "person" || kind === "place") {
+        const target = entities.get(id);
+        if (!target || target.kind !== kind) r.err("source-reference", `edge ${e.id}: ${kind} ${id} is not in entities.json${target ? ` (it is a ${target.kind})` : ""}`);
+        else if (e.editorialStatus === "published" && target.editorialStatus !== "published") r.err("source-publish", `edge ${e.id}: published, but ${kind} ${id} is ${target.editorialStatus}`);
       } else if (kind === "source_passage" && !passages.has(id)) r.err("source-reference", `edge ${e.id}: passage ${id} is not in sources.json`);
       else if (kind === "ayah" && !/^\d{1,3}:\d{1,3}$/.test(id)) r.err("source-field", `edge ${e.id}: ayah ${id} must look like "2:255" (surah:ayah)`);
       else if (kind === "surah" && !/^\d{1,3}$/.test(id)) r.err("source-field", `edge ${e.id}: surah ${id} must be a surah number`);

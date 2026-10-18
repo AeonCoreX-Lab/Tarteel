@@ -35,6 +35,11 @@ export interface PreferenceSchema {
    */
   audioAllowStreaming: boolean;
   audioPlaybackRate: number;
+  /**
+   * Off by default. When on, hadith are looked up live from api.islamic.app (a network request that shows the server the IP
+   * address and what is searched or opened). Nothing is stored. Has an effect only in a build where the feature is enabled.
+   */
+  onlineHadith: boolean;
   /** Memorisation: each ayah N times, then the whole range M times. */
   audioRepeatEachAyah: number;
   audioRepeatRange: number;
@@ -64,6 +69,7 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
   audioReciterId: null,
   audioAllowStreaming: false,
   audioPlaybackRate: 1,
+  onlineHadith: false,
   audioRepeatEachAyah: 1,
   audioRepeatRange: 1,
   audioPauseFactor: 0,
@@ -127,3 +133,4 @@ export class ReadingProgress {
 }
 export * from "./setup.ts";
 export * from "./translations.ts";
+export * from "./hadith.ts";

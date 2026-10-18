@@ -1,10 +1,10 @@
 import { rm } from "node:fs/promises";
-import { CONTENT_MIGRATIONS, migrate } from "@tarteel/database";
+import { CONTENT_MIGRATIONS, migrate, sortYearFor } from "@tarteel/database";
 import type { PackManifest } from "@tarteel/database";
 import type { SqlDriver } from "@tarteel/storage";
 import { openNodeSqlite } from "../lib/node-sqlite-driver.ts";
 import { sha256Hex } from "../lib/pack-tools.ts";
-import type { PackSource, SourceClaim, SourceEdge, SourceLicense } from "./source.ts";
+import type { PackSource, SourceClaim, SourceEdge, SourceEntity, SourceLicense } from "./source.ts";
 
 /**
  * What goes into a pack: only PUBLISHED claims and edges (drafts and retracted rows stay in git), and only the sources
@@ -14,16 +14,19 @@ import type { PackSource, SourceClaim, SourceEdge, SourceLicense } from "./sourc
 export interface PackSelection {
   claims: SourceClaim[];
   edges: SourceEdge[];
+  entities: SourceEntity[];
   passageIds: Set<string>;
   licenses: SourceLicense[];
-  excluded: { claims: number; edges: number };
+  excluded: { claims: number; edges: number; entities: number };
 }
 
 export function selectForPack(s: PackSource): PackSelection {
   const claims = s.claims.filter((c) => c.editorialStatus === "published");
   const edges = s.edges.filter((e) => e.editorialStatus === "published");
+  const entities = s.entities.filter((n) => n.editorialStatus === "published");
   const passageIds = new Set<string>();
   for (const c of claims) for (const p of [...c.supports, ...c.contradicts]) passageIds.add(p);
+  for (const n of entities) for (const p of n.supports) passageIds.add(p);
   for (const e of edges) {
     for (const p of e.passages) passageIds.add(p);
     if (e.fromKind === "source_passage") passageIds.add(e.fromId);
@@ -32,16 +35,16 @@ export function selectForPack(s: PackSource): PackSelection {
   const editionIds = new Set(s.passages.filter((p) => passageIds.has(p.id)).map((p) => p.editionId));
   const licenseIds = new Set(s.editions.filter((e) => editionIds.has(e.id)).map((e) => e.licenseId));
   return {
-    claims, edges, passageIds,
+    claims, edges, entities, passageIds,
     licenses: s.licenses.filter((l) => licenseIds.has(l.id)).sort((a, b) => a.id.localeCompare(b.id)),
-    excluded: { claims: s.claims.length - claims.length, edges: s.edges.length - edges.length },
+    excluded: { claims: s.claims.length - claims.length, edges: s.edges.length - edges.length, entities: s.entities.length - entities.length },
   };
 }
 
 export interface BuiltPack {
   dbPath: string;
   selection: PackSelection;
-  counts: { claims: number; edges: number; passages: number; editions: number; works: number; licenses: number };
+  counts: { claims: number; edges: number; entities: number; passages: number; editions: number; works: number; licenses: number };
 }
 
 const byId = <T extends { id: string }>(a: T, b: T): number => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
@@ -65,6 +68,11 @@ export async function buildPackDatabase(s: PackSource, dbPath: string): Promise<
   const db: SqlDriver = openNodeSqlite(dbPath);
   try {
     await migrate(db, CONTENT_MIGRATIONS, () => 0);
+    // A knowledge pack carries no Quran text or translations, so the full-text-search tables the shared schema creates are empty
+    // and unused here. Drop them (and the triggers that feed them): a pack file then holds NO virtual tables. This is a
+    // defence in depth against the expo-sqlite close crash (https://github.com/expo/expo/issues/38168), which needs a virtual
+    // table to happen. The app also opens databases with the workaround on (apps/mobile/src/platform/expo-sqlite-driver.ts).
+    await db.exec("DROP TRIGGER IF EXISTS translation_ayahs_ai; DROP TRIGGER IF EXISTS translation_ayahs_ad; DROP TABLE IF EXISTS ayahs_fts; DROP TABLE IF EXISTS translations_fts;");
     await db.transaction(async () => {
       const meta: [string, string][] = [["pack_id", s.meta.packId], ["pack_version", String(version)], ["schema_version", String(CONTENT_MIGRATIONS.length)]];
       for (const [k, v] of meta) await db.run("INSERT INTO content_meta (key, value) VALUES (?, ?)", [k, v]);
@@ -94,6 +102,25 @@ export async function buildPackDatabase(s: PackSource, dbPath: string): Promise<
       }
       await db.run("UPDATE claim SET editorial_status = 'published'");
 
+      const entities = [...sel.entities].sort(byId);
+      for (const ent of entities) {
+        const d = ent.date;
+        const sortYear = d ? sortYearFor(d.calendar, d.start, d.precision) : null;
+        await db.run(
+          `INSERT INTO entity (id, kind, subtype, evidence_label, uncertainty_note, editorial_basis, editorial_status, date_calendar, date_start, date_end, date_precision, sort_year, dating_note,
+                               created_by, reviewed_by, last_reviewed_at, dataset_version)
+           VALUES (?, ?, ?, ?, ?, ?, 'approved', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [ent.id, ent.kind, n(ent.subtype), ent.evidenceLabel, n(ent.uncertaintyNote), n(ent.editorialBasis), d?.calendar ?? null, d?.start ?? null, d?.end ?? null, d?.precision ?? "unknown", sortYear, n(d?.note),
+            ent.createdBy, n(ent.reviewedBy), n(ent.lastReviewedAt), version],
+        );
+        for (const lang of Object.keys(ent.text).sort()) {
+          const t = ent.text[lang];
+          if (t) await db.run("INSERT INTO entity_text (entity_id, lang, name, summary, translation_status) VALUES (?, ?, ?, ?, ?)", [ent.id, lang, t.name, n(t.summary), t.status]);
+        }
+        for (const p of [...ent.supports].sort()) await db.run("INSERT INTO entity_passage (entity_id, passage_id) VALUES (?, ?)", [ent.id, p]);
+      }
+      await db.run("UPDATE entity SET editorial_status = 'published'");
+
       const edges = [...sel.edges].sort(byId);
       for (const e of edges) {
         await db.run("INSERT INTO edge (id, type, from_kind, from_id, to_kind, to_id, editorial_status, uncertainty_note, editorial_basis, created_by, dataset_version) VALUES (?, ?, ?, ?, ?, ?, 'approved', ?, ?, ?, ?)",
@@ -108,7 +135,7 @@ export async function buildPackDatabase(s: PackSource, dbPath: string): Promise<
   }
   return {
     dbPath, selection: sel,
-    counts: { claims: sel.claims.length, edges: sel.edges.length, passages: passages.length, editions: editions.length, works: works.length, licenses: sel.licenses.length },
+    counts: { claims: sel.claims.length, edges: sel.edges.length, entities: sel.entities.length, passages: passages.length, editions: editions.length, works: works.length, licenses: sel.licenses.length },
   };
 }
 
