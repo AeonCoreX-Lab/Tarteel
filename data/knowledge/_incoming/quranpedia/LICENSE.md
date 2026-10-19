@@ -1,6 +1,6 @@
 # Quranpedia.net Data License · رخصة بيانات الموسوعة القرآنية
 
-Version / النسخة: 2026-10-14
+Version / النسخة: 2026-10-19
 
 ## English
 
