@@ -2,7 +2,7 @@
 
 Goal: every Mihrab feature exists in Tarteel, with Tarteel's own design and identity, built on Tarteel's architecture
 (Expo, SQLite `content.db`/`user.db`, MMKV, offline-first). Sizes below are real line counts of the Mihrab snapshot
-(non-test TypeScript) and show where the effort is. "Reuse" = vendor logic through `upstream.config.json` (pristine, AGPL);
+(non-test TypeScript) and show where the effort is. "Reuse" = vendor logic through `upstream.config.json` (AGPL; the vendored files are now Tarteel-maintained);
 UI is always written fresh in Tarteel's design system.
 
 | # | Feature area (Mihrab module) | LOC | Tarteel approach | Native work |

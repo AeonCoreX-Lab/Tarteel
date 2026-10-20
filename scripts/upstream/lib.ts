@@ -14,6 +14,8 @@ export interface UpstreamConfig {
    * "files": entries are an explicit list of any files (Kotlin, XML, ...), vendored verbatim under `files/`.
    */
   mode?: "closure" | "files";
+  /** True once the files are Tarteel's own to edit. `sync` then refuses, because it would overwrite Tarteel's changes. */
+  detached?: boolean;
 }
 
 export interface UpstreamLock {
@@ -34,9 +36,16 @@ export interface UpstreamLock {
   licenseFiles: Record<string, string>;
   /** non-relative modules the vendored files import -> version range upstream declares */
   externalDependencies: Record<string, string | null>;
+  /**
+   * Present once Tarteel took the files over. `files` then holds the hashes of the code as it was when it was taken over
+   * (the baseline), not a promise that the files still match it.
+   */
+  detached?: { at: string; baselineSha: string | null; reason: string };
 }
 
 export class LicenseChangedError extends Error {}
+/** A sync was asked for in a folder that Tarteel now maintains itself. */
+export class DetachedError extends Error {}
 
 export const sha256 = (data: Uint8Array | string): string => createHash("sha256").update(data).digest("hex");
 const toPosix = (p: string) => p.split(sep).join("/");
@@ -160,6 +169,11 @@ function hashLicenseFiles(srcRoot: string, names: string[]): Record<string, stri
 
 export function sync(opts: SyncOptions): UpstreamLock {
   const { name, cfg, srcRoot, destRoot } = opts;
+  if (cfg.detached || readLock(destRoot)?.detached)
+    throw new DetachedError(
+      `${cfg.destination} is maintained by Tarteel now: a sync would overwrite Tarteel's own changes. ` +
+        `Use \`npm run upstream:diff\` to see what upstream did, and port what you want by hand (note it in CHANGES.md).`,
+    );
   const mode = cfg.mode ?? "closure";
   const { files, external } = resolveFor(cfg, srcRoot);
   assertVendorable(mode, files);
@@ -226,11 +240,62 @@ function listFiles(dir: string): string[] {
   return out;
 }
 
-/** Returns a list of problems; empty = the vendored tree is byte-for-byte what the lock says. */
+/** Marks the folder as Tarteel's own. The recorded hashes stay as the baseline that `status` compares against. */
+export function detach(destRoot: string, opts: { reason: string; now?: () => string }): UpstreamLock {
+  const lock = readLock(destRoot);
+  if (!lock) throw new Error(`${LOCK_FILE} missing or unreadable in ${destRoot}`);
+  if (lock.detached) return lock;
+  const next: UpstreamLock = { ...lock, detached: { at: (opts.now ?? (() => new Date().toISOString()))(), baselineSha: lock.sha, reason: opts.reason } };
+  writeFileSync(join(destRoot, LOCK_FILE), JSON.stringify(next, null, 2) + "\n");
+  return next;
+}
+
+export interface BaselineStatus {
+  modified: string[];
+  deleted: string[];
+  added: string[];
+}
+
+/** What Tarteel changed since the files were taken over (or since the last sync, for a folder that is not detached). */
+export function status(destRoot: string): BaselineStatus {
+  const lock = readLock(destRoot);
+  if (!lock) throw new Error(`${LOCK_FILE} missing or unreadable in ${destRoot}`);
+  const mode = lock.mode ?? "closure";
+  const out: BaselineStatus = { modified: [], deleted: [], added: [] };
+  const known = new Set<string>();
+  for (const [f, h] of Object.entries(lock.files)) {
+    const p = vendoredPath(destRoot, mode, f);
+    known.add(toPosix(relative(destRoot, p)));
+    if (!existsSync(p)) out.deleted.push(f);
+    else if (sha256(readFileSync(p)) !== h) out.modified.push(f);
+  }
+  for (const f of Object.keys(lock.licenseFiles)) known.add(toPosix(relative(destRoot, join(destRoot, LICENSE_DIR, f))));
+  for (const p of vendoredDirs(mode, Object.keys(lock.files)).flatMap((d) => listFiles(join(destRoot, d)))) {
+    const rel = toPosix(relative(destRoot, p));
+    if (!known.has(rel)) out.added.push(rel);
+  }
+  return out;
+}
+
+/**
+ * Returns a list of problems. For a folder still tied to upstream, empty = byte-for-byte what the lock says.
+ * For a detached folder (Tarteel's own code) the code may change freely; only the upstream licence files, which must travel with
+ * it, are checked.
+ */
 export function verify(destRoot: string): string[] {
   const lock = readLock(destRoot);
   if (!lock) return [`${LOCK_FILE} missing or unreadable in ${destRoot}`];
   const problems: string[] = [];
+  if (lock.detached) {
+    for (const [f, h] of Object.entries(lock.licenseFiles)) {
+      const p = join(destRoot, LICENSE_DIR, f);
+      if (!existsSync(p)) problems.push(`missing licence file: ${f}`);
+      else if (sha256(readFileSync(p)) !== h) problems.push(`modified licence file: ${f}`);
+    }
+    if (!lock.licenseFiles["LICENSE"]) problems.push("the lock records no LICENSE file");
+    if (!existsSync(join(destRoot, "CHANGES.md"))) problems.push("CHANGES.md missing: AGPL-3.0 section 5(a) needs a notice of what was modified, with a date");
+    return problems;
+  }
   const expected = new Set<string>();
   const mode = lock.mode ?? "closure";
   for (const [f, h] of Object.entries(lock.files)) {

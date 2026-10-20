@@ -1,49 +1,48 @@
-# Staying in sync with Mihrab (without forking)
+# Mihrab-derived code (maintained by Tarteel)
 
-Tarteel vendors a **curated, hash-locked** subset of [Mihrab](https://github.com/MihrabHQ/Mihrab)
-(AGPL-3.0-or-later) in `third_party/mihrab/`. It is not a fork and not a subtree: only the files Tarteel
-actually needs (plus their import closure) are copied, so the repo stays small enough for phone development.
+Status 2026-10-20: **Tarteel maintains this code itself. There is no sync from Mihrab any more.**
 
-| File | Role |
+Tarteel took a curated subset of [Mihrab](https://github.com/MihrabHQ/Mihrab) (AGPL-3.0-or-later, Copyright (C) 2026 Hassan El Ghamri)
+into `third_party/mihrab/` (prayer times, Hijri calendar; TypeScript) and `third_party/mihrab-android/` (full-screen prayer alarm; Kotlin).
+Mihrab changes on its own schedule and its changes kept colliding with ours, so the files are now Tarteel's own to edit, fix and extend.
+The folders keep their names and paths on purpose: they are npm workspaces (`third_party/*`) and the Android build points at them, so
+moving them would break `npm ci` until the lockfile is regenerated. They can be renamed later in a change that also regenerates the lockfile.
+
+| Where | What |
 |---|---|
-| `upstream.config.json` | upstream repo + the **entry files** we want. Everything they import is pulled in automatically |
-| `third_party/mihrab/src/**` | pristine copies, never edited. A file outside `src/` that a vendored file imports (e.g. `data/hijri/v1/overrides.json`) is kept at the same relative place, in `third_party/mihrab/data/**`, so relative imports keep resolving |
-| `third_party/mihrab/UPSTREAM.lock.json` | commit SHA, sha256 of every file, upstream licence hashes, external dependency versions |
-| `third_party/mihrab/UPSTREAM-LICENSES/` | upstream LICENSE, NOTICE, TRADEMARK.md (shipped with our source) |
+| `third_party/<name>/src/**`, `data/**`, `files/**` | the code. Edit it directly |
+| `third_party/<name>/CHANGES.md` | **the change log. Add a line (with the date) for every change.** AGPL-3.0 section 5(a) requires a notice of what was modified, with a date |
+| `third_party/<name>/UPSTREAM-LICENSES/` | Mihrab's LICENSE, NOTICE and TRADEMARK.md. They stay with the code, unmodified |
+| `third_party/<name>/UPSTREAM.lock.json` | where the code came from (Mihrab commit, `detached.baselineSha`) and the hashes of the files at takeover (the baseline) |
+| `upstream.config.json` | `"detached": true` for both folders |
 
 ## Commands
 ```sh
-npm run upstream:verify                           # CI runs this: fails if any vendored byte differs from the lock
-npm run upstream:diff -- --from ../Mihrab         # what would change (added/removed/changed files, dep bumps)
-npm run upstream:sync -- --from ../Mihrab         # import; SHA is read from the checkout's .git
+npm run upstream:verify    # CI runs this: the upstream licence files are unmodified and CHANGES.md exists
+npm run upstream:status    # which files differ from the baseline (modified / added / deleted): the list that CHANGES.md must cover
+npm run upstream:diff -- --from ../Mihrab   # read-only: what Mihrab changed since our baseline (our own edits do not show)
 ```
-The **Upstream sync** workflow does this weekly against `MihrabHQ/Mihrab@main` and opens a PR. Nothing auto-merges.
+`upstream:sync` is gone, and the CLI refuses to sync a detached folder, because it would overwrite Tarteel's changes. The weekly
+"Upstream sync" workflow was removed.
+
+## If Mihrab fixes something we want
+Run `upstream:diff`, read the change, and port it by hand into our file. Add a line to `CHANGES.md` saying it was ported from Mihrab
+and from which commit. Nothing arrives by itself.
 
 ## Rules
-1. Never edit `third_party/**`. Wrap it in `packages/*` instead (see below).
-2. A sync **refuses** to run if upstream's LICENSE/NOTICE/TRADEMARK changed; read them, then pass `--accept-license-change`.
-3. To vendor more, add its entry file to `upstream.config.json` and run a sync. Keep the list small.
-4. Keep the AGPL source-offer: Settings -> About links to this repo (`extra.sourceUrl`).
-5. Tarteel's name, icon and visuals must stay its own (Mihrab's TRADEMARK.md).
+1. Keep Mihrab's copyright notice and licence files. The code stays AGPL-3.0-or-later. Do not delete `UPSTREAM-LICENSES/`.
+2. Log every change in `CHANGES.md` with the date. Run `npm run upstream:status` before a release to check the log covers every file it lists.
+3. Never use Mihrab's name, icon, `branding/`, store text or screenshots (Mihrab's TRADEMARK.md). Check any file you add or port for Mihrab branding in user-visible strings.
+4. Keep the AGPL source offer: Settings -> About links to this repo (`extra.sourceUrl`).
+5. New Tarteel logic that is not a change to a Mihrab file goes in `packages/*` (for example `packages/prayer`), not in `third_party/`. Fixes to Mihrab's own behaviour go in the file that is wrong.
 
-## Wrapping, not patching
-Tarteel code calls vendored modules only through a thin `packages/prayer` API (next step), so a defect or an
-upstream API change is fixed in one place. This is already needed:
+## Known issues we can now fix in place
+These were documented while the files were pristine and worked around outside; now they can be fixed at the source.
+- **Hijri conversion defect.** `hijri/convert.ts` is a tabular calendar that repeats or skips a day near the end of Dhu al-Hijjah (for example 1446-12-27 on two consecutive days, 2025-06-23/24; 8 glitches in 2020-2031). The test `CANARY known upstream issue` in `tests/mihrab-vendored.test.ts` documents it and will fail when it is fixed: when that happens, turn the canary into a normal test. The calendar also differs by up to a day from Umm al-Qura and from local moon sighting, so a user-adjustable day offset is still required.
+- **"Automatic" calculation method.** The auto method special-cases only Morocco and otherwise returns Muslim World League. For Bangladesh the app chooses the method and Asr school itself (expected: Karachi with Hanafi Asr, to be checked against the Islamic Foundation Bangladesh timetable).
+- `PrayerSilence.kt` was left out because it hard-codes the user-visible rule name "Mihrab · prayer". If it is ever added, change the name first.
 
-- **Hijri conversion defect.** `hijri/convert.ts` is a tabular calendar that repeats or skips a day near the end of
-  Dhu al-Hijjah (e.g. 1446-12-27 on two consecutive days, 2025-06-23/24; 8 glitches in 2020-2031). The test
-  `CANARY known upstream issue` documents it and will fail when upstream fixes it. Tarteel's calendar must not
-  display dates straight from `convert.ts`; it also differs by up to a day from Umm al-Qura and from local moon sighting,
-  so a user-adjustable day offset is required.
-- **"Automatic" calculation method.** Upstream's on-device auto method only special-cases Morocco and otherwise returns
-  Muslim World League (3). For Bangladesh the wrapper must choose the method/Asr school itself (expected: Karachi
-  method with Hanafi Asr, to be checked against the Islamic Foundation Bangladesh timetable).
+## What was never taken from Mihrab (and why)
+Screens (written against Mihrab's contexts/react-navigation), most native code (widgets, live activity), its Quran/tafsir/translation content and audio sources (their licences are Mihrab's claims; verify each in `docs/licensing/INVENTORY.md`), and all of `branding/`.
 
-## What is NOT vendored (and why)
-Screens (written against Mihrab's contexts/react-navigation), native Android/iOS code (widgets, live activity, alarms),
-its Quran/tafsir/translation content and audio sources (their licences are Mihrab's claims; verify per
-`docs/licensing/INVENTORY.md`), and all of `branding/`.
-
-## If you ever want more than a subset
-`git subtree add --prefix=upstream/mihrab https://github.com/MihrabHQ/Mihrab main --squash` works too (130 MB, so heavy
-on a phone), but features still do not appear in the app by themselves: the app must import them.
+Older notes: `REUSE-REPORT.md` and `NOTIFICATIONS-REPORT.md` record what was checked in Mihrab before the takeover. Where they say "pristine", read "as it was at takeover".

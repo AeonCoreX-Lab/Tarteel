@@ -33,7 +33,7 @@
     "bootstrap:mobile": "sh scripts/bootstrap-mobile.sh",
     "check": "npm run typecheck && npm run lint && npm run test && npm run upstream:verify && npm run validate:quran && npm run validate:translations && npm run validate:audio && npm run validate:knowledge",
     "upstream:verify": "node --no-warnings scripts/upstream/cli.ts verify",
-    "upstream:sync": "node --no-warnings scripts/upstream/cli.ts sync",
+    "upstream:status": "node --no-warnings scripts/upstream/cli.ts status",
     "upstream:diff": "node --no-warnings scripts/upstream/cli.ts diff",
     "validate:audio": "node --no-warnings scripts/validate-audio/cli.ts",
     "postinstall": "patch-package"

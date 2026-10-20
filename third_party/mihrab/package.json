@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "license": "AGPL-3.0-or-later",
-  "description": "Pristine, hash-locked vendor copy of selected Mihrab sources (see UPSTREAM.lock.json). Do not edit.",
+  "description": "Selected Mihrab sources (AGPL-3.0-or-later), maintained by Tarteel since 2026-10-20. See CHANGES.md and UPSTREAM.lock.json.",
   "dependencies": {
     "adhan": "^4.4.3"
   }

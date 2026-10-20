@@ -23,5 +23,10 @@
     "NOTICE": "552112e55dc92323c2400b5ab1864a35bd420ff3cd3f51c7f978071a13b4933a",
     "TRADEMARK.md": "95c205c0a46948feeac762f03cdd495db7cbe2f06c9eddb8a6e6257fe6150bdb"
   },
-  "externalDependencies": {}
+  "externalDependencies": {},
+  "detached": {
+    "at": "2026-10-20T03:32:12.956Z",
+    "baselineSha": "d2aec421c7c61ed1a3a4a2dfcb601e231721117a",
+    "reason": "Tarteel maintains these files itself; no automatic sync from upstream."
+  }
 }

@@ -39,13 +39,14 @@ These are hard rules. They come from the project spec.
 - Synthetic test fixtures must say "Synthetic" and must never look like real history. Do not present them as facts anywhere in the app.
 
 ## Upstream code (third_party/)
-- Files under `third_party/*/src` are PRISTINE copies of upstream. Never edit them by hand: `npm run upstream:verify`
-  (and CI) fails on any difference. Need a change? Wrap the module in `packages/*` (or send it upstream).
-- Update only through `npm run upstream:sync -- --from <upstream checkout>`; review the diff and the licence check it prints.
+- Files under `third_party/*` came from Mihrab and are now **Tarteel's own code**: edit them directly. There is no sync from Mihrab.
+  Every change must be logged with its date in that folder's `CHANGES.md` (AGPL-3.0 section 5(a)); `npm run upstream:status` lists
+  what differs from the takeover baseline. Never delete or edit `UPSTREAM-LICENSES/`. CI runs `npm run upstream:verify` for both.
+  See `docs/upstream/README.md`.
 - Never copy Mihrab's name, icon, `branding/`, store text or screenshots. Tarteel has its own identity.
 - Do not trust upstream's content-licence claims (translations, tafsir, fonts, audio); verify each ourselves.
-- Native Android code lives in `native/tarteel-android` (our glue) and `third_party/mihrab-android/files/**` (vendored Kotlin, pristine).
-  Never edit the vendored Kotlin. Check any vendored file for Mihrab branding (names, icons, strings) before adding it:
+- Native Android code lives in `native/tarteel-android` (our glue) and `third_party/mihrab-android/files/**` (Kotlin that came from Mihrab, ours to maintain).
+  Log changes in its `CHANGES.md`. Check any file for Mihrab branding (names, icons, strings) before adding it:
   `PrayerSilence.kt` was left out because it hard-codes the user-visible Do-Not-Disturb rule name "Mihrab · prayer".
 
 ## Brand

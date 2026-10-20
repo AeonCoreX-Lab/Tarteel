@@ -4,7 +4,7 @@ import { appendFileSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } fro
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { UpstreamConfig } from "./lib.ts";
-import { LicenseChangedError, diffAgainstUpstream, readLock, resolveClosure, sync, verify } from "./lib.ts";
+import { DetachedError, LicenseChangedError, detach, diffAgainstUpstream, readLock, resolveClosure, status, sync, verify } from "./lib.ts";
 
 function write(root: string, rel: string, text: string) {
   mkdirSync(dirname(join(root, rel)), { recursive: true });
@@ -171,4 +171,53 @@ test("closure files that would land on the destination root or a tool-owned fold
   write(up, "src/c.ts", "import p from '../package.json';\nexport const c = p;\n");
   const d = dest();
   assert.throws(() => sync({ name: "t", cfg: { ...cfg(d), entries: ["src/c.ts"] }, srcRoot: up, destRoot: d, sha: null, source: "s" }), /Cannot vendor "package\.json"/);
+});
+
+test("detach: the code may be edited freely, a sync is refused, and status lists what Tarteel changed", () => {
+  const up = fakeUpstream();
+  const d = dest();
+  sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: "abc123", source: "s" });
+  const lock = detach(d, { reason: "ours now", now: () => "2026-10-20T00:00:00.000Z" });
+  assert.deepEqual(lock.detached, { at: "2026-10-20T00:00:00.000Z", baselineSha: "abc123", reason: "ours now" });
+  assert.deepEqual(status(d), { modified: [], deleted: [], added: [] });
+
+  appendFileSync(join(d, "src/lib/b.ts"), "// our fix\n");
+  write(d, "src/extra.ts", "export const mine = 1;\n");
+  write(d, "CHANGES.md", "# Changes\n");
+  assert.deepEqual(verify(d), [], "edits, new files and CHANGES.md are fine");
+  assert.deepEqual(status(d), { modified: ["src/lib/b.ts"], deleted: [], added: ["src/extra.ts"] });
+
+  assert.throws(() => sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: null, source: "s" }), DetachedError);
+  assert.throws(() => sync({ name: "t", cfg: { ...cfg(join(d, "..", "other")), detached: true }, srcRoot: up, destRoot: join(d, "..", "other"), sha: null, source: "s" }), DetachedError, "the config flag alone also blocks a sync");
+  assert.equal(readLock(d)?.detached?.baselineSha, "abc123", "a refused sync changed nothing");
+  assert.equal(detach(d, { reason: "again" }).detached?.reason, "ours now", "detaching twice keeps the first record");
+});
+
+test("detach: the upstream licence files and CHANGES.md must stay", () => {
+  const up = fakeUpstream();
+  const d = dest();
+  sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: null, source: "s" });
+  detach(d, { reason: "r" });
+  assert.match(verify(d).join("\n"), /CHANGES\.md missing/);
+  write(d, "CHANGES.md", "x");
+  write(d, "UPSTREAM-LICENSES/LICENSE", "tampered");
+  assert.match(verify(d).join("\n"), /modified licence file: LICENSE/);
+  const mid = dest();
+  sync({ name: "t", cfg: cfg(mid), srcRoot: up, destRoot: mid, sha: null, source: "s" });
+  detach(mid, { reason: "r" });
+  write(mid, "CHANGES.md", "x");
+  appendFileSync(join(mid, "src/a.ts"), "// ours\n");
+  assert.deepEqual(verify(mid), []);
+});
+
+test("diff on a detached folder shows what upstream changed since the baseline, not Tarteel's own edits", () => {
+  const up = fakeUpstream();
+  const d = dest();
+  sync({ name: "t", cfg: cfg(d), srcRoot: up, destRoot: d, sha: null, source: "s" });
+  detach(d, { reason: "r" });
+  appendFileSync(join(d, "src/types.ts"), "// our own edit\n");
+  assert.deepEqual(diffAgainstUpstream({ ...cfg(d), detached: true }, up, d).changed, [], "our edit is not an upstream change");
+  appendFileSync(join(up, "src/lib/b.ts"), "// upstream moved on\n");
+  const diff = diffAgainstUpstream({ ...cfg(d), detached: true }, up, d);
+  assert.deepEqual(diff.changed.map((c) => c.file), ["src/lib/b.ts"]);
 });

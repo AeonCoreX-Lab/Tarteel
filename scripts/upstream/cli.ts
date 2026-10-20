@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { UpstreamConfig } from "./lib.ts";
-import { LicenseChangedError, diffAgainstUpstream, sync, verify } from "./lib.ts";
+import { DetachedError, LicenseChangedError, detach, diffAgainstUpstream, readLock, status, sync, verify } from "./lib.ts";
 
 const args = process.argv.slice(2);
 const cmd = args[0];
@@ -26,14 +26,28 @@ if (cmd === "verify") {
   for (const n of names) {
     const c = configs[n] as UpstreamConfig;
     const problems = verify(resolve(c.destination));
+    const detached = readLock(resolve(c.destination))?.detached;
     if (problems.length) {
       failed = true;
-      console.error(`✗ ${c.destination} differs from its lock:\n` + problems.map((p) => "  - " + p).join("\n"));
-    } else console.log(`✓ ${c.destination} matches UPSTREAM.lock.json`);
+      console.error(`✗ ${c.destination}${detached ? "" : " differs from its lock"}:\n` + problems.map((p) => "  - " + p).join("\n"));
+    } else console.log(detached ? `✓ ${c.destination} is maintained by Tarteel; upstream licence files and CHANGES.md are in place` : `✓ ${c.destination} matches UPSTREAM.lock.json`);
   }
   if (failed) {
-    console.error("Vendored upstream files must not be edited. Run `npm run upstream:sync` or revert your change.");
+    console.error("Tarteel-maintained Mihrab code may be edited, but its upstream licence files must stay and every change must be noted in CHANGES.md.");
     process.exit(1);
+  }
+} else if (cmd === "detach") {
+  for (const n of names) {
+    const c = configs[n] as UpstreamConfig;
+    const lock = detach(resolve(c.destination), { reason: flag("--reason") ?? "Tarteel maintains these files itself; no automatic sync from upstream." });
+    console.log(`✓ ${c.destination} is Tarteel's own code now (baseline: ${lock.detached?.baselineSha ?? "snapshot"}, since ${lock.detached?.at}). Set "detached": true for it in upstream.config.json.`);
+  }
+} else if (cmd === "status") {
+  for (const n of names) {
+    const c = configs[n] as UpstreamConfig;
+    const s = status(resolve(c.destination));
+    console.log(`${c.destination}: ${s.modified.length} modified, ${s.added.length} added, ${s.deleted.length} deleted since the baseline`);
+    for (const [label, list] of [["modified", s.modified], ["added", s.added], ["deleted", s.deleted]] as const) for (const f of list) console.log(`  ${label}: ${f}`);
   }
 } else if (cmd === "diff" || cmd === "sync") {
   const from = flag("--from");
@@ -58,9 +72,13 @@ if (cmd === "verify") {
       console.error("✗ " + e.message);
       process.exit(3);
     }
+    if (e instanceof DetachedError) {
+      console.error("✗ " + e.message);
+      process.exit(4);
+    }
     throw e;
   }
 } else {
-  console.log("usage: upstream.ts verify [--name N] | diff --from DIR | sync --from DIR [--sha SHA] [--accept-license-change] [--name NAME]");
+  console.log("usage: upstream.ts verify [--name N] | status [--name N] | diff --from DIR | detach [--name N] [--reason TEXT] | sync --from DIR [--sha SHA] [--accept-license-change] [--name NAME] (sync refuses on detached folders)");
   process.exit(1);
 }

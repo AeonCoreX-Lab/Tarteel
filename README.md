@@ -36,10 +36,10 @@ Brand: [BRAND](docs/design/BRAND.md) · UI kit: [UI-KIT](docs/design/UI-KIT.md) 
 | `packages/audio` | Recitation: reciter catalogue, per-ayah download manager, playback queue/controller. Pure TS, ports injected (empty catalogue by default) |
 | `packages/core` | Preference schema, last-read logic, go-to parsing |
 | `apps/mobile` | Expo / React Native app (Android first) |
-| `scripts/` | `validate-quran`, `validate-translations`, `build-database`, `upstream` (sync/verify/diff) |
+| `scripts/` | `validate-quran`, `validate-translations`, `build-database`, `upstream` (verify/status/diff) |
 | `native/tarteel-android` | Local Android library: autolinked glue for the vendored Kotlin full-screen alert |
-| `third_party/mihrab-android` | pristine, hash-locked Kotlin from Mihrab (full-screen alert) |
-| `third_party/mihrab` | pristine, hash-locked subset of Mihrab (AGPL) — see [docs/upstream](docs/upstream/README.md) |
+| `third_party/mihrab-android` | Kotlin that came from Mihrab (full-screen alert); maintained by Tarteel, changes in `CHANGES.md` |
+| `third_party/mihrab` | code that came from Mihrab (AGPL), maintained by Tarteel, changes in `CHANGES.md` — see [docs/upstream](docs/upstream/README.md) |
 
 ## Build (everything runs in GitHub Actions; nothing is built on the phone)
 1. **Push the repository.** The *Bootstrap dependencies* workflow starts by itself: with no `package-lock.json` yet it installs

@@ -70,5 +70,10 @@
     "adhan": "^4.4.3",
     "i18next": "^26.0.4",
     "react-native": "0.87.1"
+  },
+  "detached": {
+    "at": "2026-10-20T03:32:12.954Z",
+    "baselineSha": "d2aec421c7c61ed1a3a4a2dfcb601e231721117a",
+    "reason": "Tarteel maintains these files itself; no automatic sync from upstream."
   }
 }

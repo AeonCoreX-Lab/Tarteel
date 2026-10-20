@@ -19,11 +19,13 @@ source. The app links to it in Settings -> About; the location is configured by
 
 DERIVED / INCLUDED THIRD-PARTY CODE
 -----------------------------------
-third_party/mihrab/
-  Selected source files from Mihrab (https://github.com/MihrabHQ/Mihrab),
-  Copyright (C) 2026 Hassan El Ghamri, licensed AGPL-3.0-or-later.
-  Files are kept byte-for-byte as imported and are verified against
-  third_party/mihrab/UPSTREAM.lock.json (see docs/upstream/README.md).
+third_party/mihrab/ and third_party/mihrab-android/
+  Selected source files that began as a copy of Mihrab (https://github.com/MihrabHQ/Mihrab),
+  Copyright (C) 2026 Hassan El Ghamri, licensed AGPL-3.0-or-later. Tarteel took them over
+  on 2026-10-20 and maintains them itself; they may differ from Mihrab's. Every change by
+  Tarteel is listed with its date in third_party/<name>/CHANGES.md. Mihrab's own LICENSE,
+  NOTICE and TRADEMARK.md are kept unmodified in third_party/<name>/UPSTREAM-LICENSES/, and the
+  commit the files came from is in third_party/<name>/UPSTREAM.lock.json (see docs/upstream/README.md).
   Tarteel does not use the Mihrab name, icon, store listings or screenshots;
   see Mihrab's TRADEMARK.md. Tarteel is not affiliated with or endorsed by Mihrab.
 

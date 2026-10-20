@@ -21,7 +21,8 @@
       "src/hijri/events.ts",
       "src/hijri/islamicDay.ts",
       "src/hijri/upcomingEvents.ts"
-    ]
+    ],
+    "detached": true
   },
   "mihrab-android": {
     "repo": "https://github.com/MihrabHQ/Mihrab",
@@ -38,6 +39,7 @@
       "android/app/src/main/java/com/prayer_times/PrayerAlarmActivity.kt",
       "android/app/src/main/java/com/prayer_times/FullScreenAlarmModule.kt",
       "android/app/src/main/java/com/prayer_times/PrayerAlarmHeadlessService.kt"
-    ]
+    ],
+    "detached": true
   }
 }
