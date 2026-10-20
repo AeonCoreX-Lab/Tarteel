@@ -32,7 +32,7 @@ export function errorKey(code: HadithErrorCode): StringKey {
 }
 
 /** One lookup, made when `enabled` and again when `deps` change or `retry` is called. A lookup that was overtaken is cancelled. */
-function useLookup<T>(enabled: boolean, load: (c: HadithClient, signal: AbortSignal) => Promise<T>, deps: readonly unknown[]): { state: Remote<T>; retry: () => void } {
+export function useRemote<C, T>(enabled: boolean, client: () => C, load: (c: C, signal: AbortSignal) => Promise<T>, deps: readonly unknown[]): { state: Remote<T>; retry: () => void } {
   const [state, setState] = useState<Remote<T>>({ status: "idle" });
   const [attempt, setAttempt] = useState(0);
   const run = useCallback(load, deps);
@@ -43,7 +43,7 @@ function useLookup<T>(enabled: boolean, load: (c: HadithClient, signal: AbortSig
     }
     const controller = new AbortController();
     setState({ status: "loading" });
-    run(getHadithClient(), controller.signal).then(
+    run(client(), controller.signal).then(
       (value) => !controller.signal.aborted && setState({ status: "ready", value }),
       (e: unknown) => !controller.signal.aborted && setState(toError(e)),
     );
@@ -51,6 +51,10 @@ function useLookup<T>(enabled: boolean, load: (c: HadithClient, signal: AbortSig
   }, [enabled, run, attempt]);
   const retry = useCallback(() => setAttempt((a) => a + 1), []);
   return { state, retry };
+}
+
+function useLookup<T>(enabled: boolean, load: (c: HadithClient, signal: AbortSignal) => Promise<T>, deps: readonly unknown[]): { state: Remote<T>; retry: () => void } {
+  return useRemote(enabled, getHadithClient, load, deps);
 }
 
 export function useHadithCollections(): { state: Remote<HadithCollection[]>; retry: () => void } {

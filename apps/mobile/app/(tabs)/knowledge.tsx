@@ -8,7 +8,7 @@ import { StarBadge } from "../../src/components/Ornaments";
 import { Button, Caption, Card, Chip, Heading, ScreenScroll } from "../../src/components/ui";
 import { EVIDENCE_KEY } from "../../src/knowledge/labels";
 import { useEntityCounts, useKnowledgeBrowse, useKnowledgeSearch } from "../../src/knowledge/hooks";
-import { hadithEnabled } from "../../src/hadith/runtime";
+import { hadeethEncEnabled, hadithEnabled } from "../../src/hadith/runtime";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
@@ -166,6 +166,19 @@ export default function KnowledgeTab() {
         />
       </View>
       {body}
+      {hadeethEncEnabled ? (
+        <Pressable accessibilityRole="button" accessibilityLabel={t("hdTitle")} onPress={() => router.push("/hadeeth")}>
+          <Card padding={14}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={{ color: th.text, fontSize: 16, fontWeight: "700", fontFamily: HEADING_FONT }}>{t("hdTitle")}</Text>
+                <Caption>{t("hdEntry")}</Caption>
+              </View>
+              <Icon name="chevronRight" size={20} color={th.muted} />
+            </View>
+          </Card>
+        </Pressable>
+      ) : null}
       {hadithEnabled ? (
         <Pressable accessibilityRole="button" accessibilityLabel={t("hadTitle")} onPress={() => router.push("/hadith")}>
           <Card padding={14}>

@@ -1,0 +1,73 @@
+name: Wikidata sync
+
+# Turns a person's list of Wikidata items (data/knowledge/_incoming/wikidata/seeds.json) into DRAFT entities
+# (data/knowledge/_incoming/wikidata/candidates.json) and opens ONE pull request for review. Run by hand: Actions -> Wikidata sync.
+# Wikidata's structured data is CC0. Nothing here is published: every record is a draft with an unreviewed name and no source, and the
+# build refuses to ship it until a person adds a source and reviews it (see data/knowledge/README.md, entities.json).
+# Same one-time setting as the Quranpedia sync: Actions may create pull requests.
+# NOT TESTED YET against the live API: run it once by hand with a seeds.json that has one or two items, and read the log.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: wikidata-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      WIKIDATA_USER_AGENT: "Tarteel-wikidata-sync (+https://github.com/${{ github.repository }}; a few small requests per run)"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts; fi
+
+      - name: Fetch the listed items
+        id: sync
+        run: npm run sync:wikidata
+
+      - name: Anything to review?
+        id: diff
+        run: |
+          git add -A data/knowledge/_incoming/wikidata
+          if git diff --cached --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+          git diff --cached --stat | tail -5
+
+      - name: Check the importer
+        if: steps.diff.outputs.changed == 'true'
+        run: node --no-warnings --import ./scripts/lib/register-extless.mjs --test scripts/import-wikidata/*.test.ts
+
+      - name: Open or update the pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COUNT: ${{ steps.sync.outputs.count }}
+          PROBLEMS: ${{ steps.sync.outputs.problems }}
+        run: |
+          BRANCH=wikidata-sync
+          {
+            echo "Draft entities from Wikidata (CC0): ${COUNT} written, ${PROBLEMS} item(s) skipped (see the job log)."
+            echo
+            echo "## Before merging"
+            echo "- [ ] Every record in \`candidates.json\` is a **draft**, \`unverified\`, with a \`machine_draft\` name. Nothing here ships."
+            echo "- [ ] To use one: copy it into a pack's \`entities.json\`, add a supporting passage or a written \`editorialBasis\`, check the name and date against that source, then set it to \`published\`."
+            echo "- [ ] Dates are exactly as Wikidata states them (Gregorian/Julian, not Hijri). Where Wikidata listed several, the date is left out."
+          } > pr-body.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git commit -m "Wikidata draft entities: ${COUNT} items"
+          git push --force origin "$BRANCH"
+          if gh pr view "$BRANCH" --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$BRANCH" --title "Wikidata draft entities" --body-file pr-body.md
+          else
+            gh pr create --head "$BRANCH" --base "${{ github.event.repository.default_branch }}" --title "Wikidata draft entities" --body-file pr-body.md
+          fi

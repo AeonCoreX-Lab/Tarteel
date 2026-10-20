@@ -26,6 +26,7 @@
     "pack:demo": "node --no-warnings scripts/build-pack/demo.ts",
     "import:tanzil": "node --no-warnings scripts/import-tanzil/cli.ts",
     "import:quranpedia": "node --no-warnings scripts/import-quranpedia/cli.ts",
+    "sync:wikidata": "node --no-warnings scripts/import-wikidata/cli.ts",
     "sync:quranpedia": "node --no-warnings scripts/import-quranpedia/sync-cli.ts",
     "import:quranenc": "node --no-warnings scripts/import-quranenc/cli.ts",
     "build:db": "node --no-warnings scripts/build-database/cli.ts",

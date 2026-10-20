@@ -10,7 +10,7 @@ import { TranslationPicker } from "../../src/components/TranslationPicker";
 import { Button, Caption, Card, Heading, Row, ScreenScroll, Segmented } from "../../src/components/ui";
 import { LocationError, deviceRegion, detectLocation } from "../../src/platform/location";
 import { RECITERS, selectedReciter } from "../../src/audio/runtime";
-import { hadithEnabled } from "../../src/hadith/runtime";
+import { hadeethEncEnabled, hadithEnabled } from "../../src/hadith/runtime";
 import { knowledgeConfigured } from "../../src/knowledge/runtime";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
@@ -168,6 +168,14 @@ export default function SettingsTab() {
         <Group title={t("libraryTitle")}>
           <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("libraryIntro")}</Text>
           <Row><Button label={t("libraryTitle")} onPress={() => router.push("/library")} /></Row>
+        </Group>
+      ) : null}
+
+      {hadeethEncEnabled ? (
+        <Group title={t("hdSettingTitle")}>
+          <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("hdSettingBody")}</Text>
+          <Segmented label={t("hdSettingTitle")} value={s.onlineHadeethEnc ? 1 : 0} onChange={(v) => s.set("onlineHadeethEnc", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("hadSettingOn") }]} />
+          <Row><Button label={t("hdTitle")} onPress={() => router.push("/hadeeth")} /></Row>
         </Group>
       ) : null}
 

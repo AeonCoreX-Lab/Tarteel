@@ -71,3 +71,6 @@ Add `--base-url https://.../` to also write `catalog.json` listing the signed pa
 `source-unreadable` (file missing or not JSON), `source-shape` (wrong type or missing field), `source-field` (value not allowed),
 `source-duplicate` (id used twice), `source-reference` (id points at nothing), `source-licence` (licence rule broken),
 `source-publish` (publishing rule broken), `source-missing` (required file absent). The message names the file and the id.
+
+## Wikidata drafts
+`npm run sync:wikidata` turns a person-made list (`_incoming/wikidata/seeds.json`) into draft entities (`_incoming/wikidata/candidates.json`). They are `draft`, `unverified`, with `machine_draft` names; nothing ships until a person copies one into a pack, adds a source and reviews it. See `_incoming/wikidata/README.md`.

@@ -1,15 +1,21 @@
-import { HadithError, createHadithClient } from "@tarteel/core";
-import type { HadithClient, HadithHttp } from "@tarteel/core";
+import { HadithError, createHadeethClient, createHadithClient } from "@tarteel/core";
+import type { HadeethClient, HadithClient, HadithHttp } from "@tarteel/core";
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const config = require("./config.json") as { enabled: boolean };
+const config = require("./config.json") as { sunnah?: boolean; hadeethenc?: boolean };
 
 /**
- * The online hadith lookup is offered only in a build that turns it on here. It is OFF in the repository: the request to
- * Sunnah.com for agreement on the terms of use is still open, and the owner switches this on once the terms are settled.
- * With it off there is no hadith screen, no setting, and no request to the hadith server, ever.
+ * Each online hadith provider is offered only in a build that turns it on in config.json. With a provider off there is no
+ * screen, no setting, and no request to that provider's server, ever.
+ *
+ * `sunnah` (Sunnah.com, through the islamic.app API, which mirrors it) is OFF in the repository: the request to Sunnah.com for
+ * agreement on the terms of use is still open, and the owner switches this on once that is settled. Anything that is
+ * Sunnah.com's data, however it is reached, belongs behind this one flag.
  */
-export const hadithEnabled: boolean = config.enabled === true;
+export const hadithEnabled: boolean = config.sunnah === true;
+
+/** HadeethEnc.com (IslamHouse): its terms allow showing the content unchanged with clear credit. Live lookups only, never stored. */
+export const hadeethEncEnabled: boolean = config.hadeethenc === true;
 
 /** Names this app to the server, so its operators can see who is calling and get in touch. Contains nothing about the person. */
 const USER_AGENT = "Tarteel (free open-source Quran app; https://github.com/AeonCoreX-Lab/Tarteel)";
@@ -59,4 +65,12 @@ let client: HadithClient | null = null;
 export function getHadithClient(): HadithClient {
   client ??= createHadithClient({ http: createFetchHadithHttp() });
   return client;
+}
+
+let hadeethClient: HadeethClient | null = null;
+
+/** One HadeethEnc client for the app, so its short in-memory cache and request spacing are shared. Never created while that provider is off. */
+export function getHadeethClient(): HadeethClient {
+  hadeethClient ??= createHadeethClient({ http: createFetchHadithHttp() });
+  return hadeethClient;
 }

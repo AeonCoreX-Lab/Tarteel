@@ -320,7 +320,7 @@ async function prepareDatabase(ports: PackPorts, manifest: PackManifest, part: s
   } catch (e) {
     throw new PackError("schema-error", `the file cannot be opened as a database: ${e instanceof Error ? e.message : String(e)}`);
   }
-  let failed = false;
+  let closeError: unknown;
   try {
     throwIfCancelled(signal);
     let built: number | null | undefined;
@@ -346,16 +346,16 @@ async function prepareDatabase(ports: PackPorts, manifest: PackManifest, part: s
       if (!declared.has(l.id)) issues.push({ severity: "error", code: "licence-not-declared", message: `licence ${l.id} is used by the database but not declared in the manifest` });
     const errors = issues.filter((i) => i.severity === "error");
     if (errors.length > 0) throw new PackError("validation-failed", errors.map((i) => `[${i.code}] ${i.message}`).join("; "), issues);
-  } catch (e) {
-    failed = true;
-    throw e;
   } finally {
+    // A failure to close matters only when the validation itself passed; it is reported after the block, never thrown from `finally`
+    // (which would replace the validation error).
     try {
       await db.close();
     } catch (e) {
-      if (!failed) throw new PackError("storage-error", `the validated file could not be released: ${e instanceof Error ? e.message : String(e)}`);
+      closeError = e;
     }
   }
+  if (closeError !== undefined) throw new PackError("storage-error", `the validated file could not be released: ${closeError instanceof Error ? closeError.message : String(closeError)}`);
 }
 
 /** Moves the verified file into place and records it. If recording fails, the new files are removed again. */

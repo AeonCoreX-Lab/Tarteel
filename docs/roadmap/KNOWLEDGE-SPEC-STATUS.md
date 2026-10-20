@@ -1,6 +1,6 @@
 # Historical Knowledge System: status against the plan
 
-Last updated 2026-10-18 (online Hadith added, dormant; Step 2: events, people, places and Timeline). "Verified" means a command ran and its result was seen. Nothing below is verified on a device, and
+Last updated 2026-10-19 (HadeethEnc live hadith enabled, Wikidata draft importer added; earlier: online Hadith via islamic.app dormant; Step 2: events, people, places and Timeline). "Verified" means a command ran and its result was seen. Nothing below is verified on a device, and
 `npm run typecheck` passes (root, no React Native types); `npm run lint` could not run here (missing @eslint/js); the mobile screens were only checked against stubs.
 Counts: 380 Node tests pass, 1 skipped (an existing on-device prayer-time test).
 
@@ -74,3 +74,6 @@ Design in `docs/architecture/HADITH.md`. In short: the person must turn it on (S
 - [ ] At least one real pack with every source cleared and every claim reviewed by a person
 - [ ] Search across packs
 - [ ] Release workflow run once on a branch
+
+## Free data providers (2026-10-19)
+Full list and reasons in `docs/data-sources/RECOMMENDATIONS.md`. Built: HadeethEnc live lookup (enabled, opt-in; `packages/core/src/hadeethenc.ts`, `app/hadeeth/`) and a Wikidata (CC0) draft importer (`scripts/import-wikidata/`, workflow "Wikidata sync"). Sunnah.com and the islamic.app mirror stay behind the `sunnah` flag. **Not verified:** that the live HadeethEnc answers match the parser beyond the one hadith and category list read on 2026-10-19; the Wikidata importer against the live API (not reachable from the build sandbox); all screens on a device.

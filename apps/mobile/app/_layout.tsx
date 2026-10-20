@@ -48,6 +48,9 @@ export default function RootLayout() {
         <Stack.Screen name="hadith/index" options={{ title: t("hadTitle") }} />
         <Stack.Screen name="hadith/[collection]" options={{ title: t("hadTitle") }} />
         <Stack.Screen name="hadith/view" options={{ title: t("hadTitle") }} />
+        <Stack.Screen name="hadeeth/index" options={{ title: t("hdTitle") }} />
+        <Stack.Screen name="hadeeth/category" options={{ title: t("hdTitle") }} />
+        <Stack.Screen name="hadeeth/view" options={{ title: t("hdTitle") }} />
       </Stack>
       <AudioDock />
       </View>

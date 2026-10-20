@@ -40,6 +40,12 @@ export interface PreferenceSchema {
    * address and what is searched or opened). Nothing is stored. Has an effect only in a build where the feature is enabled.
    */
   onlineHadith: boolean;
+  /**
+   * Off by default. When on, hadith are looked up live from hadeethenc.com (the server sees the IP address and what is opened).
+   * Nothing is stored. Has an effect only in a build where that provider is enabled. Separate from `onlineHadith`, because it
+   * is a different server.
+   */
+  onlineHadeethEnc: boolean;
   /** Memorisation: each ayah N times, then the whole range M times. */
   audioRepeatEachAyah: number;
   audioRepeatRange: number;
@@ -70,6 +76,7 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
   audioAllowStreaming: false,
   audioPlaybackRate: 1,
   onlineHadith: false,
+  onlineHadeethEnc: false,
   audioRepeatEachAyah: 1,
   audioRepeatRange: 1,
   audioPauseFactor: 0,
@@ -134,3 +141,4 @@ export class ReadingProgress {
 export * from "./setup.ts";
 export * from "./translations.ts";
 export * from "./hadith.ts";
+export * from "./hadeethenc.ts";

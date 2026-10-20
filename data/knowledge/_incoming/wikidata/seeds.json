@@ -1,0 +1,19 @@
+{
+  "items": [
+    { "qid": "Q9458", "kind": "person", "subtype": "prophet", "note": "Muhammad. Item number taken from a wikidata.org search result titled \"Muhammad\"; check the description in candidates.json." },
+    { "qid": "Q334923", "kind": "person", "subtype": "companion", "note": "Abu Bakr (search result title \"Abu Bakr\")." },
+    { "qid": "Q8467", "kind": "person", "subtype": "companion", "note": "Umar ibn al-Khattab (search result title \"Umar ibn Al-Khattāb\")." },
+    { "qid": "Q37731", "kind": "person", "subtype": "companion", "note": "Uthman ibn Affan (search result title)." },
+    { "qid": "Q39619", "kind": "person", "subtype": "companion", "note": "Ali ibn Abi Talib (search result title \"Alī ibn Abī Ṭālib\")." },
+    { "qid": "Q42034", "kind": "person", "subtype": "family", "note": "Khadija bint Khuwaylid (search result title)." },
+    { "qid": "Q4730963", "kind": "person", "subtype": "family", "note": "Aisha (search result title \"Aisha\"); check it is the wife of Muhammad." },
+    { "qid": "Q5806", "kind": "place", "subtype": "city", "note": "Mecca (search result title)." },
+    { "qid": "Q35484", "kind": "place", "subtype": "city", "note": "Medina (search result title)." },
+    { "qid": "Q29466", "kind": "place", "subtype": "building", "note": "Kaaba (search result title)." },
+    { "qid": "Q131482", "kind": "event", "subtype": "migration", "note": "Hijra (search result title \"Hijra\"); check the description says it is the migration to Medina, not another meaning." },
+    { "qid": "Q486124", "kind": "event", "subtype": "battle", "note": "Battle of Badr (search result title)." },
+    { "qid": "Q488278", "kind": "event", "subtype": "battle", "note": "Battle of Uhud (search result title)." },
+    { "qid": "Q1647162", "kind": "event", "subtype": "treaty", "note": "Treaty of Hudaybiyyah (search result title)." },
+    { "qid": "Q2092033", "kind": "event", "subtype": "other", "note": "Conquest of Mecca (search result title)." }
+  ]
+}

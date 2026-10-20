@@ -92,3 +92,14 @@ With a test app that has a catalogue address and key, and the Wahidi pack (or a 
 - [ ] "Open on Sunnah.com" appears only for Bukhari, Muslim, Nasai, Abu Dawud, Tirmidhi, Ibn Majah and the Forty, and opens the right hadith.
 - [ ] Credit and "not reviewed by Tarteel" are on every hadith screen. Bengali UI shows the Arabic/English-only note on a hadith.
 - [ ] Nothing hadith-related is on disk after use (app storage shows no new files).
+
+## Online Hadith, HadeethEnc (flag `hadeethenc` is `true` in the repository build)
+- [ ] Knowledge tab shows "Hadith (HadeethEnc)". With the flag `false` there is no row, no Settings group, and no request to hadeethenc.com.
+- [ ] Setting off: opening it shows the consent card (names hadeethenc.com) and makes no request.
+- [ ] Turn on: topics load in the app language (check Bengali). Open a topic: subtopics (if any) and a list; "Show more" adds the next page without repeating rows.
+- [ ] Open a hadith: Arabic original is right-to-left and readable; translation, source of the report, grade, explanation and lessons are each labelled. A hadith with no Bengali text says so and shows the Arabic.
+- [ ] The grade note says the publisher names no grader. Credit "HadeethEnc.com, published by IslamHouse.com" and "not reviewed by Tarteel" are on every screen.
+- [ ] "Open on HadeethEnc.com" opens that hadith's page.
+- [ ] Airplane mode: a clear "could not reach" message and a working retry.
+- [ ] Nothing hadith-related is on disk after use.
+- [ ] Text is exactly as on hadeethenc.com for two or three hadith (compare side by side): nothing cut, nothing added.

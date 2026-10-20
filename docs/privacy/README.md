@@ -10,6 +10,7 @@
   sent and playing downloaded audio sends nothing. No reciter ships yet: the host will be named here when one is added
   (see [docs/audio](../audio/README.md)). Last-listened position is stored locally in preferences only.
 - Online hadith (only in a build that enables it, and only after the person turns it on in Settings, which is off by default): each search or opened hadith is a request to api.islamic.app, which can see the IP address and what is searched or opened. The app sends no account, device id or location, and stores nothing it receives. Requests carry a User-Agent that names Tarteel.
+- Online hadith from HadeethEnc (enabled in the repository build, but only after the person turns it on in Settings, which is off by default): each opened topic or hadith is a request to hadeethenc.com, which can see the IP address and which topic or hadith is opened. The app sends no account, device id or location, and stores nothing it receives. Requests carry a User-Agent that names Tarteel.
 - Knowledge packs (history and context) are the third network use, and only when the person asks: "Check for packs" fetches the catalogue
   and Install, Update or Repair downloads a pack. The pack host (GitHub Releases, once configured) sees the device IP address and which
   catalogue or pack file is requested; nothing else is sent. Opening the Library, reading an installed pack, and everything else send

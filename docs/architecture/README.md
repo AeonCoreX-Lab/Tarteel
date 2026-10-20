@@ -40,3 +40,5 @@ Source-linked claims, passages and edges live in `content.db` (migrations 2 and 
 
 ## Known gaps (tracked, not hidden)
 Notes UI, Juz/Page/Hizb navigation screens, downloadable translation packs, web app, optional cloud.
+
+Online hadith providers and the data-source decisions: `HADITH.md` and `../data-sources/RECOMMENDATIONS.md`.

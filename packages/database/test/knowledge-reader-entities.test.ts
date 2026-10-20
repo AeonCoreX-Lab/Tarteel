@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { SqlDriver } from "@tarteel/storage";
 import { openNodeSqlite } from "../../../scripts/lib/node-sqlite-driver.ts";
 import { CONTENT_MIGRATIONS, createKnowledgeReader, migrate } from "../src/index.ts";
 import type { InstalledPack, PackRegistry } from "../src/index.ts";
