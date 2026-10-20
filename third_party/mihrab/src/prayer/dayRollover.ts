@@ -23,39 +23,30 @@
  * key in `DISPLAY_ORDER` gets both cases right without knowing which is
  * which.
  *
- * ── THE TWO ROWS THAT CAN FALL AFTER MIDNIGHT ─────────────────────────
+ * ── THE ROWS THAT CAN FALL AFTER MIDNIGHT ─────────────────────────────
  *
  * Ishāʾ and the First Third are printed on this card but can happen on the
  * next calendar day — Stockholm in June puts Ishāʾ past 00:00 — and a naive
  * "today at 00:15" is sixteen hours in the PAST, which would read as a day
- * already spent at breakfast. Both are pushed a day when they land before
- * Maghrib, which is the same rule the card's own progress rail uses.
+ * already spent at breakfast. Each row is placed by `eventAt`, whose rule
+ * (`rowDateShift`) is the scheduler's and the widgets' too.
  */
 import { DISPLAY_ORDER, type TimingsMap } from '../types/prayer';
-import { addDays, combineLocalDateAndTime } from '../utils/prayerTimes';
+import { eventAt } from '../utils/prayerTimes';
 
 /**
  * The instant one row of this card happens, or null when the row is absent
  * or its clock string is unreadable.
- *
- * Not `utils/prayerTimes.eventAt`: that one pushes the First Third past
- * midnight but not Ishāʾ, because the scheduler it was written for reads
- * Ishāʾ off the day it actually falls on. This reads the card, where both
- * are printed on the evening they belong to.
  */
 function instantOf(
   key: string,
   timings: TimingsMap,
   dayStart: Date,
+  clock?: string | null,
 ): Date | null {
-  const raw = timings[key];
-  if (!raw) return null;
+  if (!timings[key]) return null;
   try {
-    const at = combineLocalDateAndTime(dayStart, raw);
-    if (key !== 'Isha' && key !== 'Firstthird') return at;
-    const maghrib = timings.Maghrib;
-    if (!maghrib) return at;
-    return at < combineLocalDateAndTime(dayStart, maghrib) ? addDays(at, 1) : at;
+    return eventAt(key, timings, dayStart, clock);
   } catch {
     // An unreadable time is a row that cannot be placed, not a throw: the
     // rest of the day still answers the question.
@@ -72,10 +63,12 @@ function instantOf(
 export function lastTimeOfDay(
   timings: TimingsMap,
   dayStart: Date,
+  /** The clock the day is written on (`DEVICE_CLOCK`). */
+  clock?: string | null,
 ): Date | null {
   let last: Date | null = null;
   for (const key of DISPLAY_ORDER) {
-    const at = instantOf(key, timings, dayStart);
+    const at = instantOf(key, timings, dayStart, clock);
     if (!at) continue;
     if (!last || at.getTime() > last.getTime()) last = at;
   }
@@ -87,7 +80,8 @@ export function dayIsSpent(
   timings: TimingsMap,
   dayStart: Date,
   now: Date,
+  clock?: string | null,
 ): boolean {
-  const last = lastTimeOfDay(timings, dayStart);
+  const last = lastTimeOfDay(timings, dayStart, clock);
   return last != null && now.getTime() > last.getTime();
 }
