@@ -26,13 +26,14 @@ jobs:
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-${{ runner.os }}-
+          restore-keys: |
+            npm-${{ runner.os }}-
       - name: Install
         run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
-      - name: Mihrab-derived code: licence files and CHANGES.md in place
+      - name: "Mihrab-derived code: licence files and CHANGES.md in place"
         run: npm run upstream:verify
 
   data:
