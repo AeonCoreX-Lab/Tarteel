@@ -286,7 +286,7 @@ test("sourceDetail: the work, edition and licence behind a citation, and the pub
   await reader.close();
 });
 
-test("trust: a pack that fails the check is never opened, and is checked again when it is reinstalled or repaired", async () => {
+test("trust: a pack that fails the check is never opened, and is checked again on the next question", async () => {
   const dir = await tmp();
   const a = await makePack(dir, "a.db");
   const b = await makePack(dir, "b.db");
@@ -301,7 +301,7 @@ test("trust: a pack that fails the check is never opened, and is checked again w
   });
   assert.deepEqual((await reader.surah(1, "en")).map((c) => c.key), ["pack-a:c-surah"]);
   await reader.surah(1, "en");
-  assert.deepEqual(asked, ["pack-a", "pack-b"], "each pack is checked once, not on every question");
+  assert.deepEqual(asked, ["pack-a", "pack-b", "pack-b"], "an opened pack is checked once; a pack that failed is checked again, so one failure is never a lasting verdict");
   assert.deepEqual(opened, [a], "the untrusted pack was never opened");
   assert.equal(await reader.sourceDetail("pack-b", "p-open", "en"), null);
   assert.deepEqual((await reader.coverage(1)).surahClaims, 1);
@@ -317,6 +317,72 @@ test("trust: a pack that fails the check is never opened, and is checked again w
   await strict.close();
 });
 
+test("a failure is not remembered: a pack whose trust check or open failed once is read on the next question", async () => {
+  const dir = await tmp();
+  const a = await makePack(dir, "a.db");
+  let trustFails = true;
+  let openFails = true;
+  const reader = createKnowledgeReader({
+    registry: fakeRegistry([installed("pack-a", a)]),
+    openDb: async (p) => {
+      if (openFails) throw new Error("file busy");
+      return openNodeSqlite(p);
+    },
+    trust: async () => {
+      if (trustFails) throw new Error("manifest not readable yet");
+      return true;
+    },
+  });
+  assert.deepEqual(await reader.browse(), []);
+  trustFails = false;
+  assert.deepEqual(await reader.browse(), [], "still fails to open");
+  openFails = false;
+  assert.deepEqual((await reader.browse()).map((x) => x.surahId), [1, 2], "the next question reads the pack");
+  await reader.close();
+});
+
+test("questions asked at the same time open a pack once", async () => {
+  const dir = await tmp();
+  const a = await makePack(dir, "a.db");
+  const opened: string[] = [];
+  const reader = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", a)]), openDb: async (p) => (opened.push(p), openNodeSqlite(p)) });
+  const [x, y, z] = await Promise.all([reader.browse(), reader.entityCounts(), reader.surah(1, "en")]);
+  assert.equal(x.length > 0 && z.length > 0, true);
+  assert.deepEqual(y, { event: 0, person: 0, place: 0 });
+  assert.deepEqual(opened, [a]);
+  await reader.close();
+});
+
+test("diagnose: says how many packs are installed and readable, and why one is not", async () => {
+  const dir = await tmp();
+  const a = await makePack(dir, "a.db");
+  const u = await makePack(dir, "u.db");
+  const broken = await makePack(dir, "broken.db", { extra: async (db) => void (await db.exec("DROP TABLE edge_passage; DROP TABLE edge;")) });
+  const bad = join(dir, "not-a-database.db");
+  const { writeFile } = await import("node:fs/promises");
+  await writeFile(bad, "this is not a sqlite file at all, just text".repeat(10));
+  const open = async (p: string) => openNodeSqlite(p);
+
+  assert.deepEqual(await createKnowledgeReader({ registry: fakeRegistry([]), openDb: open }).diagnose(), { installed: 0, readable: 0, problems: [] });
+  const fine = createKnowledgeReader({ registry: fakeRegistry([installed("pack-a", a)]), openDb: open });
+  assert.deepEqual(await fine.diagnose(), { installed: 1, readable: 1, problems: [] });
+
+  const reader = createKnowledgeReader({
+    registry: fakeRegistry([installed("pack-a", a), installed("pack-bad", bad), installed("pack-u", u), installed("pack-q", broken)]),
+    openDb: open,
+    trust: async (pack) => pack.packId !== "pack-u",
+  });
+  const r = await reader.diagnose();
+  assert.equal(r.installed, 4);
+  assert.equal(r.readable, 1);
+  assert.deepEqual(r.problems.map((p) => [p.packId, p.stage]).sort(), [["pack-bad", "open"], ["pack-q", "query"], ["pack-u", "trust"]]);
+  assert.match(r.problems.find((p) => p.packId === "pack-u")!.message, /not signed by a key/);
+  assert.match(r.problems.find((p) => p.packId === "pack-bad")!.message, /not a database/);
+  // the readable pack still answers while the others fail
+  assert.deepEqual((await reader.browse()).map((x) => x.surahId), [1, 2]);
+  await reader.close();
+  await fine.close();
+});
 
 // ------------------------------------------------------------------- browse and search
 

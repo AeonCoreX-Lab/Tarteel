@@ -3,6 +3,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { gradeLabel, sunnahUrl } from "@tarteel/core";
 import type { HadithEntry } from "@tarteel/core";
 import { Button, Caption, Card, Chip, ScreenScroll } from "../../src/components/ui";
+import { ArabicFrame, OrnamentDivider, TextBlock } from "../../src/components/Heritage";
 import { useHadithEntry } from "../../src/hadith/hooks";
 import { HadithCredit, HadithError, HadithGate } from "../../src/hadith/parts";
 import { useSettings } from "../../src/state/settings";
@@ -17,33 +18,20 @@ function Entry({ h }: { h: HadithEntry }) {
   const grades = [...h.ar.grades, ...h.en.grades.filter((g) => !h.ar.grades.some((a) => a.grade === g.grade && a.gradedBy === g.gradedBy))];
   const title = [h.chapterTitle.en, h.chapterNumber ? `(${t("hadChapter")} ${h.chapterNumber})` : null].filter(Boolean).join(" ");
   return (
-    <View style={{ gap: 14 }}>
-      <View style={{ gap: 4 }}>
-        <Text style={{ color: th.text, fontSize: 20, fontWeight: "700", fontFamily: HEADING_FONT }}>{`${h.collection} · ${t("hadNumber")} ${h.hadithNumber}`}</Text>
+    <View style={{ gap: 18 }}>
+      <View style={{ gap: 4, alignItems: "center" }}>
+        <Text accessibilityRole="header" style={{ color: th.text, fontSize: 22, fontWeight: "700", fontFamily: HEADING_FONT, textAlign: "center" }}>{`${h.collection} · ${t("hadNumber")} ${h.hadithNumber}`}</Text>
         <Caption>{`${t("hadBook")} ${h.bookNumber}`}</Caption>
         {title ? <Caption>{title}</Caption> : null}
       </View>
 
-      {h.ar.text ? (
-        <Card padding={16}>
-          <View style={{ gap: 8 }}>
-            <Caption>{t("hadArabic")}</Caption>
-            <Text selectable style={{ color: th.text, fontSize: 24, lineHeight: 42, writingDirection: "rtl", textAlign: "left" }}>{h.ar.text}</Text>
-          </View>
-        </Card>
-      ) : null}
+      {h.ar.text ? <ArabicFrame label={t("hadArabic")}>{h.ar.text}</ArabicFrame> : null}
 
-      {h.en.text ? (
-        <Card padding={16}>
-          <View style={{ gap: 8 }}>
-            <Caption>{t("hadEnglish")}</Caption>
-            <Text selectable style={{ color: th.text, fontSize: 16, lineHeight: 25 }}>{h.en.text}</Text>
-          </View>
-        </Card>
-      ) : null}
+      {h.en.text ? <TextBlock label={t("hadEnglish")}>{h.en.text}</TextBlock> : null}
       {lang === "bn" ? <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("hadLangNote")}</Text> : null}
 
-      <Card padding={14}>
+      <OrnamentDivider />
+      <Card tone="alt" padding={14}>
         <View style={{ gap: 8 }}>
           <Caption>{t("hadGrading")}</Caption>
           {grades.length === 0 ? (
@@ -89,6 +77,7 @@ export default function HadithView() {
         <HadithGate>
           <Loaded collection={String(collection)} book={String(book)} number={String(number)} />
         </HadithGate>
+        <OrnamentDivider margin={8} />
         <HadithCredit />
       </ScreenScroll>
     </>

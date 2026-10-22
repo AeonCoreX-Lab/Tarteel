@@ -3,34 +3,31 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import type { HadithCollection, HadithHit } from "@tarteel/core";
 import { Icon } from "../../src/components/Icons";
-import { Caption, Card, Heading, ScreenScroll } from "../../src/components/ui";
+import { Caption, Card, ScreenScroll } from "../../src/components/ui";
+import { Hero, ListRow, OrnamentDivider, RowStar, SectionHeader, StarGlyph } from "../../src/components/Heritage";
 import { useHadithCollections, useHadithSearch } from "../../src/hadith/hooks";
 import { HadithCredit, HadithError, HadithGate, Snippet } from "../../src/hadith/parts";
 import { useT } from "../../src/i18n";
-import { HEADING_FONT, useTheme } from "../../src/theme";
+import { useTheme } from "../../src/theme";
 
 function Collections() {
-  const th = useTheme();
   const t = useT();
   const router = useRouter();
   const { state, retry } = useHadithCollections();
   if (state.status === "error") return <HadithError state={state} retry={retry} />;
   if (state.status !== "ready") return <Caption>{t("knowLoading")}</Caption>;
-  const row = (c: HadithCollection) => (
-    <Pressable key={c.slug} accessibilityRole="button" accessibilityLabel={c.nameEn} onPress={() => router.push(`/hadith/${c.slug}`)}>
-      <Card padding={14}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ color: th.text, fontSize: 16, fontWeight: "700", fontFamily: HEADING_FONT }}>{c.nameEn}</Text>
-            {c.nameAr ? <Text style={{ color: th.muted, fontSize: 16, writingDirection: "rtl", textAlign: "left" }}>{c.nameAr}</Text> : null}
-            {c.totalHadith > 0 ? <Caption>{`${c.totalHadith} ${t("hadCount")}`}</Caption> : null}
-          </View>
-          <Icon name="chevronRight" size={20} color={th.muted} />
-        </View>
-      </Card>
-    </Pressable>
+  const row = (c: HadithCollection, i: number) => (
+    <ListRow
+      key={c.slug}
+      title={c.nameEn}
+      subtitle={c.nameAr ?? undefined}
+      tag={c.totalHadith > 0 ? `${c.totalHadith}` : undefined}
+      label={`${c.nameEn}${c.totalHadith > 0 ? `. ${c.totalHadith} ${t("hadCount")}` : ""}`}
+      lead={<RowStar n={i + 1} />}
+      onPress={() => router.push(`/hadith/${c.slug}`)}
+    />
   );
-  return <View style={{ gap: 12 }}>{state.value.map(row)}</View>;
+  return <View style={{ gap: 10 }}>{state.value.map(row)}</View>;
 }
 
 function Results({ query }: { query: string }) {
@@ -47,7 +44,7 @@ function Results({ query }: { query: string }) {
       <Pressable key={`${h.collection}:${h.bookNumber}:${h.hadithNumber}`} accessibilityRole="button" accessibilityLabel={`${h.collection} ${h.hadithNumber}`} onPress={open}>
         <Card padding={14}>
           <View style={{ gap: 8 }}>
-            <Caption>{`${h.collection} · ${t("hadNumber")} ${h.hadithNumber}`}</Caption>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><StarGlyph size={11} /><Caption>{`${h.collection} · ${t("hadNumber")} ${h.hadithNumber}`}</Caption></View>
             {h.snippet.en ? <Snippet segments={h.snippet.en} /> : null}
             {h.snippet.ar ? <Snippet segments={h.snippet.ar} rtl /> : null}
           </View>
@@ -74,9 +71,8 @@ export default function HadithHome() {
     <>
       <Stack.Screen options={{ title: t("hadTitle") }} />
       <ScreenScroll>
-        <Heading size={28}>{t("hadTitle")}</Heading>
+        <Hero title={t("hadTitle")} subtitle={t("hadIntro")} icon="knowledge" />
         <HadithGate>
-          <Text style={{ color: th.muted, fontSize: 14, lineHeight: 20 }}>{t("hadIntro")}</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 52, paddingHorizontal: 14, borderRadius: 26, borderWidth: 1, borderColor: th.border, backgroundColor: th.surface }}>
             <Icon name="search" size={22} color={th.accentText} />
             <TextInput
@@ -91,8 +87,9 @@ export default function HadithHome() {
               style={{ flex: 1, minHeight: 48, color: th.text, fontSize: 16 }}
             />
           </View>
-          {searching ? <Results query={query} /> : <Collections />}
+          {searching ? <Results query={query} /> : <><SectionHeader label={t("hadTitle")} /><Collections /></>}
         </HadithGate>
+        <OrnamentDivider margin={8} />
         <HadithCredit />
       </ScreenScroll>
     </>

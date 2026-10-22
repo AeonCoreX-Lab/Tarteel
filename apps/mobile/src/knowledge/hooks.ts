@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useFocusEffect } from "expo-router";
-import type { AyahContext, CatalogEntry, EntityDetail, EntityKind, EntityRef, EntitySummary, HistoryClaim, KnowledgeCoverage, KnowledgeSearchResult, LibraryRow, PackFailureCode, PackIntegrity, SourceDetail, SurahKnowledge } from "@tarteel/database";
+import type { AyahContext, CatalogEntry, EntityDetail, EntityKind, EntityRef, EntitySummary, HistoryClaim, KnowledgeCoverage, KnowledgeSearchResult, LibraryRow, PackFailureCode, PackIntegrity, PackReadReport, SourceDetail, SurahKnowledge } from "@tarteel/database";
 import type { StringKey } from "../i18n";
-import { getLibrary, getReader, knowledgeConfigured } from "./runtime";
+import { getLibrary, getReader, knowledgeConfigured, packsChanged, packsVersionStore } from "./runtime";
 
 export interface LibraryMessage {
   tone: "ok" | "error";
@@ -126,6 +126,7 @@ export function useKnowledgeLibrary(): KnowledgeLibraryState & {
         abort.current = null;
         working.current = false;
         await reload();
+        if (r.ok) void packsChanged();
         if (r.ok) {
           setState((s) => {
             const damaged = new Map(s.damaged);
@@ -153,6 +154,7 @@ export function useKnowledgeLibrary(): KnowledgeLibraryState & {
         const r = await lib.remove(packId);
         working.current = false;
         await reload();
+        if (r.ok) void packsChanged();
         patch({ busyId: null, message: r.ok ? { tone: "ok", text: "libRemovedOk" } : { tone: "error", text: r.code === "required-by" ? "libRequiredBy" : "libErrGeneric" } });
       } catch {
         patch({ busyId: null, message: { tone: "error", text: "libErrGeneric" } });
@@ -180,6 +182,7 @@ function usePacksQuery<T>(load: (reader: Awaited<ReturnType<typeof getReader>>) 
   const [state, setState] = useState<Loaded<T>>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const run = useCallback(load, deps);
+  const version = useSyncExternalStore(packsVersionStore.subscribe, packsVersionStore.get);
   useFocusEffect(
     useCallback(() => {
       if (!knowledgeConfigured) return undefined;
@@ -191,7 +194,7 @@ function usePacksQuery<T>(load: (reader: Awaited<ReturnType<typeof getReader>>) 
       return () => {
         cancelled = true;
       };
-    }, [run, attempt]),
+    }, [run, attempt, version]),
   );
   const retry = useCallback(() => {
     setState({ status: "loading" });
@@ -285,4 +288,14 @@ export function useAyahContextState(surahId: number, ayahNumber: number | null, 
 /** The work, edition and licence behind a citation, and the claims that cite that edition. Null while loading or when not found. */
 export function useSourceDetail(packId: string, passageId: string, lang: string): SourceDetail | null {
   return useFromPacks((r) => r.sourceDetail(packId, passageId, lang), [packId, passageId, lang]);
+}
+
+/** How many packs are installed, how many could be read, and why the others could not. Read again when the packs change or the person retries. */
+export function usePackDiagnosis(): { state: Loaded<PackReadReport>; retry: () => void } {
+  return usePacksQuery((r) => r.diagnose(), []);
+}
+
+/** Closes the open pack files and makes every screen read again. For the "Try again" buttons. */
+export function readPacksAgain(): void {
+  void packsChanged();
 }

@@ -103,3 +103,9 @@ With a test app that has a catalogue address and key, and the Wahidi pack (or a 
 - [ ] Airplane mode: a clear "could not reach" message and a working retry.
 - [ ] Nothing hadith-related is on disk after use.
 - [ ] Text is exactly as on hadeethenc.com for two or three hadith (compare side by side): nothing cut, nothing added.
+
+## Install, then show (no restart needed)
+- [ ] Knowledge tab open with no pack: shows "No knowledge packs installed". Go to Knowledge library, install a pack, come back: the tab lists the surahs **without closing the app**.
+- [ ] Remove the pack in the Library and come back: the list disappears at once. Reinstall: it comes back at once.
+- [ ] Open a surah that the pack does not cover: the screen says the installed packs have nothing about it (it does not tell you to add packs).
+- [ ] If packs are installed but cannot be read, the Knowledge tab says so, lists the pack, the stage (`trust`, `open` or `query`) and a short technical message, and "Try again" works. Copy those lines into the bug report.

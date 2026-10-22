@@ -1,15 +1,14 @@
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Icon } from "../../src/components/Icons";
-import { Button, Caption, Card, Heading, ScreenScroll } from "../../src/components/ui";
+import { Button, Caption, ScreenScroll } from "../../src/components/ui";
+import { Hero, ListRow, OrnamentDivider, RowStar, SectionHeader } from "../../src/components/Heritage";
 import { useHadeethCategories, useHadeethList } from "../../src/hadith/hadeeth";
 import { HadeethCredit, HadeethGate } from "../../src/hadith/hadeeth-parts";
 import { HadithError } from "../../src/hadith/parts";
 import { useT } from "../../src/i18n";
-import { HEADING_FONT, useTheme } from "../../src/theme";
+import { useTheme } from "../../src/theme";
 
 function Subtopics({ id }: { id: string }) {
-  const th = useTheme();
   const t = useT();
   const router = useRouter();
   const { state } = useHadeethCategories();
@@ -17,20 +16,16 @@ function Subtopics({ id }: { id: string }) {
   const children = state.value.filter((c) => c.parentId === id);
   if (children.length === 0) return null;
   return (
-    <View style={{ gap: 12 }}>
-      <Caption>{t("hdSubtopics")}</Caption>
-      {children.map((c) => (
-        <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={c.title} onPress={() => router.push(`/hadeeth/category?id=${encodeURIComponent(c.id)}&name=${encodeURIComponent(c.title)}`)}>
-          <Card padding={14}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ color: th.text, fontSize: 15, fontWeight: "700", fontFamily: HEADING_FONT }}>{c.title}</Text>
-                {c.hadeethsCount > 0 ? <Caption>{`${c.hadeethsCount} ${t("hdCount")}`}</Caption> : null}
-              </View>
-              <Icon name="chevronRight" size={20} color={th.muted} />
-            </View>
-          </Card>
-        </Pressable>
+    <View style={{ gap: 10 }}>
+      <SectionHeader label={t("hdSubtopics")} trailing={String(children.length)} />
+      {children.map((c, i) => (
+        <ListRow
+          key={c.id}
+          title={c.title}
+          subtitle={c.hadeethsCount > 0 ? `${c.hadeethsCount} ${t("hdCount")}` : undefined}
+          lead={<RowStar n={i + 1} />}
+          onPress={() => router.push(`/hadeeth/category?id=${encodeURIComponent(c.id)}&name=${encodeURIComponent(c.title)}`)}
+        />
       ))}
     </View>
   );
@@ -42,17 +37,10 @@ function List({ id }: { id: string }) {
   const router = useRouter();
   const { items, total, hasMore, state, more, retry } = useHadeethList(id);
   return (
-    <View style={{ gap: 12 }}>
-      <Caption>{total > 0 ? `${t("hdHadithIn")} (${total})` : t("hdHadithIn")}</Caption>
-      {items.map((h) => (
-        <Pressable key={h.id} accessibilityRole="button" accessibilityLabel={h.title} onPress={() => router.push(`/hadeeth/view?id=${encodeURIComponent(h.id)}`)}>
-          <Card padding={14}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <Text style={{ flex: 1, color: th.text, fontSize: 15, lineHeight: 22 }}>{h.title}</Text>
-              <Icon name="chevronRight" size={20} color={th.muted} />
-            </View>
-          </Card>
-        </Pressable>
+    <View style={{ gap: 10 }}>
+      <SectionHeader label={t("hdHadithIn")} trailing={total > 0 ? String(total) : undefined} />
+      {items.map((h, i) => (
+        <ListRow key={h.id} title={h.title} lead={<RowStar n={i + 1} />} onPress={() => router.push(`/hadeeth/view?id=${encodeURIComponent(h.id)}`)} />
       ))}
       {state.status === "loading" ? <Caption>{t("knowLoading")}</Caption> : null}
       {state.status === "error" ? <HadithError state={state} retry={retry} /> : null}
@@ -75,11 +63,12 @@ export default function HadeethCategory() {
     <>
       <Stack.Screen options={{ title }} />
       <ScreenScroll>
-        <Heading size={26}>{title}</Heading>
+        <Hero title={title} icon="knowledge" />
         <HadeethGate>
           <Subtopics id={String(id)} />
           <List id={String(id)} />
         </HadeethGate>
+        <OrnamentDivider margin={8} />
         <HadeethCredit />
       </ScreenScroll>
     </>

@@ -212,8 +212,29 @@ export interface KnowledgeReader {
   ayah(surahId: number, ayahNumber: number, lang: string): Promise<AyahContext>;
   /** Everything a pack says about the edition that `passageId` belongs to; null when the pack or passage is not there (or not trusted). */
   sourceDetail(packId: string, passageId: string, lang: string): Promise<SourceDetail | null>;
-  /** Closes every open pack. Call when the app goes away; packs reopen on the next question. */
+  /**
+   * Why installed packs might not be showing: how many are installed, how many could be opened and answered a test question, and
+   * for each one that could not, where it failed and the message. Never throws. Makes a fresh attempt (nothing here is cached).
+   */
+  diagnose(): Promise<PackReadReport>;
+  /** Closes every open pack. Call when the app goes away, or after a pack was installed, repaired or removed; packs reopen on the next question. */
   close(): Promise<void>;
+}
+
+/** Where reading an installed pack failed. */
+export type PackReadStage = "trust" | "open" | "query";
+
+export interface PackReadProblem {
+  packId: string;
+  stage: PackReadStage;
+  /** Technical, in English, for a bug report. Contains no personal data. */
+  message: string;
+}
+
+export interface PackReadReport {
+  installed: number;
+  readable: number;
+  problems: PackReadProblem[];
 }
 
 interface Open {
@@ -235,37 +256,70 @@ export function createKnowledgeReader(deps: {
   // Keyed by file path AND install record, so an updated pack (new path) and a repaired one (same path, new install time) are reopened.
   const keyOf = (p: InstalledPack): string => `${p.path}#${p.installedAt}#${p.sha256}`;
   const open = new Map<string, Open>();
-  const rejected = new Set<string>(); // packs that failed the trust check; forgotten when the install record changes or goes
+  /** An open in progress, so two questions asked at once share one open instead of opening the same file twice. */
+  const opening = new Map<string, Promise<Open | PackReadProblem>>();
+  /** The latest reason each pack could not be read, by pack id. Cleared when it reads again. Failures are never remembered as a verdict: the next question tries again. */
+  const problems = new Map<string, PackReadProblem>();
+  const text = (e: unknown): string => (e instanceof Error ? `${e.name}: ${e.message}` : String(e)).slice(0, 300);
 
-  /** The databases of every installed pack, opened on demand; ones that were removed or replaced are closed. A pack that will not open is skipped. */
+  async function openOne(pack: InstalledPack): Promise<Open | PackReadProblem> {
+    if (deps.trust) {
+      let trusted = false;
+      let why = "the stored manifest is missing, not for this pack, or not signed by a key this app trusts";
+      try {
+        trusted = await deps.trust(pack);
+      } catch (e) {
+        why = text(e);
+      }
+      if (!trusted) return { packId: pack.packId, stage: "trust", message: why };
+    }
+    let db: SqlDriver;
+    try {
+      db = await deps.openDb(pack.path);
+    } catch (e) {
+      return { packId: pack.packId, stage: "open", message: text(e) };
+    }
+    try {
+      const has = await db.get<{ n: number }>("SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name IN ('entity', 'entity_text', 'entity_passage')");
+      return { pack, db, entities: has?.n === 3 };
+    } catch (e) {
+      await db.close().catch(() => undefined);
+      return { packId: pack.packId, stage: "open", message: `the file opened but could not be read: ${text(e)}` };
+    }
+  }
+
+  /** The databases of every installed pack, opened on demand; ones that were removed or replaced are closed. A pack that will not open is skipped now and tried again next time. */
   async function packs(): Promise<Open[]> {
     const installed = await deps.registry.list();
     const keys = new Set(installed.map(keyOf));
-    for (const k of rejected) if (!keys.has(k)) rejected.delete(k);
     for (const [k, o] of open) {
       if (!keys.has(k)) {
         open.delete(k);
         await o.db.close().catch(() => undefined);
       }
     }
+    const ids = new Set(installed.map((p) => p.packId));
+    for (const id of problems.keys()) if (!ids.has(id)) problems.delete(id);
     const out: Open[] = [];
     for (const pack of [...installed].sort((a, b) => a.packId.localeCompare(b.packId))) {
-      let o = open.get(keyOf(pack));
+      const key = keyOf(pack);
+      let o = open.get(key);
       if (!o) {
-        if (rejected.has(keyOf(pack))) continue;
-        if (deps.trust && !(await deps.trust(pack).catch(() => false))) {
-          rejected.add(keyOf(pack));
+        let pending = opening.get(key);
+        if (!pending) {
+          pending = openOne(pack).finally(() => opening.delete(key));
+          opening.set(key, pending);
+        }
+        const r = await pending;
+        if (!("db" in r)) {
+          problems.set(pack.packId, r);
           continue;
         }
-        try {
-          const db = await deps.openDb(pack.path);
-          const has = await db.get<{ n: number }>("SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name IN ('entity', 'entity_text', 'entity_passage')").catch(() => null);
-          o = { pack, db, entities: has?.n === 3 };
-        } catch {
-          continue;
-        }
-        open.set(keyOf(pack), o);
+        // Two questions may have waited on the same open: keep the first handle.
+        o = open.get(key) ?? r;
+        open.set(key, o);
       }
+      problems.delete(pack.packId);
       out.push(o);
     }
     return out;
@@ -274,11 +328,17 @@ export function createKnowledgeReader(deps: {
   /** Runs `work` on every pack; a pack whose query fails (damaged file) contributes nothing and does not stop the others. */
   async function eachPack<T>(work: (o: Open) => Promise<T[]>): Promise<T[]> {
     const out: T[] = [];
-    for (const o of await packs()) out.push(...(await work(o).catch(() => [])));
+    for (const o of await packs()) {
+      try {
+        out.push(...(await work(o)));
+      } catch (e) {
+        problems.set(o.pack.packId, { packId: o.pack.packId, stage: "query", message: text(e) });
+      }
+    }
     return out;
   }
 
-  return {
+  const api: KnowledgeReader = {
     async coverage(surahId) {
       const surahTo = String(surahId);
       const prefix = `${surahId}:`;
@@ -557,12 +617,25 @@ export function createKnowledgeReader(deps: {
       }
     },
 
+    async diagnose() {
+      try {
+        const installed = (await deps.registry.list()).length;
+        // A real question (the one the Knowledge tab asks), so a failure the person would see is the one reported here.
+        await api.browse().catch(() => []);
+        const list = [...problems.values()];
+        return { installed, readable: Math.max(0, installed - list.length), problems: list };
+      } catch (e) {
+        return { installed: 0, readable: 0, problems: [{ packId: "(registry)", stage: "open" as const, message: text(e) }] };
+      }
+    },
+
     async close() {
       const all = [...open.values()];
       open.clear();
       for (const o of all) await o.db.close().catch(() => undefined);
     },
   };
+  return api;
 }
 
 // ------------------------------------------------------------------- events, people, places

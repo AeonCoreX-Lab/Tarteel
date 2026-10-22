@@ -56,3 +56,30 @@ export function getReader(): Promise<KnowledgeReader> {
   reader ??= getPorts().then((p) => createKnowledgeReader({ registry: p.registry, openDb: p.openDb, trust: (pack) => isPackTrusted(p, pack) }));
   return reader;
 }
+
+// ------------------------------------------------------------------- "the installed packs changed"
+
+let packsVersion = 0;
+const packListeners = new Set<() => void>();
+
+/** What the screens subscribe to: it changes every time the installed packs changed (installed, repaired, removed) or a read is asked to start over. */
+export const packsVersionStore = {
+  subscribe(listener: () => void): () => void {
+    packListeners.add(listener);
+    return () => {
+      packListeners.delete(listener);
+    };
+  },
+  get: (): number => packsVersion,
+};
+
+/**
+ * Call after a pack was installed, repaired or removed, or when the person asks to try again. The reader closes the pack files it
+ * had open and forgets nothing else, and every screen reading packs reads again. Without this a screen that was already open
+ * could keep showing what it read before the change.
+ */
+export async function packsChanged(): Promise<void> {
+  if (reader) await (await reader).close().catch(() => undefined);
+  packsVersion += 1;
+  for (const l of [...packListeners]) l();
+}
