@@ -27,47 +27,58 @@ jobs:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: npm-${{ runner.os }}-
-      - name: Install
-        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test
-      - name: Mihrab-derived code: licence files and CHANGES.md in place
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test
+      - name: Mihrab-derived code verify
         run: npm run upstream:verify
 
   data:
-    # Quran content integrity. A PR with invalid, missing or altered Quran/translation data fails here.
-    name: Validate Quran + translation data
+    name: Validate Quran and translation data
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      # Validation scripts only need Node + the workspace packages (no npm install required),
-      # but workspace links are created by npm, so install without lifecycle scripts.
-      - run: if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts; fi
-      # No Quran dataset is committed yet (see docs/data-sources/README.md), so an empty data/quran/ is tolerated here.
-      # Once a dataset is added, a missing/invalid one still fails: --allow-empty only covers "no dataset directory at all".
-      - run: npm run validate:quran -- --allow-empty
-      - run: npm run validate:translations
-      - run: npm run validate:audio
-      - name: Build content database (also proves FTS5 + import work)
+      - name: Install dependencies without scripts
         run: |
-          if [ -n "$(find data/quran -mindepth 1 -maxdepth 1 -type d 2>/dev/null)" ]; then
+          if [ -f package-lock.json ]; then
+            npm ci --ignore-scripts
+          else
+            npm install --ignore-scripts
+          fi
+      - name: Validate Quran dataset
+        run: npm run validate:quran -- --allow-empty
+      - name: Validate translations
+        run: npm run validate:translations
+      - name: Validate audio
+        run: npm run validate:audio
+      - name: Build content database
+        run: |
+          HAS_DATA=$(find data/quran -mindepth 1 -maxdepth 1 -type d 2>/dev/null || true)
+          if [ -n "$HAS_DATA" ]; then
             npm run build:db -- --out build/db
           else
-            echo "No Quran dataset yet: building the schema-only database to prove migrations + FTS5 still work."
+            echo "No Quran dataset yet: building schema-only database."
             npm run build:db -- --out build/db --empty
           fi
-      - name: Validate the knowledge tables of the built database
+      - name: Validate knowledge tables
         run: npm run validate:knowledge -- build/db/quran.db
-      - name: Build knowledge packs (unsigned check with release validation)
+      - name: Build knowledge packs
         run: npm run build:pack -- --quran build/db/quran.db --out build/packs
 
   mobile-types:
-    # Real TypeScript check of the mobile app against the installed Expo / React Native types. Informational for now
-    # (continue-on-error) because the vendored Mihrab files are checked under Tarteel's stricter settings too.
     name: Mobile typecheck (informational)
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -76,6 +87,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Install
-        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
-      - run: npx tsc -p apps/mobile --noEmit
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+      - name: Typecheck Mobile App
+        run: npx tsc -p apps/mobile --noEmit
