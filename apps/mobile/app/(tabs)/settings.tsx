@@ -11,6 +11,7 @@ import { Button, Caption, Card, Heading, Row, ScreenScroll, Segmented } from "..
 import { LocationError, deviceRegion, detectLocation } from "../../src/platform/location";
 import { RECITERS, selectedReciter } from "../../src/audio/runtime";
 import { hadeethEncEnabled, hadithEnabled } from "../../src/hadith/runtime";
+import { wikipediaEnabled } from "../../src/online/runtime";
 import { knowledgeConfigured } from "../../src/knowledge/runtime";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
@@ -176,6 +177,13 @@ export default function SettingsTab() {
           <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("hdSettingBody")}</Text>
           <Segmented label={t("hdSettingTitle")} value={s.onlineHadeethEnc ? 1 : 0} onChange={(v) => s.set("onlineHadeethEnc", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("hadSettingOn") }]} />
           <Row><Button label={t("hdTitle")} onPress={() => router.push("/hadeeth")} /></Row>
+        </Group>
+      ) : null}
+
+      {wikipediaEnabled ? (
+        <Group title={t("wkSettingTitle")}>
+          <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("wkSettingBody")}</Text>
+          <Segmented label={t("wkSettingTitle")} value={s.onlineWikipedia ? 1 : 0} onChange={(v) => s.set("onlineWikipedia", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("hadSettingOn") }]} />
         </Group>
       ) : null}
 

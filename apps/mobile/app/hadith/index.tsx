@@ -71,7 +71,7 @@ export default function HadithHome() {
     <>
       <Stack.Screen options={{ title: t("hadTitle") }} />
       <ScreenScroll>
-        <Hero title={t("hadTitle")} subtitle={t("hadIntro")} icon="knowledge" />
+        <Hero title={t("hadTitle")} subtitle={t("hadIntro")} icon="books" />
         <HadithGate>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 52, paddingHorizontal: 14, borderRadius: 26, borderWidth: 1, borderColor: th.border, backgroundColor: th.surface }}>
             <Icon name="search" size={22} color={th.accentText} />

@@ -73,7 +73,7 @@ export default function HadithCollectionScreen() {
     <>
       <Stack.Screen options={{ title: t("hadTitle") }} />
       <ScreenScroll>
-        <Hero title={slug} icon="knowledge" />
+        <Hero title={slug} icon="books" />
         <HadithGate>{book ? <HadithList collection={slug} book={String(book)} /> : <Books collection={slug} />}</HadithGate>
         <OrnamentDivider margin={8} />
         <HadithCredit />

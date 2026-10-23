@@ -37,7 +37,7 @@ export default function HadeethHome() {
     <>
       <Stack.Screen options={{ title: t("hdTitle") }} />
       <ScreenScroll>
-        <Hero title={t("hdTitle")} subtitle={t("hdIntro")} icon="knowledge" />
+        <Hero title={t("hdTitle")} subtitle={t("hdIntro")} icon="books" />
         <HadeethGate>
           <Topics />
         </HadeethGate>

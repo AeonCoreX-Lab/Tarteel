@@ -63,7 +63,7 @@ export default function HadeethCategory() {
     <>
       <Stack.Screen options={{ title }} />
       <ScreenScroll>
-        <Hero title={title} icon="knowledge" />
+        <Hero title={title} icon="books" />
         <HadeethGate>
           <Subtopics id={String(id)} />
           <List id={String(id)} />

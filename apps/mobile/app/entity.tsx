@@ -8,6 +8,7 @@ import { useFormatDate } from "../src/knowledge/dates";
 import { useEntityDetail } from "../src/knowledge/hooks";
 import { EVIDENCE_KEY } from "../src/knowledge/labels";
 import { Citation, ClaimCard, EntityLink, KIND_KEY, SUBTYPE_KEY } from "../src/knowledge/parts";
+import { WikiLookupCard } from "../src/online/wiki-parts";
 import { useApp } from "../src/state/app";
 import { useSettings } from "../src/state/settings";
 import { useT } from "../src/i18n";
@@ -121,6 +122,7 @@ function Detail({ d }: { d: EntityDetail }) {
         </View>
       ) : null}
       {d.lastReviewedAt ? <Caption>{t("histReviewed")}: {d.lastReviewedAt}</Caption> : null}
+      <WikiLookupCard build={() => d.name} queryKey={`${d.kind}:${d.name}`} />
       <Text style={{ color: th.muted, fontSize: 12, lineHeight: 18 }}>{t("histFooter")}</Text>
     </View>
   );

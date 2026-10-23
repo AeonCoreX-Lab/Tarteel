@@ -46,6 +46,12 @@ export interface PreferenceSchema {
    * is a different server.
    */
   onlineHadeethEnc: boolean;
+  /**
+   * Off by default. When on, background reading (people, places, events, surahs) is looked up live from Wikipedia when no
+   * installed pack covers a question (wikipedia.org sees the IP address and the words searched). Nothing is stored. Has an
+   * effect only in a build where the feature is enabled.
+   */
+  onlineWikipedia: boolean;
   /** Memorisation: each ayah N times, then the whole range M times. */
   audioRepeatEachAyah: number;
   audioRepeatRange: number;
@@ -77,6 +83,7 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
   audioPlaybackRate: 1,
   onlineHadith: false,
   onlineHadeethEnc: false,
+  onlineWikipedia: false,
   audioRepeatEachAyah: 1,
   audioRepeatRange: 1,
   audioPauseFactor: 0,
@@ -142,3 +149,4 @@ export * from "./setup.ts";
 export * from "./translations.ts";
 export * from "./hadith.ts";
 export * from "./hadeethenc.ts";
+export * from "./wikipedia.ts";

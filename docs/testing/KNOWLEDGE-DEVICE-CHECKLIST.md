@@ -109,3 +109,29 @@ With a test app that has a catalogue address and key, and the Wahidi pack (or a 
 - [ ] Remove the pack in the Library and come back: the list disappears at once. Reinstall: it comes back at once.
 - [ ] Open a surah that the pack does not cover: the screen says the installed packs have nothing about it (it does not tell you to add packs).
 - [ ] If packs are installed but cannot be read, the Knowledge tab says so, lists the pack, the stage (`trust`, `open` or `query`) and a short technical message, and "Try again" works. Copy those lines into the bug report.
+
+## Reading-screen design (Knowledge tab, HadeethEnc, Sunnah, History). Not yet run on a device
+
+Look at each screen in light, dark and AMOLED themes, and once with a large Arabic size and wide line spacing in Settings.
+
+- [ ] Knowledge tab: green header card with the quiet star pattern; the title and the line under it are easy to read on it.
+- [ ] Section labels (gold text, small star, line to the edge) are readable in all three themes; surah rows show a numbered star.
+- [ ] HadeethEnc topics and hadith lists: numbered stars, counts, chevrons; the list is still smooth to scroll with 20+ rows.
+- [ ] A hadith (`/hadeeth/view`): the Arabic sits in a double gold frame with a star on its top edge, is right-to-left, and no vowel marks are clipped at the top or bottom of any line. Changing the Arabic size or line spacing in Settings changes it.
+- [ ] The translation is smaller than the Arabic and sits beside a thin gold rule; its label says which text it is.
+- [ ] Source and grade, "Practical lessons", and the credit line "HadeethEnc.com, IslamHouse.com" are all still on screen, unchanged in wording.
+- [ ] With TalkBack on: decorative stars, rules and frames are skipped; headings are announced as headings.
+- [ ] Bengali and Arabic UI: nothing is cut off; a long Bengali title wraps instead of overflowing.
+
+## Wikipedia background reading (flag `wikipedia` is `true`; setting off by default). Not yet run on a device
+
+- [ ] Settings shows "Background reading (Wikipedia)", Off. Open History for a surah with no pack content (or with no pack installed): a "More background from Wikipedia" card with a consent box; nothing is requested yet.
+- [ ] Turn it on from the card: up to five results appear, each with a short passage; the passage has no stray tags or `&quot;`-style codes.
+- [ ] English app language: results look like the surah (for example "Al-Baqara"). Note any surah where the first results are unrelated, and send me the surah numbers.
+- [ ] Bengali app language: results are in Bengali when the article exists; otherwise the line "No article was found in your language…" and English results.
+- [ ] Open one: introduction in a bar with a gold rule, other parts closed under headings; tapping a heading opens it; long article scrolls smoothly; Arabic-language article is right-to-left.
+- [ ] The credit line (CC BY-SA 4.0), the "not Islamic scholarship" sentence, and the three buttons (Open on Wikipedia, Authors, CC BY-SA 4.0) open the right pages.
+- [ ] Offline, or in airplane mode: a clear "no connection" message and a Retry button, not a blank screen.
+- [ ] Turn it off in Settings: cards show the consent box again, and no request is made (check with a network monitor if you can).
+- [ ] An entity page (Timeline → an entry) shows the same card below the pack's own text, searched by the entry's name.
+- [ ] A surah that HAS pack content does not show the card on the History screen.

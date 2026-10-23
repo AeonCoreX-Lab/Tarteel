@@ -2,12 +2,14 @@ import { ScrollView, Text, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { wikiSurahQuery } from "@tarteel/core";
 import type { AyahReport } from "@tarteel/database";
 import type { Surah } from "@tarteel/types";
 import { Button, Caption, Card, Chip } from "../../src/components/ui";
 import { Hero, OrnamentDivider, SectionHeader } from "../../src/components/Heritage";
 import { useAyahContextState, useEntitiesFor, usePackDiagnosis, useSurahHistoryState } from "../../src/knowledge/hooks";
 import { Citation, ClaimCard, EntityLink, KIND_KEY } from "../../src/knowledge/parts";
+import { WikiLookupCard } from "../../src/online/wiki-parts";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
@@ -119,6 +121,10 @@ export default function HistoryScreen() {
         {/* An ayah with nothing installed is said plainly, and not worded as a finding that nothing is known. */}
         {!loading && !failed && ayahEmpty ? <Text style={{ color: th.muted, fontSize: 14, lineHeight: 20 }}>{t("histNoneForAyah")}</Text> : null}
         {nothing && ayahNumber === null ? <Text style={{ color: th.muted, fontSize: 14, lineHeight: 20 }}>{t(packsInstalled ? "histNothingInstalled" : "histNothing")}</Text> : null}
+        {/* Where the installed packs have nothing for this surah or ayah, background can be searched live (and only if the person allows it). */}
+        {surah && !loading && !failed && (nothing || ayahEmpty) ? (
+          <WikiLookupCard build={(l) => wikiSurahQuery(l, surah)} queryKey={`surah:${surah.id}`} />
+        ) : null}
         <OrnamentDivider margin={8} />
         <Text style={{ color: th.muted, fontSize: 12, lineHeight: 18 }}>{t("histFooter")}</Text>
       </ScrollView>
