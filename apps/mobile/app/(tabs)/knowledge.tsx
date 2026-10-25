@@ -162,9 +162,12 @@ export default function KnowledgeTab() {
         />
       </View>
       {body}
-      {hadeethEncEnabled || hadithEnabled ? <SectionHeader label={t("knowSectionHadith")} /> : null}
+      <SectionHeader label={t("knowSectionHadith")} />
       {hadeethEncEnabled ? <ListRow title={t("hdTitle")} subtitle={t("hdEntry")} lead={<IconStar icon="books" />} onPress={() => router.push("/hadeeth")} /> : null}
       {hadithEnabled ? <ListRow title={t("hadTitle")} subtitle={t("hadEntry")} lead={<IconStar icon="search" />} onPress={() => router.push("/hadith")} /> : null}
+      <ListRow title={t("srcHadithTitle")} subtitle={t("srcHadithIntro")} lead={<IconStar icon="check" />} onPress={() => router.push("/sources?domain=hadith")} />
+      <SectionHeader label={t("srcHistoryTitle")} />
+      <ListRow title={t("srcHistoryTitle")} subtitle={t("srcHistoryIntro")} lead={<IconStar icon="check" />} onPress={() => router.push("/sources?domain=history")} />
     </ScreenScroll>
   );
 }

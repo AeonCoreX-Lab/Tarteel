@@ -51,6 +51,10 @@ export default function RootLayout() {
         <Stack.Screen name="hadeeth/index" options={{ title: t("hdTitle") }} />
         <Stack.Screen name="hadeeth/category" options={{ title: t("hdTitle") }} />
         <Stack.Screen name="hadeeth/view" options={{ title: t("hdTitle") }} />
+        <Stack.Screen name="tafsir" options={{ title: t("tfTitle") }} />
+        <Stack.Screen name="quranpedia" options={{ title: t("qpTitle") }} />
+        <Stack.Screen name="sources" options={{ title: t("srcMore") }} />
+        <Stack.Screen name="tasbih" options={{ title: t("tasbih") }} />
         <Stack.Screen name="wiki/view" options={{ title: t("wkTitle") }} />
       </Stack>
       <AudioDock />

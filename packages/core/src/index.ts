@@ -1,5 +1,6 @@
 import type { PreferencesStore } from "@tarteel/storage";
 import type { AyahRef, ReaderMode, ThemeMode, UiLanguage } from "@tarteel/types";
+import type { TasbihState } from "./tasbih.ts";
 
 /** Everything stored in the preferences store (MMKV / localStorage). Keep it SMALL. */
 export interface PreferenceSchema {
@@ -52,6 +53,21 @@ export interface PreferenceSchema {
    * effect only in a build where the feature is enabled.
    */
   onlineWikipedia: boolean;
+  /**
+   * Off by default. When on, tafsir and translation notes are looked up live from quranenc.com (the server sees the IP address
+   * and which surah and ayah are opened). Nothing is stored. Has an effect only in a build where that provider is enabled.
+   */
+  onlineQuranEnc: boolean;
+  /**
+   * Off by default. When on, the introduction of a surah, classical tafsir and the reasons of revelation are read live from
+   * api.quranpedia.net (the server sees the IP address and which surah and ayah are opened). Nothing is stored. Has an effect
+   * only in a build where that provider is enabled.
+   */
+  onlineQuranpedia: boolean;
+  /** The tasbih counter: where each dhikr has got to, and today's totals. See `tasbih.ts`. */
+  tasbih: TasbihState | null;
+  /** A short vibration on each tap of the tasbih counter, a longer one when a round is finished. */
+  tasbihVibrate: boolean;
   /** Memorisation: each ayah N times, then the whole range M times. */
   audioRepeatEachAyah: number;
   audioRepeatRange: number;
@@ -84,6 +100,10 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
   onlineHadith: false,
   onlineHadeethEnc: false,
   onlineWikipedia: false,
+  onlineQuranEnc: false,
+  onlineQuranpedia: false,
+  tasbih: null,
+  tasbihVibrate: true,
   audioRepeatEachAyah: 1,
   audioRepeatRange: 1,
   audioPauseFactor: 0,
@@ -150,3 +170,7 @@ export * from "./translations.ts";
 export * from "./hadith.ts";
 export * from "./hadeethenc.ts";
 export * from "./wikipedia.ts";
+export * from "./quranenc.ts";
+export * from "./quranpedia.ts";
+export * from "./providers.ts";
+export * from "./tasbih.ts";

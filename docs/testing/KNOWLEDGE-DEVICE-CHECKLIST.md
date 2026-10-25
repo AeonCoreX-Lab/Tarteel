@@ -135,3 +135,45 @@ Look at each screen in light, dark and AMOLED themes, and once with a large Arab
 - [ ] Turn it off in Settings: cards show the consent box again, and no request is made (check with a network monitor if you can).
 - [ ] An entity page (Timeline → an entry) shows the same card below the pack's own text, searched by the entry's name.
 - [ ] A surah that HAS pack content does not show the card on the History screen.
+
+## Tasbih counter (Today screen → Tasbih). Not yet run on a device
+
+- [ ] Today screen shows four tiles in one row (Qibla, Month, Tasbih, Alerts) and none is cut off, in English and in Bengali, at the largest system font size.
+- [ ] The Tasbih tile's icon (a ring of beads with a tassel) is clear at tile size. If the beads show as a solid ring or nothing, tell me.
+- [ ] Tap the big circle: the count goes up by one each tap, the ring fills, a short vibration on each tap (with Vibration On). A rapid run of 50 taps loses none.
+- [ ] At the target (33 for Subhanallah) the ring turns gold, the star above it grows, and the longer vibration plays. The next tap starts round two at 1, and "Rounds today" shows 1.
+- [ ] Undo takes back the last tap, also the tap that finished a round (the round count goes back down).
+- [ ] Reset asks first, then sets only this dhikr to 0; "Counted today" stays.
+- [ ] Previous / Next and the pills at the top change the dhikr; each keeps its own count. Close the app fully and open it: every count is still there.
+- [ ] Change the target (for example 100, or "No limit"): the ring follows. With "No limit" a dotted ring shows and the count goes on without end.
+- [ ] After midnight (or set the phone's date forward a day): "Counted today" and "Rounds today" start again from 0; the place in each unfinished round stays.
+- [ ] Vibration Off: no vibration at all, including at the end of a round.
+- [ ] TalkBack: the circle reads the dhikr name and "12 of 33", and the new number is announced after each double tap.
+- [ ] The Arabic of each dhikr shows complete (no clipped vowel marks), and the Bengali sound and meaning read correctly.
+
+## Tafsir (QuranEnc) and the Sources screens. Not yet run on a device
+
+The QuranEnc answer shape could not be checked from the build machine. This section is how it gets checked.
+
+- [ ] History for any surah: a "Tafsir (online)" row appears, with or without packs. Tapping it opens the tafsir screen with a consent box; nothing is requested yet.
+- [ ] Turn it on from the box. The editions are Al-Mukhtasar (Bengali, first in Bengali), Saadi (Arabic) and Saheeh notes (English). The list of ayahs loads (a few seconds for a long surah) and shows the first 15; "Load more" adds 15.
+- [ ] Tap an ayah: the Arabic in the gold frame, the tafsir text, and (for the Saheeh edition) the notes. **If any screen says "unexpected answer" or shows nothing, send me a screenshot and the edition name: that means the answer shape differs from what the parser expects.**
+- [ ] Try all three editions. For Bengali the line under the credit says the publisher gives no version number: that is expected. Arabic text is right-to-left. Some ayahs may have no entry: the app should say so and not crash.
+- [ ] Previous / Next ayah, Previous / Next surah, and "Ayahs of this surah" all work; the screen title follows.
+- [ ] The credit line (QuranEnc.com, Rowwad Translation Center, IslamHouse.com) and the "not a ruling" sentence are on the screen. "Open on QuranEnc.com" opens the matching page.
+- [ ] Settings shows "Online tafsir (QuranEnc)", Off by default. Turning it off makes the tafsir screen show the consent box again.
+- [ ] Knowledge tab: under Hadith there is "Hadith sources"; under "History and tafsir sources" there is one row. Each opens a page listing its sources with licence, what they send, and an Off/On switch. Sunnah.com shows "Waiting for the publisher's permission" and no switch.
+- [ ] Under the credit line of the tafsir screen: `<edition key> · Version x.y.z · updated <date>`. If it says the version could not be read, send a screenshot; the text itself is still the publisher's current one.
+- [ ] A tafsir block that covers several ayahs shows "Ayah 5–8" above its text, and the surah list shows "5–8" in the star.
+
+## Classical tafsir (Quranpedia). Not yet run on a device
+
+The API's whole answers could not be seen from the build machine; this section is how they get checked.
+
+- [ ] History for any surah: a row "Classical tafsir (online)". It opens a screen with a consent box; nothing is requested yet.
+- [ ] Turn it on. "About this surah" shows the introduction and facts in Arabic, each under the server's own heading. **If it says "unexpected answer" or is empty, send a screenshot.**
+- [ ] "Read ayah by ayah" opens ayah 1 in the first book (al-Wahidi, reasons of revelation). Many ayahs have no entry: the screen says "This book has nothing on this ayah" and does not show an error.
+- [ ] Pick each book (al-Tabari, Ibn Kathir, al-Baghawi, Ibn al-Jawzi, Ibn 'Atiyyah, al-Razi, al-Baydawi, Ibn Juzayy, al-Jalalayn). **For each, read the author line under the title: it must be the author in the button.** If an id shows another book or author, tell me which, and it is removed or corrected.
+- [ ] A passage shows its part and page when the server gives them. No stray HTML tags in the text.
+- [ ] Previous / Next ayah and surah work. Turning it off in Settings brings the consent box back.
+- [ ] Settings shows "Classical tafsir (Quranpedia)", Off by default. The Sources screen lists Quranpedia with its licence and what it sends.

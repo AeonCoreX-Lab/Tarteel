@@ -10,8 +10,7 @@ staging area for raw third-party material (keep its `LICENSE.md` next to it) unt
 Generated packs: `data/knowledge/asbab-wahidi/` is written by `npm run import:quranpedia` from `_incoming/quranpedia/` (al-Wahidi's
 *Asbab al-Nuzul*, as digitised by Quranpedia.net). It holds source passages and `REPORT_REFERENCES_AYAH` links only, no claims, and its
 `PROVENANCE.md` says what was converted. Change the importer and re-run it rather than editing that pack by hand.
-`.github/workflows/quranpedia-sync.yml` runs `sync:quranpedia` and `import:quranpedia` every week and opens a pull request when Quranpedia's
-book changed; `packVersion` goes up only when passages or links really differ. A person reviews and merges, then runs the Knowledge packs workflow.
+There is no automatic download of Quranpedia's dump any more: Quranpedia is read live in the app (see `docs/architecture/ONLINE-SOURCES.md`). This pack is the copy that was imported on 2026-10-16 and stays as it is unless a person re-runs the importer by hand on a newer dump.
 
 A complete synthetic example (no real religious content) is in `tests/fixtures/knowledge/example-pack/`.
 
@@ -58,7 +57,6 @@ Ids are lower-case (`a-z 0-9 . _ : -`). Ayah ids are `"surah:ayah"` (`"2:255"`),
 npm run build:db -- --out build/db                      # content database used to check surah/ayah references
 npm run build:pack -- --quran build/db/quran.db         # build and release-check every pack (unsigned unless the key is set)
 npm run build:pack -- my-pack --out /tmp/packs          # one pack
-npm run sync:quranpedia                                 # download Quranpedia's current dump files if they changed (3 small requests)
 npm run import:quranpedia                               # (re)generate the asbab-wahidi pack from data/knowledge/_incoming/quranpedia
 npm run pack:keygen                                     # new signing key pair (prints, writes nothing)
 npm run pack:configure -- --catalog-url <https://.../catalog.json>   # write the app's catalogue address and trusted key

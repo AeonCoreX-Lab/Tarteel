@@ -1,15 +1,16 @@
 import { ScrollView, Text, View } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { wikiSurahQuery } from "@tarteel/core";
 import type { AyahReport } from "@tarteel/database";
 import type { Surah } from "@tarteel/types";
 import { Button, Caption, Card, Chip } from "../../src/components/ui";
-import { Hero, OrnamentDivider, SectionHeader } from "../../src/components/Heritage";
+import { Hero, IconStar, ListRow, OrnamentDivider, SectionHeader } from "../../src/components/Heritage";
 import { useAyahContextState, useEntitiesFor, usePackDiagnosis, useSurahHistoryState } from "../../src/knowledge/hooks";
 import { Citation, ClaimCard, EntityLink, KIND_KEY } from "../../src/knowledge/parts";
 import { WikiLookupCard } from "../../src/online/wiki-parts";
+import { quranEncEnabled, quranpediaEnabled } from "../../src/online/runtime";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
@@ -25,6 +26,7 @@ export default function HistoryScreen() {
   const ayahNumber = ayah ? Number(ayah) : null;
   const th = useTheme();
   const t = useT();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const lang = useSettings((s) => s.uiLanguage);
   const { repos } = useApp();
@@ -74,6 +76,25 @@ export default function HistoryScreen() {
       <Stack.Screen options={{ title: t("historyTitle") }} />
       <ScrollView contentContainerStyle={{ width: "100%", maxWidth: 720, alignSelf: "center", paddingHorizontal: 16, paddingTop: 8, paddingBottom: insets.bottom + 32, gap: 12 }}>
         {surah ? <Hero title={surah.nameTransliteration} subtitle={`${surah.nameEnglish}${order !== null ? ` · ${t("revelationOrder")}: ${order} / 114` : ""}`} icon="quran" /> : null}
+
+        {/* Tafsir is offered whatever the packs hold: it is a different kind of source (a book's own words) from a pack's claims. */}
+        {surah && quranEncEnabled ? (
+          <ListRow
+            title={t("tfTitle")}
+            subtitle={t("tfHistoryBody")}
+            lead={<IconStar icon="books" />}
+            onPress={() => router.push(`/tafsir?surah=${surah.id}${ayahNumber !== null ? `&ayah=${ayahNumber}` : ""}`)}
+          />
+        ) : null}
+
+        {surah && quranpediaEnabled ? (
+          <ListRow
+            title={t("qpTitle")}
+            subtitle={t("qpHistoryBody")}
+            lead={<IconStar icon="books" />}
+            onPress={() => router.push(`/quranpedia?surah=${surah.id}${ayahNumber !== null ? `&ayah=${ayahNumber}` : ""}`)}
+          />
+        ) : null}
 
         {ayahNumber !== null && context && (context.claims.length > 0 || context.reports.length > 0) ? (
           <>

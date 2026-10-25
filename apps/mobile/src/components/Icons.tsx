@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { ColorValue } from "react-native";
 
 export type IconName =
-  | "today" | "quran" | "bookmark" | "settings" | "search" | "compass" | "calendar" | "bell" | "pin" | "check" | "chevronRight" | "chevronLeft" | "sound" | "knowledge" | "books";
+  | "today" | "quran" | "bookmark" | "settings" | "search" | "compass" | "calendar" | "bell" | "pin" | "check" | "chevronRight" | "chevronLeft" | "sound" | "knowledge" | "books" | "tasbih";
 
 // Original outline glyphs on a 24x24 grid, drawn with one stroke width so the set feels like one family.
 const GLYPHS: Record<IconName, ReactNode> = {
@@ -23,6 +23,8 @@ const GLYPHS: Record<IconName, ReactNode> = {
   knowledge: (<><Path d="M12 4.5L2.5 9.5 12 14.5l9.5-5z" /><Path d="M6.5 11.8v4c0 1.6 2.4 3 5.5 3s5.5-1.4 5.5-3v-4" /><Path d="M21.5 9.5v6.2" /><Circle cx={21.5} cy={16.9} r={1} /></>),
   // Books on a shelf: for hadith and other readings that are not "knowledge" in the broad sense.
   books: (<><Path d="M5 4h4v16H5z" /><Path d="M10 4h4v16h-4z" /><Path d="M15.5 5.5l4 .9-3.6 13.6-4-.9z" /></>),
+  // Tasbih: a loop of prayer beads with a tassel.
+  tasbih: (<><Circle cx={12} cy={10.5} r={6.5} strokeWidth={3.2} strokeDasharray="0.01 5.095" /><Path d="M12 19.2v2.6" /></>),
   sound: (<><Path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" /><Path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /></>),
 };
 

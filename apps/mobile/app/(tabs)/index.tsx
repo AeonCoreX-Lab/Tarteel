@@ -182,6 +182,7 @@ export default function Today() {
         <View style={{ flexDirection: "row", gap: 10 }}>
           <Tile icon="compass" label={t("qibla")} onPress={() => router.push("/qibla")} />
           <Tile icon="calendar" label={t("month")} onPress={() => router.push("/month")} />
+          <Tile icon="tasbih" label={t("tasbih")} onPress={() => router.push("/tasbih")} />
           <Tile icon="bell" label="Alerts" onPress={() => router.push("/alerts")} />
         </View>
 

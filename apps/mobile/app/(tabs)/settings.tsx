@@ -11,7 +11,7 @@ import { Button, Caption, Card, Heading, Row, ScreenScroll, Segmented } from "..
 import { LocationError, deviceRegion, detectLocation } from "../../src/platform/location";
 import { RECITERS, selectedReciter } from "../../src/audio/runtime";
 import { hadeethEncEnabled, hadithEnabled } from "../../src/hadith/runtime";
-import { wikipediaEnabled } from "../../src/online/runtime";
+import { quranEncEnabled, quranpediaEnabled, wikipediaEnabled } from "../../src/online/runtime";
 import { knowledgeConfigured } from "../../src/knowledge/runtime";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
@@ -177,6 +177,20 @@ export default function SettingsTab() {
           <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("hdSettingBody")}</Text>
           <Segmented label={t("hdSettingTitle")} value={s.onlineHadeethEnc ? 1 : 0} onChange={(v) => s.set("onlineHadeethEnc", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("hadSettingOn") }]} />
           <Row><Button label={t("hdTitle")} onPress={() => router.push("/hadeeth")} /></Row>
+        </Group>
+      ) : null}
+
+      {quranEncEnabled ? (
+        <Group title={t("tfSettingTitle")}>
+          <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("tfSettingBody")}</Text>
+          <Segmented label={t("tfSettingTitle")} value={s.onlineQuranEnc ? 1 : 0} onChange={(v) => s.set("onlineQuranEnc", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("tsOn") }]} />
+        </Group>
+      ) : null}
+
+      {quranpediaEnabled ? (
+        <Group title={t("qpSettingTitle")}>
+          <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("qpSettingBody")}</Text>
+          <Segmented label={t("qpSettingTitle")} value={s.onlineQuranpedia ? 1 : 0} onChange={(v) => s.set("onlineQuranpedia", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("tsOn") }]} />
         </Group>
       ) : null}
 

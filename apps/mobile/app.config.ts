@@ -19,7 +19,8 @@ const config: ExpoConfig = {
     // Privacy: notes/bookmarks must stay on the device unless the user opts into sync.
     allowBackup: false,
     // No network-dependent permissions needed for the offline core.
-    permissions: [],
+    // Vibration only, for the tasbih counter. A normal permission: it asks the person nothing and reaches no data or network.
+    permissions: ["android.permission.VIBRATE"],
   },
   plugins: [
     "expo-router",

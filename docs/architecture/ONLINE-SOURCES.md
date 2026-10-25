@@ -7,6 +7,15 @@ Every online source follows the same rules: a build flag turns the feature on or
 | HadeethEnc.com | `hadeethenc` in `src/hadith/config.json` | `onlineHadeethEnc` | Hadith by topic, with explanation and grade, Bengali | `packages/core/src/hadeethenc.ts`, `app/hadeeth/` |
 | Sunnah.com (islamic.app) | `sunnah` (**off**) | `onlineHadith` | Dormant until Sunnah.com agrees in writing | `packages/core/src/hadith.ts`, `app/hadith/` |
 | Wikipedia | `wikipedia` in `src/online/config.json` | `onlineWikipedia` | Background on surahs, people, places, events | `packages/core/src/wikipedia.ts`, `src/online/`, `app/wiki/view.tsx` |
+| QuranEnc.com | `quranenc` in `src/online/config.json` | `onlineQuranEnc` | Al-Mukhtasar (Bengali), Tafsir al-Saʿdi (Arabic) per ayah, and Saheeh International notes (English). The Bengali edition is not in the publisher's lists but its `translation/sura` endpoint answers (checked on a device 2026-10-25) | `packages/core/src/quranenc.ts`, `src/online/quranenc*.ts(x)`, `app/tafsir.tsx` |
+
+QuranEnc: the app states each edition's version number (from the publisher's `translations/list` and `tafsirs/list`) on the tafsir screen, as the terms require. A tafsir answer is blocks that can cover several ayahs; the app shows each block's text unchanged and states its ayah range.
+
+| Quranpedia.net | `quranpedia` in `src/online/config.json` | `onlineQuranpedia` | A surah's introduction and facts, classical tafsir per ayah (al-Tabari, Ibn Kathir, al-Baghawi, Ibn al-Jawzi, Ibn 'Atiyyah, al-Razi, al-Baydawi, Ibn Juzayy, al-Jalalayn) and the reasons of revelation (al-Wahidi). Arabic | `packages/core/src/quranpedia.ts`, `src/online/quranpedia*.ts(x)`, `app/quranpedia.tsx` |
+
+Quranpedia: its API is free, read-only, without a key, for apps that ask it live (120 requests a minute and 10,000 a day for each IP address; the app spaces its requests 700 ms apart). The API is not a download service, so the app never walks it to build a copy, and the weekly dump-download workflow and `sync:quranpedia` script were removed. Only the classical books named in `QURANPEDIA_BOOKS` can be asked for (the licence leaves translations and contemporary works with their authors). The author and language shown on a screen come from the server's answer for that book.
+
+The list of sources, with publisher, terms and what each sends, is one table in `packages/core/src/providers.ts`. The two "Sources" screens (`app/sources.tsx`, Hadith and History) are drawn from it, so a source added there appears there. Add a source to that table in the same change that adds its client.
 
 ## Where Wikipedia is offered
 
@@ -26,6 +35,5 @@ The article screen shows the introduction, and every other part under its own he
 | Quran Foundation Content API (quran.com) | Needs an approved client id and token on every request (request access form). A secret cannot be shipped in an open-source app; it would need a server of ours or a key each person gets |
 | Dorar.net hadith search | No published API terms found; the known wrappers read the site's own endpoints |
 | IslamHouse API v3 | The public key is free, but no terms were found, and the endpoint paths are not documented where they could be read. Same publisher as HadeethEnc: worth an email, together with the permission to keep copies |
-| QuranEnc.com API | Terms match HadeethEnc (no changes, credit). The live list held translations only and no Bengali; the Bengali short tafsir shown on the website was not in it. Worth a second look with the publisher's own list |
 
 Writing to IslamHouse (one email covers HadeethEnc, QuranEnc and the IslamHouse API) is the most useful next step for more hadith and tafsir.

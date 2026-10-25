@@ -18,7 +18,7 @@ UI is always written fresh in Tarteel's design system.
 | 9 | Quran audio (`quran/audio` 5k, `WordPlayer`, track-player) | 5k | **Built (own implementation, `packages/audio`):** per-ayah download manager, rolling queue, Listen page, MiniPlayer, reciter picker. Reader follows the recitation (ayah highlight, auto-scroll, word highlight when timings exist). Reciters stay disabled until the source licence is confirmed; no timing source chosen yet; tap-a-word-to-hear not built. See [docs/audio](../audio/README.md) | none |
 | 10 | Khatmah, resume doors, downloads (`QuranDownloads`, `Khatmah*`) | 3k | New UI; progress in `user.db` | none |
 | 11 | **Prayer log, practice, journal, fasting** (`journal`, `practice`, `fasting`, `LogScreen`) | 6k | Logic vendored where pure; storage on `user.db` | none |
-| 12 | Tasbih + dhikr + duas (`tasbih`, `dhikr`, `duas`, `TasbihScreen`) | 3k | Logic vendored; **dua content licence verified before shipping** | none |
+| 12 | Tasbih + dhikr + duas (`tasbih`, `dhikr`, `duas`, `TasbihScreen`) | 3k | **Tasbih: done, Tarteel's own implementation** (`packages/core/src/tasbih.ts`, `app/tasbih.tsx`; it does not use Mihrab's tasbih code). Dhikr reminders and duas: not started; **dua content licence verified before shipping** | none |
 | 13 | **Widgets** (`widget` 4k + 9 Glance Kotlin files) | 4k + Kotlin | Kotlin copied via config plugin; payload contract vendored | **yes** |
 | 14 | Live activity / ongoing notification (`liveActivity`, Kotlin service) | 0.6k + Kotlin | Android only first | **yes** |
 | 15 | **Encrypted sync + backup** (`sync` 5k, `backup`, QR scan) | 5.4k | Vendored crypto/format; stays opt-in, off by default | QR scanner |
