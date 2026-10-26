@@ -218,7 +218,7 @@ export default function Today() {
   }
 
   return (
-    <ScreenScroll headerless>
+    <ScreenScroll>
       {header}
       {body}
     </ScreenScroll>

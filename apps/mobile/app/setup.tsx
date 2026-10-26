@@ -18,6 +18,16 @@ import { useT } from "../src/i18n";
 import { HEADING_FONT, useTheme } from "../src/theme";
 import { Button, PillButton, Row } from "../src/components/ui";
 
+/** A quiet action under the main button: text only, with a 44 pt touch height. */
+function TextAction({ label, onPress }: { label: string; onPress: () => void }) {
+  const th = useTheme();
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={6} style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 12, justifyContent: "center", opacity: pressed ? 0.6 : 1 })}>
+      <Text style={{ color: th.accentText, fontSize: 16, fontWeight: "700" }}>{label}</Text>
+    </Pressable>
+  );
+}
+
 export default function Setup() {
   const th = useTheme();
   const t = useT();
@@ -206,16 +216,17 @@ export default function Setup() {
         {msg ? <Text accessibilityLiveRegion="polite" style={{ color: th.text, fontSize: 14 }}>{msg}</Text> : null}
       </ScrollView>
 
-      <View style={{ flexDirection: "row", gap: 10, padding: 16, paddingBottom: insets.bottom + 16, borderTopWidth: 1, borderTopColor: th.border }}>
-        {!isFirst ? <Button label={t("back")} onPress={() => go(previousStep(step, ctx))} /> : null}
-        <View style={{ flex: 1 }} />
-        {step === "location" && !s.location ? <Button label={t("skip")} onPress={() => go(nextStep(step, ctx))} /> : null}
-        <View style={{ minWidth: 150 }}>
-          {isLast ? (
-            <PillButton label={t("startApp")} onPress={() => { s.set("onboardingComplete", true); router.replace("/"); }} />
-          ) : (
-            <PillButton label={t("continue")} disabled={step === "location" && !s.location} onPress={() => go(nextStep(step, ctx))} />
-          )}
+      {/* The main action takes the full width on its own row, so it can never be pushed off the screen by a long label or a
+          larger font; Back and Skip sit under it, one at each edge. */}
+      <View style={{ gap: 6, padding: 16, paddingBottom: insets.bottom + 12, borderTopWidth: 1, borderTopColor: th.border }}>
+        {isLast ? (
+          <PillButton label={t("startApp")} onPress={() => { s.set("onboardingComplete", true); router.replace("/"); }} />
+        ) : (
+          <PillButton label={t("continue")} disabled={step === "location" && !s.location} onPress={() => go(nextStep(step, ctx))} />
+        )}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: 44 }}>
+          {!isFirst ? <TextAction label={t("back")} onPress={() => go(previousStep(step, ctx))} /> : <View />}
+          {step === "location" && !s.location ? <TextAction label={t("skip")} onPress={() => go(nextStep(step, ctx))} /> : <View />}
         </View>
       </View>
     </View>

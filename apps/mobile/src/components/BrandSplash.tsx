@@ -13,10 +13,16 @@ export function BrandSplash({ error }: { error: Error | null }) {
   const t = useT();
   const [reduceMotion, setReduceMotion] = useState(false);
   const slide = useRef(new Animated.Value(0)).current;
+  const fade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-  }, []);
+    void AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
+      setReduceMotion(reduced);
+      // The mark and name ease in; with reduce-motion they are simply there.
+      if (reduced) fade.setValue(1);
+      else Animated.timing(fade, { toValue: 1, duration: 450, easing: Easing.out(Easing.ease), useNativeDriver: true }).start();
+    }).catch(() => fade.setValue(1));
+  }, [fade]);
   useEffect(() => {
     if (reduceMotion || error) return;
     const loop = Animated.loop(Animated.timing(slide, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.ease), useNativeDriver: true }));
@@ -26,7 +32,7 @@ export function BrandSplash({ error }: { error: Error | null }) {
 
   const BAR = 120;
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: th.dark ? "#053227" : th.bg, padding: 24 }}>
+    <Animated.View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: th.dark ? "#053227" : th.bg, padding: 24, opacity: fade }}>
       <Image source={th.dark ? MARKS.light : MARKS.color} accessibilityIgnoresInvertColors style={{ width: 150, height: 150 }} resizeMode="contain" />
       <Text accessibilityRole="header" style={{ marginTop: 14, color: th.dark ? "#FBF9F4" : "#09372C", fontSize: 34, fontWeight: "700", fontFamily: HEADING_FONT }}>{BRAND.name}</Text>
       <Text style={{ color: th.dark ? "#FBF9F4" : "#09372C", fontSize: 22, marginTop: 2 }}>{BRAND.arabicName}</Text>
@@ -51,6 +57,6 @@ export function BrandSplash({ error }: { error: Error | null }) {
           )}
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 }

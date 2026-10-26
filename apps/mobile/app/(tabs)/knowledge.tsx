@@ -145,7 +145,7 @@ export default function KnowledgeTab() {
   }
 
   return (
-    <ScreenScroll headerless>
+    <ScreenScroll>
       <Hero title={t("knowTitle")} subtitle={t("knowIntro")} icon="knowledge" />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 52, paddingHorizontal: 14, borderRadius: 26, borderWidth: 1, borderColor: th.border, backgroundColor: th.surface }}>
         <Icon name="search" size={22} color={th.accentText} />

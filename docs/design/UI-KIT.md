@@ -55,3 +55,12 @@ Shared pieces for the Knowledge tab, the hadith screens and the history screen. 
 | `StarList` | Short points, each with a small star. |
 
 Rules: gold (`brass`) is for lines and marks; small text uses `brassText`. Ornament never sits behind text that is read at length. The Arabic is the largest text on a screen. Every ornament is hidden from screen readers. No new font is used yet: an Arabic book face (for example Amiri or Noto Naskh Arabic, both OFL) needs a font audit and an install that regenerates the lockfile.
+
+## App bar (2026-10-26)
+
+`src/components/AppBar.tsx` is the bar at the top of the five main tabs (Today, Quran, Knowledge, Bookmarks, Settings): the brand mark, "Tarteel" in the heading serif, a thin gold rule, and the Arabic name, over a hairline. It is the tab navigator's own header, so it carries the status-bar inset; the tab screens therefore no longer add `insets.top` themselves (`ScreenScroll headerless` is no longer used by them). It is not interactive and reads as one header, "Tarteel", to a screen reader. Light and dark use the matching mark file. Screens below it keep their own serif heading. Stack screens (a surah, a tafsir) keep the navigator's normal title bar with the screen's title.
+
+## Setup footer and splash (2026-10-26)
+
+- The setup screens' footer puts the main action (Continue / Start) alone on a full-width row; Back and Skip are text actions under it, one at each edge. A long label or a larger system font can therefore not push the main button off the screen.
+- The in-app brand splash is held for at least 1.8 s (`AppProvider minFallbackMs`) even when the databases open sooner, and its mark and name ease in over 0.45 s (not with reduce-motion). An error is shown at once.

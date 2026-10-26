@@ -18,7 +18,7 @@ export default function RootLayout() {
   const th = useTheme();
   const t = useT();
   return (
-    <AppProvider fallback={({ error }) => <BrandSplash error={error} />}>
+    <AppProvider minFallbackMs={1800} fallback={({ error }) => <BrandSplash error={error} />}>
       <StatusBar style={th.dark ? "light" : "dark"} />
       <View style={{ flex: 1 }}>
       <Stack

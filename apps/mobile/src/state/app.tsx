@@ -22,10 +22,20 @@ export function useApp(): AppContextValue {
   return v;
 }
 
-export function AppProvider({ children, fallback }: { children: ReactNode; fallback: (state: { error: Error | null }) => ReactNode }) {
+/**
+ * `minFallbackMs`: the fallback (the brand splash) stays at least this long even when the databases are ready sooner, so it can
+ * be seen and the app does not flash past it. An error is never held back.
+ */
+export function AppProvider({ children, fallback, minFallbackMs = 0 }: { children: ReactNode; fallback: (state: { error: Error | null }) => ReactNode; minFallbackMs?: number }) {
   const [repos, setRepos] = useState<Repositories | null>(null);
   const [translations, setTranslations] = useState<TranslationMeta[]>([]);
   const [error, setError] = useState<Error | null>(null);
+  const [held, setHeld] = useState(minFallbackMs > 0);
+  useEffect(() => {
+    if (minFallbackMs <= 0) return undefined;
+    const id = setTimeout(() => setHeld(false), minFallbackMs);
+    return () => clearTimeout(id);
+  }, [minFallbackMs]);
 
   useEffect(() => {
     initDatabases()
@@ -45,6 +55,6 @@ export function AppProvider({ children, fallback }: { children: ReactNode; fallb
     () => (repos ? { repos, translations, progress: new ReadingProgress(prefs, repos.history) } : null),
     [repos, translations],
   );
-  if (!value) return <>{fallback({ error })}</>;
+  if (!value || (held && !error)) return <>{fallback({ error })}</>;
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

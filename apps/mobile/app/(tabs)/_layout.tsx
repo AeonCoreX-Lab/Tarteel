@@ -1,5 +1,6 @@
 import type { ColorValue } from "react-native";
 import { Redirect, Tabs } from "expo-router";
+import { AppBar } from "../../src/components/AppBar";
 import { Icon } from "../../src/components/Icons";
 import type { IconName } from "../../src/components/Icons";
 import { knowledgeConfigured } from "../../src/knowledge/runtime";
@@ -9,7 +10,7 @@ import { useTheme } from "../../src/theme";
 
 const icon = (name: IconName) => ({ color }: { color: ColorValue }) => <Icon name={name} color={color} size={24} />;
 
-// Icon + text label on every tab (never icon-only). Each screen draws its own serif heading, so no navigator header.
+// Icon + text label on every tab (never icon-only). The bar on top names the app (mark and wordmark); each screen draws its own serif heading below it.
 export default function TabsLayout() {
   const th = useTheme();
   const t = useT();
@@ -18,7 +19,8 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        header: () => <AppBar />,
         sceneStyle: { backgroundColor: th.bg },
         tabBarStyle: { backgroundColor: th.surface, borderTopColor: th.border, minHeight: 64, paddingTop: 6 },
         tabBarActiveTintColor: th.accentText,

@@ -11,14 +11,12 @@ import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
 import { HEADING_FONT, useTheme } from "../../src/theme";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function QuranTab() {
   const { repos } = useApp();
   const router = useRouter();
   const th = useTheme();
   const t = useT();
-  const insets = useSafeAreaInsets();
   const lastRead = useSettings((s) => s.lastRead);
   const [surahs, setSurahs] = useState<Surah[]>([]);
 
@@ -85,7 +83,7 @@ export default function QuranTab() {
           <Text style={{ color: th.muted, fontSize: 15, lineHeight: 22, textAlign: "center", maxWidth: 300 }}>{t("noQuranData")}</Text>
         </View>
       }
-      contentContainerStyle={{ width: "100%", maxWidth: 720, alignSelf: "center", padding: 16, paddingTop: insets.top + 12, paddingBottom: 28 }}
+      contentContainerStyle={{ width: "100%", maxWidth: 720, alignSelf: "center", padding: 16, paddingTop: 12, paddingBottom: 28 }}
       initialNumToRender={20}
       windowSize={7}
       renderItem={({ item }) => (

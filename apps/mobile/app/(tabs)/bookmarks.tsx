@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Bookmark, Surah } from "@tarteel/types";
 import { Icon } from "../../src/components/Icons";
 import { StarBadge } from "../../src/components/Ornaments";
@@ -15,7 +14,6 @@ export default function BookmarksTab() {
   const router = useRouter();
   const th = useTheme();
   const t = useT();
-  const insets = useSafeAreaInsets();
   const [items, setItems] = useState<Bookmark[]>([]);
   const [surahs, setSurahs] = useState<Surah[]>([]);
 
@@ -27,7 +25,7 @@ export default function BookmarksTab() {
     <FlatList
       data={items}
       keyExtractor={(b) => String(b.id)}
-      contentContainerStyle={{ width: "100%", maxWidth: 720, alignSelf: "center", padding: 16, paddingTop: insets.top + 12, paddingBottom: 28, flexGrow: 1 }}
+      contentContainerStyle={{ width: "100%", maxWidth: 720, alignSelf: "center", padding: 16, paddingTop: 12, paddingBottom: 28, flexGrow: 1 }}
       ListHeaderComponent={<View style={{ paddingBottom: 12 }}><Heading size={30}>{t("bookmarks")}</Heading></View>}
       ListEmptyComponent={
         <View style={{ alignItems: "center", gap: 12, paddingVertical: 56 }}>

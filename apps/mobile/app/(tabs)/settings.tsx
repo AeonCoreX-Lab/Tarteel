@@ -84,7 +84,7 @@ export default function SettingsTab() {
   const field = { minHeight: 48, flexGrow: 1, minWidth: 130, borderWidth: 1, borderColor: th.border, borderRadius: 12, paddingHorizontal: 12, color: th.text, backgroundColor: th.surfaceAlt, fontSize: 16 } as const;
 
   return (
-    <ScreenScroll headerless gap={22}>
+    <ScreenScroll gap={22}>
       <Heading size={30}>{t("settings")}</Heading>
 
       <Group title={t("appearance")}>
