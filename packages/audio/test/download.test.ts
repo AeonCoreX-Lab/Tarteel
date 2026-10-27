@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createMemoryFileStore } from "@tarteel/storage";
-import { fetchAyahToStore, prefetchAyah, runAyahDownload } from "../src/download.ts";
+import { DEFAULT_WORKERS, RATE_LIMIT_PAUSE_MS, fetchAyahToStore, prefetchAyah, runAyahDownload } from "../src/download.ts";
 import { surahRefs } from "../src/refs.ts";
 import { createAudioStore } from "../src/store.ts";
 import { fakeHttp, fakeMp3, makeReciter, noSleep } from "./helpers.ts";
@@ -106,4 +106,14 @@ test("prefetch returns the local path, never refetches, and returns null on fail
   assert.equal(http.calls.length, 1);
   const bad = setup(() => ({ status: 500 }));
   assert.equal(await prefetchAyah({ store: bad.store, http: bad.http, reciter, ref: { surahId: 1, ayahNumber: 2 } }), null);
+});
+
+test("a 429 or 503 is retried after a longer pause than an ordinary failure, and the default is a few workers", async () => {
+  let n = 0;
+  const { store, http } = setup(() => (++n === 1 ? { status: 429 } : n === 2 ? { status: 503 } : ok()));
+  const sleeps: number[] = [];
+  await fetchAyahToStore({ store, http, reciter, ref: { surahId: 1, ayahNumber: 1 }, sleep: async (ms) => { sleeps.push(ms); } });
+  assert.deepEqual(sleeps, [RATE_LIMIT_PAUSE_MS, RATE_LIMIT_PAUSE_MS * 2]);
+  assert.equal(http.calls.length, 3);
+  assert.ok(DEFAULT_WORKERS <= 3, "the publisher asked for care with multi-threaded downloads");
 });

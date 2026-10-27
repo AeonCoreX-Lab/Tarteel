@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Linking, Text, TextInput, View } from "react-native";
+import type { LayoutChangeEvent, ScrollView } from "react-native";
 import Constants from "expo-constants";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { LIMITS, clamp } from "@tarteel/core";
 import { METHODS, resolveMethod, validateCoordinates } from "@tarteel/prayer";
 import { BRAND } from "../../src/brand";
+import { MadhabPicker } from "../../src/components/MadhabPicker";
 import { TranslationPicker } from "../../src/components/TranslationPicker";
-import { Button, Caption, Card, Heading, Row, ScreenScroll, Segmented } from "../../src/components/ui";
+import { Button, Caption, Card, Flash, Heading, Row, ScreenScroll, Segmented } from "../../src/components/ui";
 import { LocationError, deviceRegion, detectLocation } from "../../src/platform/location";
 import { RECITERS, selectedReciter } from "../../src/audio/runtime";
 import { hadeethEncEnabled, hadithEnabled } from "../../src/hadith/runtime";
@@ -22,12 +24,15 @@ import { HEADING_FONT, useTheme } from "../../src/theme";
 const TANZIL_URL = "https://tanzil.net";
 const QURAN_TEXT_CREDIT = "Tanzil Project · Uthmani text, version 1.1 · CC BY 3.0 (verbatim copies only)";
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
+/** A titled settings block. `onBlock` reports where it sits (for a link from another screen); `flash` plays the landing highlight. */
+function Group({ title, children, onBlock, flash = 0 }: { title: string; children: ReactNode; onBlock?: (y: number) => void; flash?: number }) {
   const t = useTheme();
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 10 }} onLayout={onBlock ? (e: LayoutChangeEvent) => onBlock(e.nativeEvent.layout.y) : undefined}>
       <Text accessibilityRole="header" style={{ color: t.brassText, fontSize: 12, fontWeight: "800", letterSpacing: 1.4, textTransform: "uppercase", paddingHorizontal: 4 }}>{title}</Text>
-      <Card padding={16}><View style={{ gap: 14 }}>{children}</View></Card>
+      <Flash signal={flash}>
+        <Card padding={16}><View style={{ gap: 14 }}>{children}</View></Card>
+      </Flash>
     </View>
   );
 }
@@ -55,12 +60,37 @@ export default function SettingsTab() {
   const t = useT();
   const s = useSettings();
   const router = useRouter();
+  const params = useLocalSearchParams<{ focus?: string; n?: string }>();
+  const scrollRef = useRef<ScrollView | null>(null);
+  const blockY = useRef<Record<string, number>>({});
+  const [flash, setFlash] = useState<{ id: string; n: number }>({ id: "", n: 0 });
   const { translations } = useApp();
   const [lat, setLat] = useState(s.location ? String(s.location.latitude) : "");
   const [lng, setLng] = useState(s.location ? String(s.location.longitude) : "");
   const [locMsg, setLocMsg] = useState<string | null>(null);
   const choice = resolveMethod({ userMethodId: s.calcMethodId, userSchool: s.asrSchool, countryCode: s.countryCode });
   const sourceUrl = String(Constants.expoConfig?.extra?.["sourceUrl"] ?? "");
+
+  // A link from another screen (the Today chips) names the block to land on. Wait a beat so the tab has finished
+  // switching, scroll the block to the top, flash it, then clear the request so it does not repeat on its own.
+  useEffect(() => {
+    const id = params.focus;
+    if (!id) return;
+    const timer = setTimeout(() => {
+      const y = blockY.current[id];
+      if (y !== undefined) scrollRef.current?.scrollTo({ y: Math.max(0, y - 4), animated: true });
+      setFlash({ id, n: Date.now() });
+      router.setParams({ focus: "", n: "" });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [params.focus, params.n]);
+
+  // Keep the coordinate boxes in step when the place changes somewhere else (the Today screen's "Use my location").
+  useEffect(() => {
+    setLat(s.location ? String(s.location.latitude) : "");
+    setLng(s.location ? String(s.location.longitude) : "");
+  }, [s.location?.latitude, s.location?.longitude]);
+  const blockProps = (id: string) => ({ onBlock: (y: number) => { blockY.current[id] = y; }, flash: flash.id === id ? flash.n : 0 });
 
   function saveManual() {
     const check = validateCoordinates(lat.trim() === "" ? NaN : Number(lat), lng.trim() === "" ? NaN : Number(lng));
@@ -84,7 +114,7 @@ export default function SettingsTab() {
   const field = { minHeight: 48, flexGrow: 1, minWidth: 130, borderWidth: 1, borderColor: th.border, borderRadius: 12, paddingHorizontal: 12, color: th.text, backgroundColor: th.surfaceAlt, fontSize: 16 } as const;
 
   return (
-    <ScreenScroll gap={22}>
+    <ScreenScroll gap={22} scrollRef={scrollRef}>
       <Heading size={30}>{t("settings")}</Heading>
 
       <Group title={t("appearance")}>
@@ -122,21 +152,17 @@ export default function SettingsTab() {
         </Row>
       </Group>
 
-      <Group title={t("prayerSettings")}>
+      <Group title={t("prayerSettings")} {...blockProps("method")}>
         <Caption>
           {t("method")}: {choice.methodId === "auto" ? t("automatic") : METHODS.find((m) => m.id === choice.methodId)?.name} · {choice.school === 1 ? t("hanafi") : t("standardAsr")}
         </Caption>
+        <Text style={{ color: th.text, fontWeight: "600" }}>{t("method")}</Text>
         <Row>
           <Button label={t("automatic")} selected={s.calcMethodId === null} onPress={() => s.set("calcMethodId", null)} />
           {METHODS.map((m) => <Button key={m.id} label={m.name} selected={s.calcMethodId === m.id} onPress={() => s.set("calcMethodId", m.id)} />)}
         </Row>
-        <Text style={{ color: th.text, fontWeight: "600" }}>{t("asrSchool")}</Text>
-        <Segmented
-          label={t("asrSchool")}
-          value={s.asrSchool === null ? "auto" : s.asrSchool === 0 ? "std" : "han"}
-          onChange={(v) => s.set("asrSchool", v === "auto" ? null : v === "std" ? 0 : 1)}
-          options={[{ value: "auto", label: t("automatic") }, { value: "std", label: t("standardAsr") }, { value: "han", label: t("hanafi") }]}
-        />
+        <Text style={{ color: th.text, fontWeight: "600" }}>{t("madhabSetting")}</Text>
+        <MadhabPicker />
         <Text style={{ color: th.text, fontWeight: "600" }}>{t("hijriAdjust")}</Text>
         <Segmented
           label={t("hijriAdjust")}
@@ -144,14 +170,22 @@ export default function SettingsTab() {
           onChange={(v) => s.set("hijriOffsetDays", v)}
           options={[-2, -1, 0, 1, 2].map((d) => ({ value: d, label: d > 0 ? `+${d}` : String(d) }))}
         />
-        <Text style={{ color: th.text, fontWeight: "600" }}>{t("summaryLocation")}</Text>
+      </Group>
+
+      <Group title={t("summaryLocation")} {...blockProps("location")}>
+        <Caption>
+          {s.location ? `${s.location.label ?? `${s.location.latitude.toFixed(3)}°, ${s.location.longitude.toFixed(3)}°`}` : t("notSet")}
+        </Caption>
+        <Row>
+          <Button label={t("useGps")} onPress={() => void useGps()} />
+        </Row>
+        <Text style={{ color: th.text, fontWeight: "600" }}>{t("enterManually")}</Text>
         <Row>
           <TextInput value={lat} onChangeText={setLat} placeholder={t("latitude")} placeholderTextColor={th.muted} accessibilityLabel={t("latitude")} keyboardType="numbers-and-punctuation" style={field} />
           <TextInput value={lng} onChangeText={setLng} placeholder={t("longitude")} placeholderTextColor={th.muted} accessibilityLabel={t("longitude")} keyboardType="numbers-and-punctuation" style={field} />
         </Row>
         <Row>
           <Button label={t("save")} onPress={saveManual} />
-          <Button label={t("useGps")} onPress={() => void useGps()} />
         </Row>
         {locMsg ? <Text accessibilityLiveRegion="polite" style={{ color: th.text, fontSize: 13 }}>{locMsg}</Text> : null}
         <Row><Button label={t("runSetup")} onPress={() => { s.set("onboardingComplete", false); router.replace("/setup"); }} /></Row>

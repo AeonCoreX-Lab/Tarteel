@@ -5,13 +5,13 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { nextStep, previousStep, setupProgress } from "@tarteel/core";
 import type { SetupStepId } from "@tarteel/core";
-import { METHODS, previewAsrBySchool, resolveMethod, validateCoordinates } from "@tarteel/prayer";
+import { selectedMadhab } from "@tarteel/core";
+import { METHODS, resolveMethod, validateCoordinates } from "@tarteel/prayer";
 import { LocationError, deviceRegion, detectLocation } from "../src/platform/location";
 import { suggestedUiLanguage } from "../src/platform/locale";
+import { MadhabPicker } from "../src/components/MadhabPicker";
 import { TranslationPicker } from "../src/components/TranslationPicker";
 import { WelcomeCarousel } from "../src/components/WelcomeCarousel";
-import { calculateTimes } from "../src/platform/prayer-adapter";
-import { to12h } from "../src/prayer/format";
 import { useApp } from "../src/state/app";
 import { useSettings } from "../src/state/settings";
 import { useT } from "../src/i18n";
@@ -82,11 +82,8 @@ export default function Setup() {
   const body = { color: th.muted, fontSize: 15, lineHeight: 22 };
 
   const choice = resolveMethod({ userMethodId: s.calcMethodId, userSchool: s.asrSchool, countryCode: s.countryCode });
-  let asr: ReturnType<typeof previewAsrBySchool> | null = null;
-  if (step === "method" && s.location) {
-    try { asr = previewAsrBySchool(calculateTimes, s.location, new Date(), choice.methodId); } catch { asr = null; }
-  }
-
+  const chosenSchool = selectedMadhab(s.madhab, s.asrSchool);
+  const madhabLabel = chosenSchool === "hanafi" ? t("madhabHanafi") : chosenSchool === "maliki" ? t("madhabMaliki") : chosenSchool === "shafii" ? t("madhabShafii") : chosenSchool === "hanbali" ? t("madhabHanbali") : t("madhabNotChosen");
   let content: ReactNode = null;
   if (step === "language") {
     content = (
@@ -143,29 +140,16 @@ export default function Setup() {
           </Row>
         ) : null}
 
-        <Text accessibilityRole="header" style={{ color: th.text, fontSize: 18, fontWeight: "700", marginTop: 8 }}>{t("asrSchool")}</Text>
-        {asr ? (
-          <>
-            <Text style={body}>{t("asrChoiceBody")} {asr.differenceMinutes} {t("minutes")}.</Text>
-            {([["standardAsr", asr.standard, 0], ["hanafi", asr.hanafi, 1]] as const).map(([key, time, value]) => {
-              const selected = choice.school === value;
-              return (
-                <Pressable
-                  key={key}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`${t(key)}, ${to12h(time)}`}
-                  onPress={() => s.set("asrSchool", value)}
-                  style={{ minHeight: 64, padding: 14, borderRadius: 10, borderWidth: selected ? 2 : 1, borderColor: selected ? th.accent : th.border, backgroundColor: th.surface, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
-                >
-                  <Text style={{ color: th.text, fontSize: 16, fontWeight: selected ? "700" : "500" }}>{t(key)}</Text>
-                  <Text style={{ color: th.text, fontSize: 20, fontVariant: ["tabular-nums"] }}>{to12h(time)}</Text>
-                </Pressable>
-              );
-            })}
-          </>
-        ) : <Text style={body}>{t("timesFailed")}</Text>}
         <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("confirmLocal")}</Text>
+      </>
+    );
+  } else if (step === "madhab") {
+    content = (
+      <>
+        <Text accessibilityRole="header" style={h1}>{t("madhabTitle")}</Text>
+        <Text style={body}>{t("madhabBody")}</Text>
+        <MadhabPicker />
+        {s.location ? <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("confirmLocal")}</Text> : null}
       </>
     );
   } else if (step === "translation") {
@@ -188,7 +172,9 @@ export default function Setup() {
         <View style={{ padding: 14, borderRadius: 10, borderWidth: 1, borderColor: th.border, backgroundColor: th.surface, gap: 8 }}>
           <Text style={{ color: th.text }}>{t("language")}: {s.uiLanguage === "bn" ? "বাংলা" : "English"}</Text>
           <Text style={{ color: th.text }}>{t("summaryLocation")}: {s.location ? `${s.location.latitude.toFixed(2)}, ${s.location.longitude.toFixed(2)}` : t("notSet")}</Text>
-          {s.location ? <Text style={{ color: th.text }}>{t("method")}: {choice.methodId === "auto" ? t("automatic") : METHODS.find((x) => x.id === choice.methodId)?.name} · {choice.school === 1 ? t("hanafi") : t("standardAsr")}</Text> : null}
+          {s.location ? <Text style={{ color: th.text }}>{t("method")}: {choice.methodId === "auto" ? t("automatic") : METHODS.find((x) => x.id === choice.methodId)?.name}</Text> : null}
+          <Text style={{ color: th.text }}>{t("madhabSetting")}: {madhabLabel}</Text>
+          {chosenSchool === null ? <Text style={{ color: th.text }}>{t("asrSchool")}: {choice.school === 1 ? t("hanafi") : t("standardAsr")}</Text> : null}
           <Text style={{ color: th.text }}>{t("translation")}: {tr ? `${tr.languageName} · ${tr.translator}` : t("none")}</Text>
         </View>
         <Text style={body}>{t("changeLater")}</Text>

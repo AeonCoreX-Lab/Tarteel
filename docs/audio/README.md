@@ -10,8 +10,9 @@ audio code is vendored.
   whole reciter, or (b) streaming, which is **off by default** (Settings -> Recitation -> Reciters).
 - With streaming off, playback **stops at the first ayah that is not downloaded** and says which one
   (`blocked` / `gap` status, shown by `AudioNotice`). It never silently skips and never silently goes online.
-- **No reciter ships in this build.** `apps/mobile/assets/audio/reciters.json` is `[]`. With an empty catalogue the
-  Listen page, the reader's audio controls and the Quran tab's Listen button are hidden; the rest of the app is unchanged.
+- **Two reciters ship**: Mishary Rashid Alafasy and Mahmoud Khalil Al-Husary (128 kbps, Hafs), both from the Islamic Network CDN
+  (`apps/mobile/assets/audio/reciters.json`). With an empty or fully disabled catalogue the Listen page, the reader's audio
+  controls and the Quran tab's Listen button are hidden; the rest of the app is unchanged.
 - A reciter is only offered when `enabled` **and** `verification.licenseVerified` are true
   (`offeredReciters`). `npm run validate:audio` (also in CI) rejects malformed or unverified-but-enabled entries.
 
@@ -20,7 +21,7 @@ audio code is vendored.
 ```
 reciters.json --parseCatalog--> Reciter[]            (packages/audio/catalog.ts)
 FileStore (expo-file-system) --> AudioStore          (store.ts: {reciter}/{SSS}{AAA}.mp3, .part then move)
-AudioHttp (fetch)  --> download.ts / manager.ts      (4 workers, resume = skip valid files, 8 consecutive failures
+AudioHttp (fetch)  --> download.ts / manager.ts      (3 workers, resume = skip valid files, 8 consecutive failures
                                                       -> "interrupted", one job at a time, stall watchdog, space check)
 PlayerPort (react-native-track-player) --> controller.ts + queue.ts
                                                      (rolling window of 200 ayahs refilled at 60, prefetch 3 ahead,
@@ -29,25 +30,47 @@ timing.ts                                            (optional word timings; aya
 ```
 
 `packages/audio` is pure TypeScript with injected ports, so everything above the three ports is unit-tested under
-Node (`npm test`, 74 tests). The Expo adapters live in `apps/mobile/src/audio/`.
+Node (`npm test`). The Expo adapters live in `apps/mobile/src/audio/`.
 
 Integrity: every downloaded file must look like an MP3 (ID3 tag or frame sync, at least 1000 bytes). A captive-portal
 HTML page saved as `.mp3` is rejected and never counted as downloaded. 404/403/410 are not retried.
 
-## Candidate source: Islamic Network CDN (not yet approved)
+## Source: Islamic Network CDN (approved 2026-10-26)
 
-`reciters.json` holds two **disabled, unverified** drafts (Alafasy, Husary at 128 kbps) pointing at
-`https://cdn.islamic.network/quran/audio/{bitrate}/{edition}/{ayah}.mp3`. Why this host: key-less, no per-client
-throttle, per-ayah MP3, and written terms (<https://alquran.cloud/terms-and-conditions>, section IV): recitations are
-"licensed to us by the reciters or their estates for free, non-commercial redistribution" and "you may stream, embed and
-download them for personal and educational use". Open points before enabling:
+`reciters.json` holds two enabled reciters (Alafasy, Husary at 128 kbps) pointing at
+`https://cdn.islamic.network/quran/audio/{bitrate}/{edition}/{ayah}.mp3`. Why this host: key-less, per-ayah MP3, written
+terms (<https://alquran.cloud/terms-and-conditions>, section IV: recitations are "licensed to us by the reciters or their
+estates for free, non-commercial redistribution" and "you may stream, embed and download them for personal and educational
+use"), and now a direct answer from the host.
 
-1. The terms say copyright stays with the reciters, who may ask for removal; a community answer on the same site calls
-   the rights "implied". Get written confirmation from Islamic Network that a free app may offer downloads, and keep it.
-2. The file URLs were not fetched (the build sandbox cannot reach the host): test each reciter's `{ayah}` URL and its
-   bitrate by hand. The CDN page and the API list some identifiers differently (e.g. `ar.sudais` vs `ar.abdurrahmaansudais`).
-3. Then set `licenseVerified` and `enabled` to true, fill `verifiedBy` with who confirmed what and when, and complete the
-   INVENTORY and privacy entries.
+**Permission on record.** Tarteel asked on the Islamic Network community forum whether a per-user download of a whole
+reciter's ayah files from the audio CDN is acceptable ("option b"). Thread:
+<https://community.islamic.network/d/310-confirming-acceptable-use-of-per-user-full-reciter-downloads-from-the-audio-cdn>.
+The reply, by meezaan (Islamic Network), read 2026-10-26:
+
+> There are no restrictions for option b, but please be mindful of the rate limits if downloads will be multi-threaded.
+
+What this covers: each person downloading a reciter's files to their own device. What it does **not** say (so the app does
+not assume it): anything about attribution, about hosting the files ourselves or in a pack, or about commercial use. The thread
+page shows no dates, so the date above is when it was read. Keep this link; if the reply is ever withdrawn or the thread moves,
+the reciters are switched off (`enabled: false`) until it is settled again.
+
+**What the app does about it**
+- **Rate limits:** 3 download workers (`DEFAULT_WORKERS` in `packages/audio/src/download.ts`, down from 4). A 429 or 503 is a
+  `RateLimitedError` and the worker pauses 2 s times the attempt number (`RATE_LIMIT_PAUSE_MS`) before it retries, instead of the usual 400 ms.
+  A reciter download is a person's own tap, one job at a time, never in the background and never started by the app.
+- **Credit:** the reciter and Islamic Network are credited on the reciter screen (Settings -> Recitation -> Reciters, the `attribution` line of each reciter).
+- **Nothing is mirrored:** files are fetched from the CDN into the person's own storage; Tarteel hosts no audio.
+- **Privacy:** the CDN sees the IP address and the reciter and ayah requested ([docs/privacy](../privacy/README.md)).
+
+**Still open**
+1. The file URLs were not fetched from the build sandbox (it cannot reach the host). Test each reciter's `{ayah}` URL and its
+   bitrate on a device (checklist below). The CDN page and the API list some identifiers differently (e.g. `ar.sudais` vs `ar.abdurrahmaansudais`),
+   so check the edition id before adding a reciter.
+2. The approximate size shown before a download (`APPROX_RECITATION_HOURS`) is an estimate; compare it with a real download.
+
+Device test: Settings -> Recitation -> Reciters -> download one short surah (e.g. 112), play it offline, then pause the network
+in the middle of a larger download and check that it resumes and that a 429 (if seen) shows as a pause, not as a failure.
 
 ## Adding a reciter (licence procedure)
 
@@ -57,7 +80,7 @@ download them for personal and educational use". Open points before enabling:
    `id`, `name`, `arabicName`, `urlTemplate` (https only; `{surah3}{ayah3}` for hosts that number files by surah and
    ayah, e.g. `https://host/path/{surah3}{ayah3}.mp3`, or `{ayah}` for the 1..6236 number, e.g. `https://host/128/ed/{ayah}.mp3`), `bitrateKbps`, `riwayah`, `attribution`,
    `verification { licenseVerified, verifiedOn, verifiedBy, termsUrl }`, `enabled`, optional `timings { url, attribution }`.
-3. Keep `licenseVerified: false` / `enabled: false` until step 1 is done and recorded.
+3. Keep `licenseVerified: false` / `enabled: false` until step 1 is done and recorded. A reciter that is not one of the Islamic Network ones needs its own permission: the forum answer above covers only that host's CDN.
 4. Add a row to [`docs/licensing/INVENTORY.md`](../licensing/INVENTORY.md) in the same change.
 5. Run `npm run validate:audio`. Check the file size estimate (`APPROX_RECITATION_HOURS`) against reality for the chosen bitrate.
 6. Update [`docs/privacy/README.md`](../privacy/README.md) with the host's name (it sees the IP address and the reciter/surah requested).

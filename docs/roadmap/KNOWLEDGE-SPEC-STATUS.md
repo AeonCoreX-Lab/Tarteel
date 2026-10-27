@@ -1,8 +1,8 @@
 # Historical Knowledge System: status against the plan
 
-Last updated 2026-10-19 (HadeethEnc live hadith enabled, Wikidata draft importer added; earlier: online Hadith via islamic.app dormant; Step 2: events, people, places and Timeline). "Verified" means a command ran and its result was seen. Nothing below is verified on a device, and
+Last updated 2026-10-27 (QuranEnc and Quranpedia live providers, Sources hubs and AppBar added; earlier: HadeethEnc live hadith enabled, Wikidata draft importer added; online Hadith via islamic.app dormant; Step 2: events, people, places and Timeline). "Verified" means a command ran and its result was seen. Nothing below is verified on a device, and
 `npm run typecheck` passes (root, no React Native types); `npm run lint` could not run here (missing @eslint/js); the mobile screens were only checked against stubs.
-Counts: 380 Node tests pass, 1 skipped (an existing on-device prayer-time test).
+Counts (2026-10-27): 452 Node tests, 451 pass, 1 skipped (an existing on-device prayer-time test).
 
 Legend: **Done** (implemented and tested) · **Partial** · **Not started** · **Blocked** (needs rights, data, credentials or hardware).
 
@@ -25,7 +25,7 @@ Legend: **Done** (implemented and tested) · **Partial** · **Not started** · *
 | 4. User experience | Partial | Library, History, Ayah Context, Source Detail, **Knowledge tab (browse by surah, search of installed packs)**, loading / failure / retry on the History screen and Knowledge tab (English and Bengali). Missing: Timeline, Graph navigation, filters, accessibility review, Arabic rendering check on device. None of the new screens has been run on a device |
 | 5. Editorial and publishing | Partial | JSON source, strict loader, build with release validation, signing, GitHub release workflow (never run). Missing: review checklist and pull request template, corrections guide. **Pilot pack: Blocked**, only synthetic fixtures exist, and they are labelled synthetic |
 | 6. Security, privacy, performance | Partial | threat model written (`KNOWLEDGE.md`), privacy page updated. No large-pack, low-storage or slow-network tests beyond unit tests of the failure codes |
-| 7. Tests and release gates | Partial | 300 Node tests (migrations, provenance rules, licence rules, conflicting evidence, malformed and tampered packs, signature failures, interrupted installs, update and rollback, offline rebuild, empty catalogue, rotation). **Not run:** typecheck, lint, CI, the Android build, any device or emulator test |
+| 7. Tests and release gates | Partial | 452 Node tests in all (2026-10-27; migrations, provenance rules, licence rules, conflicting evidence, malformed and tampered packs, signature failures, interrupted installs, update and rollback, offline rebuild, empty catalogue, rotation). `npm run typecheck` passes. **Not run:** lint, CI, the Android build, any device or emulator test |
 | 8. Documentation | Mostly done | README, architecture, privacy, licensing inventory, NOTICE, CLAUDE.md and AGENTS.md, authoring guide, device checklist, release steps all updated. Not written yet: a recovery guide for end users, a contributor guide for reviewers |
 
 ## Decisions of 2026-10-18
@@ -48,6 +48,8 @@ Design in `docs/architecture/HADITH.md`. In short: the person must turn it on (S
 | Source | Decision | Evidence |
 |---|---|---|
 | Quranpedia, Wahidi *Asbab Nuzul al-Quran* (book 2919) | Usable with credit (Quranpedia.net, link, dump version). Not yet confirmed in writing. Raw file read; imported as pack `asbab-wahidi` by `npm run import:quranpedia` | INVENTORY |
+| Quranpedia live API (classical tafsir, asbab, surah introduction) | Live, opt-in, nothing stored, since 2026-10-25 (`packages/core/src/quranpedia.ts`). The weekly dump-sync workflow was removed; `asbab-wahidi` stays as a pack | INVENTORY |
+| QuranEnc.com tafsir (Bengali Al-Mukhtasar, Al-Sa'di, Saheeh notes) | Live, opt-in, nothing stored, version shown | INVENTORY |
 | Quranpedia, other books (modern compilations, translations) | Not cleared: author or publisher copyright | INVENTORY |
 | Quran Foundation (Quran.com) API | Rejected for packs: no redistribution, no bundled database | INVENTORY |
 | fawazahmed0 hadith-api | Rejected for hadith text: the Unlicense covers the repository, not the scraped sources, which state no terms | INVENTORY |

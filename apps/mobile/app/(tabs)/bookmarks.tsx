@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import type { Bookmark, Surah } from "@tarteel/types";
 import { Icon } from "../../src/components/Icons";
 import { StarBadge } from "../../src/components/Ornaments";
@@ -18,7 +18,10 @@ export default function BookmarksTab() {
   const [surahs, setSurahs] = useState<Surah[]>([]);
 
   const load = useCallback(async () => setItems(await repos.bookmarks.list(500)), [repos]);
-  useEffect(() => { void load(); void repos.quran.getSurahs().then(setSurahs); }, [load, repos]);
+  useEffect(() => { void repos.quran.getSurahs().then(setSurahs); }, [repos]);
+  // A tab stays mounted while another screen is on top of it, so loading once on mount showed a bookmark only after the
+  // app was reopened. Reload every time this tab comes into focus (and again when the app returns from the background).
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
   const name = (id: number) => surahs.find((s) => s.id === id)?.nameTransliteration ?? String(id);
 
   return (

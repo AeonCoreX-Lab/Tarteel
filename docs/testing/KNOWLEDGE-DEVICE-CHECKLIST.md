@@ -177,3 +177,17 @@ The API's whole answers could not be seen from the build machine; this section i
 - [ ] A passage shows its part and page when the server gives them. No stray HTML tags in the text.
 - [ ] Previous / Next ayah and surah work. Turning it off in Settings brings the consent box back.
 - [ ] Settings shows "Classical tafsir (Quranpedia)", Off by default. The Sources screen lists Quranpedia with its licence and what it sends.
+
+## Settings links, school step and bookmarks (added 2026-10-27). Not yet run on a device
+
+- [ ] Today: tap the location chip (top right). Settings opens, scrolls to the **Location** block and the block pulses about twice, then stays still. Go back to Today and tap the chip again: it plays again.
+- [ ] Today with no location: "Enter manually" does the same; with a failed calculation, "Open settings" does the same.
+- [ ] Today: "Change method" opens Settings on the **Calculation** block (method, school, Hijri adjustment) and highlights it. In Bengali too.
+- [ ] Turn on "Remove animations" (Android): the highlight is a steady tint for about a second, with no pulsing.
+- [ ] Open Settings from the tab bar (no link): it opens at the top with no highlight.
+- [ ] Today -> "Use my location" (or GPS in Settings): the coordinate boxes in Settings show the new place.
+- [ ] New install, Setup: after Location (and Method, when a location is set) comes the **school** step: Hanafi, Maliki, Shafi'i, Hanbali, "I'm not sure", each with an Asr time. Hanafi's time is later; the other three are equal. Picking one moves the mark; the Today screen then shows the same Asr time.
+- [ ] Setup, location skipped: the school step still appears; rows show a dash instead of a time and the note says to add a location. Continue and Back work.
+- [ ] The last Setup screen lists the school you picked.
+- [ ] Settings -> Calculation: the same picker. An install made before this version shows "Currently: Hanafi Asr" or "Standard Asr" with no school selected until one is picked.
+- [ ] Bookmarks: open a surah, bookmark an ayah, go back to the Bookmarks tab: it is there at once, without closing the app. Remove it from the surah: the tab no longer lists it. Bookmark from the Bookmarks tab itself (open the ayah, add another) works the same.

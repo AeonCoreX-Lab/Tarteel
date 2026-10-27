@@ -1,9 +1,9 @@
 /**
  * First-run Setup flow: order and progress, kept pure so a test can hold the order still.
- * Starts with the brand intro carousel ("welcome"). Differs from Mihrab's on purpose: location is OPTIONAL (Quran works without it), and there is a
+ * Starts with the brand intro carousel ("welcome"). The "madhab" step (which school: it moves Asr) is always asked, even without a location (then it shows no times). Differs from Mihrab's on purpose: location is OPTIONAL (Quran works without it), and there is a
  * Quran-translation step.
  */
-export type SetupStepId = "welcome" | "language" | "location" | "method" | "translation" | "ready";
+export type SetupStepId = "welcome" | "language" | "location" | "method" | "madhab" | "translation" | "ready";
 
 export interface SetupContext {
   /** A valid location has been set (GPS or manual). */
@@ -15,6 +15,7 @@ export interface SetupContext {
 export function setupSteps(ctx: SetupContext): SetupStepId[] {
   const steps: SetupStepId[] = ["welcome", "language", "location"];
   if (ctx.hasLocation) steps.push("method"); // choosing a method only makes sense once there is a place
+  steps.push("madhab"); // a person can answer which school they pray by without a place; with one, each row shows its Asr time
   if (ctx.hasTranslations) steps.push("translation");
   steps.push("ready");
   return steps;

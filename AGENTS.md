@@ -38,6 +38,9 @@ These are hard rules. They come from the project spec.
   `apps/mobile/src/knowledge/config.json` must never hold a test or demo key (`npm run pack:demo` output is for device tests only).
 - Synthetic test fixtures must say "Synthetic" and must never look like real history. Do not present them as facts anywhere in the app.
 
+## Audio
+- A reciter is offered only with `enabled` and `licenseVerified` true and a `verifiedBy` that says who confirmed what, with the link and the date. The Islamic Network CDN reply (forum thread #310, 2026-10-26) covers per-person downloads from that CDN only: not hosting or bundling files, not another host. Keep downloads polite: few workers, pause on 429/503. Details: `docs/audio/README.md`.
+
 ## Upstream code (third_party/)
 - Files under `third_party/*` came from Mihrab and are now **Tarteel's own code**: edit them directly. There is no sync from Mihrab.
   Every change must be logged with its date in that folder's `CHANGES.md` (AGPL-3.0 section 5(a)); `npm run upstream:status` lists

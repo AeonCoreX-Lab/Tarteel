@@ -33,13 +33,21 @@ export interface DownloadOutcome {
 
 /** One file failing is a file; this many in a row, across the workers, is the connection. */
 export const GIVE_UP_AFTER_CONSECUTIVE_FAILURES = 8;
-export const DEFAULT_WORKERS = 4;
+/**
+ * Islamic Network's answer on its community forum (2026-10): per-user downloads of a whole reciter have no restrictions, "but
+ * please be mindful of the rate limits if downloads will be multi-threaded". So few workers, and a longer pause when the server
+ * says "too many requests" or "unavailable" than for an ordinary failure.
+ */
+export const DEFAULT_WORKERS = 3;
+export const RATE_LIMIT_PAUSE_MS = 2000;
 export const AYAH_TIMEOUT_MS = 60_000;
 export const PREFETCH_TIMEOUT_MS = 30_000;
 
 const sleepReal = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
 class PermanentError extends Error {}
+/** HTTP 429 or 503: the server asks for fewer requests. Retried, after a longer pause. */
+class RateLimitedError extends Error {}
 
 /** Fetches one ayah and commits it to the store. Retries transient failures, never a 404. Throws when it cannot. */
 export async function fetchAyahToStore(args: {
@@ -63,13 +71,14 @@ export async function fetchAyahToStore(args: {
     try {
       const res = await http.get(url, { timeoutMs, signal });
       if (res.status === 404 || res.status === 403 || res.status === 410) throw new PermanentError(`HTTP ${res.status}`);
+      if (res.status === 429 || res.status === 503) throw new RateLimitedError(`HTTP ${res.status}`);
       if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
       assertAudioBytes(res.bytes); // a 200 is not proof of audio: see looksLikeMp3
       return await store.commitAyah(reciter.id, ref, res.bytes);
     } catch (e) {
       last = e;
       if (e instanceof PermanentError || signal?.aborted) break;
-      if (attempt < attempts) await sleep(400 * attempt);
+      if (attempt < attempts) await sleep((e instanceof RateLimitedError ? RATE_LIMIT_PAUSE_MS : 400) * attempt);
     }
   }
   throw last instanceof Error ? last : new Error(String(last));

@@ -7,8 +7,10 @@
 - Reading history is optional and can be turned off in Settings; the last-read pointer is always local.
 - Recitation audio is the only other network use, and only when asked: a download, or streaming if the user turns it on
   (off by default). The audio host sees the device IP address and which reciter and surah are requested; nothing else is
-  sent and playing downloaded audio sends nothing. No reciter ships yet: the host will be named here when one is added
-  (see [docs/audio](../audio/README.md)). Last-listened position is stored locally in preferences only.
+  sent and playing downloaded audio sends nothing. The host is the Islamic Network CDN (cdn.islamic.network, run by Islamic Network, the
+  people behind alquran.cloud); it receives the request for each ayah file (the reciter and the ayah number are in the address). Downloads are
+  paced (3 at a time, with a pause when the host says to slow down). Last-listened position is stored locally in preferences only.
+  See [docs/audio](../audio/README.md).
 - Online hadith (only in a build that enables it, and only after the person turns it on in Settings, which is off by default): each search or opened hadith is a request to api.islamic.app, which can see the IP address and what is searched or opened. The app sends no account, device id or location, and stores nothing it receives. Requests carry a User-Agent that names Tarteel.
 - Online hadith from HadeethEnc (enabled in the repository build, but only after the person turns it on in Settings, which is off by default): each opened topic or hadith is a request to hadeethenc.com, which can see the IP address and which topic or hadith is opened. The app sends no account, device id or location, and stores nothing it receives. Requests carry a User-Agent that names Tarteel.
 - The tasbih counter keeps its counts and today's totals on the device only (in the preferences store). Nothing about it is sent anywhere, and it needs no network. The only permission it adds is Android's `VIBRATE`, which asks the person nothing.

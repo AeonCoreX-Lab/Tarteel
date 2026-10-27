@@ -1,6 +1,7 @@
 import type { PreferencesStore } from "@tarteel/storage";
 import type { AyahRef, ReaderMode, ThemeMode, UiLanguage } from "@tarteel/types";
 import type { TasbihState } from "./tasbih.ts";
+import type { Madhab } from "./madhab.ts";
 
 /** Everything stored in the preferences store (MMKV / localStorage). Keep it SMALL. */
 export interface PreferenceSchema {
@@ -24,6 +25,8 @@ export interface PreferenceSchema {
   calcMethodId: number | null;
   /** null = use the country default. 0 = Shafi/Maliki/Hanbali, 1 = Hanafi. */
   asrSchool: 0 | 1 | null;
+  /** The school the person named (see `madhab.ts`). Always written together with `asrSchool`; null = not asked or not sure. */
+  madhab: Madhab | null;
   /** Manual per-event corrections in minutes, e.g. { Fajr: -2 }. */
   prayerOffsets: Record<string, number>;
   /** Moon-sighting adjustment for the Hijri date, usually -2..+2. */
@@ -92,6 +95,7 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
   countryCode: null,
   calcMethodId: null,
   asrSchool: null,
+  madhab: null,
   prayerOffsets: {},
   hijriOffsetDays: 0,
   audioReciterId: null,
@@ -166,6 +170,7 @@ export class ReadingProgress {
   }
 }
 export * from "./setup.ts";
+export * from "./madhab.ts";
 export * from "./translations.ts";
 export * from "./hadith.ts";
 export * from "./hadeethenc.ts";

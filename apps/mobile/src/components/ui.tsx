@@ -1,6 +1,7 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { AccessibilityInfo, Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import { HEADING_FONT, useTheme } from "../theme";
 import { GeoPattern } from "./Ornaments";
 
@@ -132,11 +133,42 @@ export function Column({ children, gap = 16 }: { children: ReactNode; gap?: numb
 }
 
 /** Scrolling screen: safe-area aware, width-capped column. `headerless` screens add the status-bar inset themselves. */
-export function ScreenScroll({ children, headerless = false, gap = 16 }: { children: ReactNode; headerless?: boolean; gap?: number }) {
+export function ScreenScroll({ children, headerless = false, gap = 16, scrollRef }: { children: ReactNode; headerless?: boolean; gap?: number; scrollRef?: RefObject<ScrollView | null> }) {
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 12 + (headerless ? insets.top : 0), paddingBottom: 28 }} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 16, paddingTop: 12 + (headerless ? insets.top : 0), paddingBottom: 28 }} keyboardShouldPersistTaps="handled">
       <Column gap={gap}>{children}</Column>
     </ScrollView>
+  );
+}
+
+/**
+ * A brief wash of the accent colour over a block, to show where a link from another screen has landed.
+ * Bump `signal` (any new number) to play it; 0 does nothing. Two soft pulses, about a second in all. With "reduce motion" on,
+ * the block is tinted steadily for the same time instead of pulsing. It never captures touches.
+ */
+export function Flash({ signal, radius = 18, children }: { signal: number; radius?: number; children: ReactNode }) {
+  const th = useTheme();
+  const level = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!signal) return;
+    let cancelled = false;
+    let running: Animated.CompositeAnimation | null = null;
+    level.setValue(0);
+    void AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
+      if (cancelled) return;
+      const to = (v: number, ms: number) => Animated.timing(level, { toValue: v, duration: ms, useNativeDriver: true });
+      running = reduce
+        ? Animated.sequence([to(1, 1), Animated.delay(1100), to(0, 1)])
+        : Animated.sequence([to(1, 260), to(0, 260), to(1, 260), to(0, 520)]);
+      running.start();
+    });
+    return () => { cancelled = true; running?.stop(); };
+  }, [signal, level]);
+  return (
+    <View>
+      {children}
+      <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, borderRadius: radius, borderWidth: 2, borderColor: th.accent, backgroundColor: th.accent, opacity: level.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }) }} />
+    </View>
   );
 }

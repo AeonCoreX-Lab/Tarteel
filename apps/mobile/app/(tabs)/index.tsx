@@ -60,6 +60,11 @@ export default function Today() {
     void repos.quran.getSurah(lastRead.surahId).then(setLastSurah);
   }, [repos, lastRead]);
 
+  /** Opens Settings on the block the person meant (and Settings scrolls to it and flashes it), not at the top. */
+  function openSettings(focus: "location" | "method") {
+    router.navigate({ pathname: "/settings", params: { focus, n: String(Date.now()) } });
+  }
+
   async function useMyLocation() {
     setBusy(true);
     setProblem(null);
@@ -89,7 +94,7 @@ export default function Today() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${t("locationChip")}: ${locationChip}`}
-        onPress={() => router.push("/settings")}
+        onPress={() => openSettings("location")}
         style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 22, borderWidth: 1, borderColor: th.border, backgroundColor: th.surface }}
       >
         <Icon name="pin" size={18} color={th.accentText} />
@@ -109,7 +114,7 @@ export default function Today() {
           {problem ? <Text accessibilityLiveRegion="polite" style={{ color: th.text, fontSize: 14, textAlign: "center" }}>{problem}</Text> : null}
           <View style={{ alignSelf: "stretch", gap: 10 }}>
             <PillButton label={busy ? t("locating") : t("useMyLocation")} onPress={() => void useMyLocation()} disabled={busy} />
-            <Button label={t("enterManually")} onPress={() => router.push("/settings")} />
+            <Button label={t("enterManually")} onPress={() => openSettings("location")} />
           </View>
           {busy ? <ActivityIndicator color={th.accentText} /> : null}
         </View>
@@ -121,7 +126,7 @@ export default function Today() {
         <View style={{ gap: 10 }}>
           <Heading size={20}>{t("timesFailed")}</Heading>
           <Text selectable style={{ color: th.muted, fontSize: 13 }}>{prayer.message}</Text>
-          <Row><Button label={t("openSettings")} onPress={() => router.push("/settings")} /></Row>
+          <Row><Button label={t("openSettings")} onPress={() => openSettings("location")} /></Row>
         </View>
       </Card>
     );
@@ -211,7 +216,7 @@ export default function Today() {
           <Text selectable style={{ color: th.muted, fontSize: 12, lineHeight: 18 }}>
             {basis.methodName}{basis.source === "country" ? ` (${t("defaultForRegion")})` : ""} · {basis.school === 1 ? t("hanafi") : t("standardAsr")}
           </Text>
-          <Row><Button label={t("changeMethod")} onPress={() => router.push("/settings")} /></Row>
+          <Row><Button label={t("changeMethod")} onPress={() => openSettings("method")} /></Row>
         </View>
       </>
     );
