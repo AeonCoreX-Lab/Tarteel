@@ -7,7 +7,7 @@
  * it is a setting; this list says what the source is.
  */
 
-export type ProviderDomain = "hadith" | "history";
+export type ProviderDomain = "hadith" | "history" | "books";
 
 export type ProviderStatus =
   /** Terms read; the app may use it. */
@@ -23,8 +23,8 @@ export interface Text2 {
 export interface SourceProvider {
   id: string;
   domain: ProviderDomain;
-  /** "live": asked over the internet when the person opens something. "pack": a signed pack installed on the device. */
-  mode: "live" | "pack";
+  /** "live": asked over the internet when the person opens something. "pack": a signed pack installed on the device. "download": a text the person chooses to keep on the device. */
+  mode: "live" | "pack" | "download";
   name: Text2;
   publisher: string;
   /** The licence or terms, in a few words. */
@@ -34,7 +34,7 @@ export interface SourceProvider {
   /** What leaves the device when the source is used. */
   sends: Text2;
   /** The preference that turns a live source on for the person; null for a pack. */
-  settingKey: "onlineHadeethEnc" | "onlineHadith" | "onlineWikipedia" | "onlineQuranEnc" | "onlineQuranpedia" | null;
+  settingKey: "onlineHadeethEnc" | "onlineHadith" | "onlineWikipedia" | "onlineQuranEnc" | "onlineQuranpedia" | "onlineIslamicBooks" | "onlineOpenIti" | null;
   /** The screen that opens the source; null when it appears inside other screens. */
   route: string | null;
   siteUrl: string;
@@ -129,6 +129,43 @@ export const SOURCE_PROVIDERS: readonly SourceProvider[] = [
     settingKey: "onlineWikipedia",
     route: null,
     siteUrl: "https://www.wikipedia.org",
+  },
+  {
+    id: "islamicbooks",
+    domain: "books",
+    mode: "live",
+    name: { en: "islamic.app Library", bn: "islamic.app লাইব্রেরি" },
+    publisher: "islamic.app. Texts gathered from usul.ai, turath.io, shamela.ws, waqfeya.net and others",
+    licence: "Out-of-copyright classical works (the publisher's statement); no per-book licence",
+    status: "allowed",
+    about: {
+      en: "Hundreds of classical Arabic books (tafsir, creed, fiqh, seerah, history, language) read live, chapter by chapter, or opened as a PDF. The publisher says it carries only works whose authors died over 100 years ago; Tarteel has not checked each book or its edition. Every book shows its own sources.",
+      bn: "শত শত ক্লাসিক্যাল আরবি বই (তাফসির, আকীদা, ফিকহ, সীরাত, ইতিহাস, ভাষা) সরাসরি অধ্যায় ধরে পড়া যায়, বা PDF হিসেবে খোলা যায়। প্রকাশকের কথা, শুধু সেই বই যার লেখক ১০০ বছরের বেশি আগে মারা গেছেন; প্রতিটি বই বা তার সংস্করণ তারতিল যাচাই করেনি। প্রতিটি বইয়ে তার উৎস দেখানো হয়।",
+    },
+    sends: LIVE_SENDS,
+    settingKey: "onlineIslamicBooks",
+    route: "/books",
+    siteUrl: "https://islamic.app",
+  },
+  {
+    id: "openiti",
+    domain: "books",
+    mode: "download",
+    name: { en: "OpenITI corpus (KITAB project)", bn: "OpenITI কর্পাস (KITAB প্রজেক্ট)" },
+    publisher: "OpenITI / KITAB project (Nigst, Romanov, Savant, Seydi, Verkinderen), release 2025.1.9",
+    licence: "CC BY-NC-SA 4.0: credit, non-commercial, share alike",
+    status: "allowed",
+    about: {
+      en: "Thousands of premodern Arabic texts. You choose a book and keep a copy on this device to read offline. Tarteel hosts nothing: the list comes from Zenodo and each book from the corpus's own GitHub repository. The texts are scholarly transcriptions: they may hold errors, and their layout is not a printed page.",
+      bn: "হাজার হাজার প্রাক-আধুনিক আরবি গ্রন্থ। আপনি একটি বই বেছে এই ডিভাইসে কপি রাখেন, অফলাইনে পড়ার জন্য। তারতিল কিছু হোস্ট করে না: তালিকা আসে Zenodo থেকে আর প্রতিটি বই কর্পাসের নিজস্ব GitHub রিপোজিটরি থেকে। এগুলো পণ্ডিতি প্রতিলিপি: ভুল থাকতে পারে, আর ছাপা পাতার বিন্যাস নেই।",
+    },
+    sends: {
+      en: "Your IP address, to zenodo.org (the list) and raw.githubusercontent.com (a book you keep). No account, device id or location. Only the books you choose to keep are saved on this device; reading a kept book sends nothing.",
+      bn: "আপনার IP ঠিকানা, zenodo.org (তালিকা) ও raw.githubusercontent.com (আপনার রাখা বই) এ। কোনো অ্যাকাউন্ট, ডিভাইস আইডি বা অবস্থান নয়। শুধু আপনার রাখা বইগুলো এই ডিভাইসে সংরক্ষিত হয়; রাখা বই পড়তে কিছু পাঠানো হয় না।",
+    },
+    settingKey: "onlineOpenIti",
+    route: "/books",
+    siteUrl: "https://kitab-project.org/data/download",
   },
 ];
 

@@ -67,6 +67,16 @@ export interface PreferenceSchema {
    * only in a build where that provider is enabled.
    */
   onlineQuranpedia: boolean;
+  /**
+   * Off by default. When on, classical books are read live from the islamic.app Library (the server sees the IP address and which
+   * book and chapter are opened). Nothing is stored. Has an effect only in a build where that provider is enabled.
+   */
+  onlineIslamicBooks: boolean;
+  /**
+   * Off by default. When on, the OpenITI book list can be fetched from Zenodo and a chosen book kept from GitHub (those servers see the
+   * IP address). Only the books the person chooses to keep are saved. Has an effect only in a build where that provider is enabled.
+   */
+  onlineOpenIti: boolean;
   /** The tasbih counter: where each dhikr has got to, and today's totals. See `tasbih.ts`. */
   tasbih: TasbihState | null;
   /** A short vibration on each tap of the tasbih counter, a longer one when a round is finished. */
@@ -106,6 +116,8 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
   onlineWikipedia: false,
   onlineQuranEnc: false,
   onlineQuranpedia: false,
+  onlineIslamicBooks: false,
+  onlineOpenIti: false,
   tasbih: null,
   tasbihVibrate: true,
   audioRepeatEachAyah: 1,
@@ -177,5 +189,8 @@ export * from "./hadeethenc.ts";
 export * from "./wikipedia.ts";
 export * from "./quranenc.ts";
 export * from "./quranpedia.ts";
+export * from "./islamicbooks.ts";
+export * from "./openiti.ts";
 export * from "./providers.ts";
 export * from "./tasbih.ts";
+export * from "./bookcover.ts";

@@ -1,9 +1,9 @@
-import { createQuranEncClient, createQuranpediaClient, createWikiClient } from "@tarteel/core";
-import type { QuranEncClient, QuranpediaClient, WikiClient } from "@tarteel/core";
+import { createIslamicBooksClient, createQuranEncClient, createQuranpediaClient, createWikiClient } from "@tarteel/core";
+import type { IslamicBooksClient, QuranEncClient, QuranpediaClient, WikiClient } from "@tarteel/core";
 import { createFetchHadithHttp } from "../hadith/runtime";
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const config = require("./config.json") as { wikipedia?: boolean; quranenc?: boolean; quranpedia?: boolean };
+const config = require("./config.json") as { wikipedia?: boolean; quranenc?: boolean; quranpedia?: boolean; islamicbooks?: boolean; openiti?: boolean };
 
 /**
  * Wikipedia background reading is offered only in a build that turns it on in config.json. With it off there is no card, no
@@ -23,6 +23,18 @@ export const quranEncEnabled: boolean = config.quranenc === true;
  * to quranpedia.net.
  */
 export const quranpediaEnabled: boolean = config.quranpedia === true;
+
+/**
+ * islamic.app Library (public-domain classical books, read live one book at a time, never stored). With the flag off there is no
+ * screen, no setting and no request to api.islamic.app for books.
+ */
+export const islamicBooksEnabled: boolean = config.islamicbooks === true;
+
+/**
+ * OpenITI corpus (CC BY-NC-SA 4.0, KITAB project): the catalogue is fetched once on request; a book is downloaded only when the
+ * person chooses to keep it, and is then read offline. With the flag off there is no screen, no setting and no request.
+ */
+export const openItiEnabled: boolean = config.openiti === true;
 
 let client: WikiClient | null = null;
 
@@ -46,4 +58,12 @@ let quranpediaClient: QuranpediaClient | null = null;
 export function getQuranpediaClient(): QuranpediaClient {
   quranpediaClient ??= createQuranpediaClient({ http: createFetchHadithHttp() });
   return quranpediaClient;
+}
+
+let islamicBooksClient: IslamicBooksClient | null = null;
+
+/** One islamic.app Library client for the app, so its short in-memory cache and request spacing are shared. Never created while that provider is off. */
+export function getIslamicBooksClient(): IslamicBooksClient {
+  islamicBooksClient ??= createIslamicBooksClient({ http: createFetchHadithHttp() });
+  return islamicBooksClient;
 }

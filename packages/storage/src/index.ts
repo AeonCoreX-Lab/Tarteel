@@ -180,7 +180,7 @@ export function createPreferencesStore<S extends object>(
 
 // ---------------------------------------------------------------- Files
 
-export type FileArea = "audio" | "fonts" | "packages" | "images" | "cache";
+export type FileArea = "audio" | "fonts" | "packages" | "images" | "cache" | "books";
 
 export interface FileStore {
   /** Resolves a relative path inside an area to a platform path/URI. */

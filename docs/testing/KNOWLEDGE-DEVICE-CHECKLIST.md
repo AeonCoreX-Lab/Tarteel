@@ -191,3 +191,21 @@ The API's whole answers could not be seen from the build machine; this section i
 - [ ] The last Setup screen lists the school you picked.
 - [ ] Settings -> Calculation: the same picker. An install made before this version shows "Currently: Hanafi Asr" or "Standard Asr" with no school selected until one is picked.
 - [ ] Bookmarks: open a surah, bookmark an ayah, go back to the Bookmarks tab: it is there at once, without closing the app. Remove it from the surah: the tab no longer lists it. Bookmark from the Bookmarks tab itself (open the ayah, add another) works the same.
+
+## Books (islamic.app and OpenITI, added 2026-11-09). Not yet run on a device
+
+The API answers and the OpenITI file layout could not be seen from the build machine; this section is how they get checked. **Send a screenshot of anything that says "unexpected answer" or shows markup.**
+
+- [ ] Knowledge tab: a "Books" section with one row, and under the sources rows a "Book sources" row. There is no sixth bottom tab.
+- [ ] Books opens on **Online**. A consent box shows; nothing is requested until "Turn on" is tapped.
+- [ ] After turning on: genre chips (All, Tafsir, Aqeedah ...) and a list of books with Arabic titles, author and "d. ... AH". "Show more" adds the next page without repeating books. Choosing a genre shows that genre only.
+- [ ] Search: type two letters, nothing happens until **Search** is tapped; results open the book. Tapping Search many times in a row waits instead of failing.
+- [ ] A book page: author, death year, genre, pages, the book's **sources** at the bottom and the credit. **Read** opens the reader; **Open the PDF** (when offered) opens the browser.
+- [ ] Reader: contents list, a chapter reads right-to-left in the Arabic text size set in Settings; Previous / Next / Contents work; the credit is under every chapter. A large book shows "Loading the book" and then the contents.
+- [ ] **OpenITI** tab: consent box, then "Download the list". Afterwards a search for a title or an author in Arabic or Latin finds texts. **If the list stays empty or says "unexpected answer", send a screenshot.**
+- [ ] An OpenITI book: "Keep on this device" downloads it (a few seconds to a minute). **If it says "not found", send the title shown, so the file path can be fixed.** After keeping: Read and Remove appear, and the book is under **On this device** with its size.
+- [ ] Reader on a kept book works in flight mode. No `PageV..`, `Ms000` or `@` markers show in the text. Headings make a contents list.
+- [ ] Remove asks to confirm and then the book is gone from **On this device**; the used space goes down.
+- [ ] Settings shows "Books online (islamic.app)" and "OpenITI texts (download to keep)", both Off by default. Turning OpenITI off keeps kept books readable. The Sources screen (Book sources) lists both with licence and what they send.
+- [ ] Bengali: every new string is Bengali, and Arabic titles are not cut off.
+- [ ] Covers: each book in the lists has a small cover (dark colour, gold stars); the same genre has the same colour. A book page shows a large cover with the Arabic title and author inside the gold frame; a very long title is shortened with "…" and stays inside the frame. Dark mode and light mode look the same. Covers appear in flight mode too.

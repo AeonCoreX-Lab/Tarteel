@@ -13,7 +13,7 @@ import { Button, Caption, Card, Flash, Heading, Row, ScreenScroll, Segmented } f
 import { LocationError, deviceRegion, detectLocation } from "../../src/platform/location";
 import { RECITERS, selectedReciter } from "../../src/audio/runtime";
 import { hadeethEncEnabled, hadithEnabled } from "../../src/hadith/runtime";
-import { quranEncEnabled, quranpediaEnabled, wikipediaEnabled } from "../../src/online/runtime";
+import { islamicBooksEnabled, openItiEnabled, quranEncEnabled, quranpediaEnabled, wikipediaEnabled } from "../../src/online/runtime";
 import { knowledgeConfigured } from "../../src/knowledge/runtime";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
@@ -225,6 +225,19 @@ export default function SettingsTab() {
         <Group title={t("qpSettingTitle")}>
           <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("qpSettingBody")}</Text>
           <Segmented label={t("qpSettingTitle")} value={s.onlineQuranpedia ? 1 : 0} onChange={(v) => s.set("onlineQuranpedia", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("tsOn") }]} />
+        </Group>
+      ) : null}
+
+      {islamicBooksEnabled ? (
+        <Group title={t("bkIaSettingTitle")}>
+          <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("bkIaSettingBody")}</Text>
+          <Segmented label={t("bkIaSettingTitle")} value={s.onlineIslamicBooks ? 1 : 0} onChange={(v) => s.set("onlineIslamicBooks", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("tsOn") }]} />
+        </Group>
+      ) : null}
+      {openItiEnabled ? (
+        <Group title={t("bkOiSettingTitle")}>
+          <Text style={{ color: th.muted, fontSize: 13, lineHeight: 19 }}>{t("bkOiSettingBody")}</Text>
+          <Segmented label={t("bkOiSettingTitle")} value={s.onlineOpenIti ? 1 : 0} onChange={(v) => s.set("onlineOpenIti", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("tsOn") }]} />
         </Group>
       ) : null}
 

@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: "ci-${{ github.ref }}"
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
-      - name: "Mihrab-derived code: licence files and CHANGES.md in place"
+      - name: Mihrab-derived code: licence files and CHANGES.md in place
         run: npm run upstream:verify
 
   data:

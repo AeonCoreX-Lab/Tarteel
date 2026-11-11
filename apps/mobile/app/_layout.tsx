@@ -54,6 +54,10 @@ export default function RootLayout() {
         <Stack.Screen name="tafsir" options={{ title: t("tfTitle") }} />
         <Stack.Screen name="quranpedia" options={{ title: t("qpTitle") }} />
         <Stack.Screen name="sources" options={{ title: t("srcMore") }} />
+        <Stack.Screen name="books/index" options={{ title: t("bkTitle") }} />
+        <Stack.Screen name="books/[slug]" options={{ title: t("bkTitle") }} />
+        <Stack.Screen name="books/openiti" options={{ title: t("bkTitle") }} />
+        <Stack.Screen name="books/read" options={{ title: t("bkTitle") }} />
         <Stack.Screen name="tasbih" options={{ title: t("tasbih") }} />
         <Stack.Screen name="wiki/view" options={{ title: t("wkTitle") }} />
       </Stack>

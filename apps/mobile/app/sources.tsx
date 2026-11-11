@@ -6,13 +6,13 @@ import { Button, Caption, Card, Chip, Row, ScreenScroll, Segmented } from "../sr
 import { Hero, OrnamentDivider } from "../src/components/Heritage";
 import { hadeethEncEnabled, hadithEnabled } from "../src/hadith/runtime";
 import { knowledgeConfigured } from "../src/knowledge/runtime";
-import { quranEncEnabled, quranpediaEnabled, wikipediaEnabled } from "../src/online/runtime";
+import { islamicBooksEnabled, openItiEnabled, quranEncEnabled, quranpediaEnabled, wikipediaEnabled } from "../src/online/runtime";
 import { useSettings } from "../src/state/settings";
 import { useT } from "../src/i18n";
 import { HEADING_FONT, useTheme } from "../src/theme";
 
 /** Whether this build carries each source at all. A source that is not in the build has no screen and makes no request. */
-const IN_BUILD: Record<string, boolean> = { hadeethenc: hadeethEncEnabled, sunnah: hadithEnabled, wikipedia: wikipediaEnabled, quranenc: quranEncEnabled, quranpedia: quranpediaEnabled, packs: knowledgeConfigured };
+const IN_BUILD: Record<string, boolean> = { hadeethenc: hadeethEncEnabled, sunnah: hadithEnabled, wikipedia: wikipediaEnabled, quranenc: quranEncEnabled, quranpedia: quranpediaEnabled, islamicbooks: islamicBooksEnabled, openiti: openItiEnabled, packs: knowledgeConfigured };
 
 function Provider({ p }: { p: SourceProvider }) {
   const th = useTheme();
@@ -29,7 +29,7 @@ function Provider({ p }: { p: SourceProvider }) {
       <View style={{ gap: 10 }}>
         <Text accessibilityRole="header" style={{ color: th.text, fontSize: 19, fontWeight: "700", fontFamily: HEADING_FONT }}>{bn ? p.name.bn : p.name.en}</Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          <Chip label={p.mode === "live" ? t("srcLive") : t("srcPack")} tone="muted" />
+          <Chip label={p.mode === "live" ? t("srcLive") : p.mode === "download" ? t("srcDownload") : t("srcPack")} tone="muted" />
           <Chip label={p.licence} tone="muted" />
           {p.status === "pending-permission" ? <Chip label={t("srcPending")} tone="brass" /> : !inBuild ? <Chip label={t("srcNotInBuild")} tone="brass" /> : null}
         </View>
@@ -58,13 +58,14 @@ function Provider({ p }: { p: SourceProvider }) {
 export default function Sources() {
   const { domain } = useLocalSearchParams<{ domain?: string }>();
   const t = useT();
-  const d = domain === "hadith" ? "hadith" : "history";
-  const title = d === "hadith" ? t("srcHadithTitle") : t("srcHistoryTitle");
+  const d = domain === "hadith" ? "hadith" : domain === "books" ? "books" : "history";
+  const title = d === "hadith" ? t("srcHadithTitle") : d === "books" ? t("bkSourcesTitle") : t("srcHistoryTitle");
+  const intro = d === "hadith" ? t("srcHadithIntro") : d === "books" ? t("bkSourcesIntro") : t("srcHistoryIntro");
   return (
     <>
       <Stack.Screen options={{ title }} />
       <ScreenScroll>
-        <Hero title={title} subtitle={d === "hadith" ? t("srcHadithIntro") : t("srcHistoryIntro")} icon="books" />
+        <Hero title={title} subtitle={intro} icon="books" />
         {providersFor(d).map((p) => <Provider key={p.id} p={p} />)}
         <OrnamentDivider margin={8} />
         <SourcesNote />

@@ -9,6 +9,7 @@ import { Button, Caption, Card, Chip, ScreenScroll } from "../../src/components/
 import { EVIDENCE_KEY } from "../../src/knowledge/labels";
 import { readPacksAgain, useEntityCounts, useKnowledgeBrowse, useKnowledgeSearch, usePackDiagnosis } from "../../src/knowledge/hooks";
 import { hadeethEncEnabled, hadithEnabled } from "../../src/hadith/runtime";
+import { islamicBooksEnabled, openItiEnabled } from "../../src/online/runtime";
 import { useApp } from "../../src/state/app";
 import { useSettings } from "../../src/state/settings";
 import { useT } from "../../src/i18n";
@@ -162,12 +163,19 @@ export default function KnowledgeTab() {
         />
       </View>
       {body}
+      {islamicBooksEnabled || openItiEnabled ? (
+        <>
+          <SectionHeader label={t("bkTitle")} />
+          <ListRow title={t("bkTitle")} subtitle={t("bkEntry")} lead={<IconStar icon="books" />} onPress={() => router.push("/books")} />
+        </>
+      ) : null}
       <SectionHeader label={t("knowSectionHadith")} />
       {hadeethEncEnabled ? <ListRow title={t("hdTitle")} subtitle={t("hdEntry")} lead={<IconStar icon="books" />} onPress={() => router.push("/hadeeth")} /> : null}
       {hadithEnabled ? <ListRow title={t("hadTitle")} subtitle={t("hadEntry")} lead={<IconStar icon="search" />} onPress={() => router.push("/hadith")} /> : null}
       <ListRow title={t("srcHadithTitle")} subtitle={t("srcHadithIntro")} lead={<IconStar icon="check" />} onPress={() => router.push("/sources?domain=hadith")} />
       <SectionHeader label={t("srcHistoryTitle")} />
       <ListRow title={t("srcHistoryTitle")} subtitle={t("srcHistoryIntro")} lead={<IconStar icon="check" />} onPress={() => router.push("/sources?domain=history")} />
+      {islamicBooksEnabled || openItiEnabled ? <ListRow title={t("bkSourcesTitle")} subtitle={t("bkSourcesIntro")} lead={<IconStar icon="check" />} onPress={() => router.push("/sources?domain=books")} /> : null}
     </ScreenScroll>
   );
 }

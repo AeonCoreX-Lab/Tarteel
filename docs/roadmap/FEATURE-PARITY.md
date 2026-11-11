@@ -46,3 +46,7 @@ UI is always written fresh in Tarteel's design system.
 ## Known upstream defects handled in wrappers
 - Hijri tabular conversion repeats/skips a day near year end (canary test in `tests/mihrab-vendored.test.ts`).
 - On-device "Automatic" method = MWL except Morocco; Tarteel chooses method/Asr school by country with user override.
+
+## Books (2026-11-09)
+
+Classical books inside the Knowledge tab: islamic.app Library read live, and OpenITI texts kept on the device for offline reading. Built and unit-tested at the parsing level; not yet run on a device (see KNOWLEDGE-DEVICE-CHECKLIST). Not included: Bengali books (IslamHouse needs written permission), reading-position memory, in-book search, bookmarks inside books.
