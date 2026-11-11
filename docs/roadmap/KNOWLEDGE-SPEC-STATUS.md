@@ -61,7 +61,7 @@ Design in `docs/architecture/HADITH.md`. In short: the person must turn it on (S
 ## Remaining blockers
 1. **Real content.** Done for the passages: `npm run import:quranpedia` builds pack `asbab-wahidi` (source passages and ayah links only). Still open: people-written claims. (Earlier note: the Wahidi asbab importer needed the real file layout.) The sandbox cannot reach quranpedia.net and the fetch tool cannot read `.json.gz`, so it needs `manifest.json`, `asbab.json.gz`, `asbab-book-2919.json.gz`, `surahs.json.gz` and `LICENSE.md` supplied (about 0.5 MB). Claims must still be written and reviewed by people: nothing may be machine-written religious content.
 2. **Toolchain.** typecheck, lint and the Android build must run in CI, and the `@noble` lockfile entries must be committed.
-3. **Device.** `docs/testing/KNOWLEDGE-DEVICE-CHECKLIST.md` has not been run.
+3. **Device.** The owner has run the app on a phone many times and reports that it works (2026-11-11). The signed-pack screens (Library, pack install, History from packs) are hidden without a publisher key, so they still need the demo-pack test build in `docs/testing/KNOWLEDGE-DEVICE-CHECKLIST.md`; its Books section is new and not yet run.
 4. **Publisher key and catalogue address.** Not generated, so the feature is correctly hidden in every build.
 5. **Hadith (stored), timeline content, graph.** Migration 3 exists; what is missing is licensed or CC0 data and people to write and review entries.
 

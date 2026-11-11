@@ -3,8 +3,11 @@
 Free, open-source, offline-first Quran app for Android and Web.
 No ads, no mandatory account, no mandatory internet, no tracking.
 
-> Status (2026-10): **Quran reader, prayer times and alerts, qibla, tasbih, recitation, and the history and sources screens are built;
-> most of them have not yet been run on a device** (see [device checklist](docs/testing/KNOWLEDGE-DEVICE-CHECKLIST.md)).
+> Status (2026-11): **Quran reader, prayer times and alerts, qibla, tasbih, recitation (both reciters), the Sources screens and the
+> online sources are built and have been run on a phone by the owner, who reports that they work.** The signed-pack screens
+> (History, Library, Timeline) are hidden until a publisher key is set, so they have only been tested in code. The newest
+> part, the **Books library** (and its generated covers), is built and unit-tested but **not yet run on a device**
+> (see [device checklist](docs/testing/KNOWLEDGE-DEVICE-CHECKLIST.md)); the list there is also the regression list for each release.
 > The Quran text (Tanzil Uthmani 1.1) and seven translations are committed under `data/` with hash-checked manifests and
 > are built into `content.db` at release time. Nothing was typed or edited by AI: the files are the publisher's own.
 
@@ -13,12 +16,12 @@ No ads, no mandatory account, no mandatory internet, no tracking.
 | Area | State |
 |---|---|
 | Quran reading, search, bookmarks, notes, last-read | Built, offline. Bengali, English, French, Indonesian, Russian, Chinese and Filipino translations |
-| Prayer times, Hijri calendar, qibla, adhan alerts | Built, offline (on-device calculation); alerts need a device test |
+| Prayer times, Hijri calendar, qibla, adhan alerts | Built, offline (on-device calculation), run on a phone. Calculation method and school (madhab) are chosen in Setup and Settings |
 | Tasbih counter | Built, offline, Tarteel's own code |
-| Recitation (Listen page, reader follows the recitation) | Built. Two reciters, Mishary Alafasy and Mahmoud Khalil Al-Husary, from the Islamic Network CDN, with the host's written confirmation (see [docs/audio](docs/audio/README.md)). Downloads are opt-in; streaming is off by default |
-| History, Library, Timeline (signed offline packs) | Built; the shipped packs are small, content is still being cleared and reviewed |
-| Online sources: HadeethEnc, Wikipedia, QuranEnc tafsir, Quranpedia classical tafsir | Live, opt-in (all off by default), nothing stored, each credited. See [ONLINE-SOURCES](docs/architecture/ONLINE-SOURCES.md) |
-| Books (Knowledge tab): islamic.app Library read live; OpenITI texts the person chooses to keep and read offline | Built, not yet run on a device. Opt-in (off by default); islamic.app stores nothing; OpenITI is CC BY-NC-SA 4.0, credited, kept only on request and removable |
+| Recitation (Listen page, reader follows the recitation) | Built and working on a phone. Two reciters, Mishary Alafasy and Mahmoud Khalil Al-Husary, from the Islamic Network CDN, with the host's written confirmation (see [docs/audio](docs/audio/README.md)). Downloads are opt-in; streaming is off by default |
+| History, Library, Timeline (signed offline packs) | Built, tested in code; hidden until a publisher key and catalogue address are set (see [KNOWLEDGE](docs/architecture/KNOWLEDGE.md)). The shipped packs are small, content is still being cleared and reviewed |
+| Online sources: HadeethEnc, Wikipedia, QuranEnc tafsir, Quranpedia classical tafsir | Live, opt-in (all off by default), nothing stored, each credited; run on a phone. See [ONLINE-SOURCES](docs/architecture/ONLINE-SOURCES.md) |
+| Books (Knowledge tab): islamic.app Library read live; OpenITI texts the person chooses to keep and read offline; covers drawn by the app (no publisher images) | Built, **not yet run on a device**. Opt-in (off by default); islamic.app stores nothing; OpenITI is CC BY-NC-SA 4.0, credited, kept only on request and removable |
 | Sunnah.com (and anything that is its data) | **Off** until Sunnah.com agrees in writing |
 
 The app has a brand header (`AppBar`) on the main tabs, a splash that is held long enough to read, and a first-run setup flow.

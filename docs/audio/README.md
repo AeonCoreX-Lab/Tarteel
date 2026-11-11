@@ -64,12 +64,13 @@ the reciters are switched off (`enabled: false`) until it is settled again.
 - **Privacy:** the CDN sees the IP address and the reciter and ayah requested ([docs/privacy](../privacy/README.md)).
 
 **Still open**
-1. The file URLs were not fetched from the build sandbox (it cannot reach the host). Test each reciter's `{ayah}` URL and its
-   bitrate on a device (checklist below). The CDN page and the API list some identifiers differently (e.g. `ar.sudais` vs `ar.abdurrahmaansudais`),
+1. The file URLs could not be fetched from the build sandbox (it cannot reach the host); the owner has run both reciters on a phone
+   and reports that downloads and playback work. Test each *new* reciter's `{ayah}` URL and its bitrate on a device before enabling
+   it (checklist below). The CDN page and the API list some identifiers differently (e.g. `ar.sudais` vs `ar.abdurrahmaansudais`),
    so check the edition id before adding a reciter.
 2. The approximate size shown before a download (`APPROX_RECITATION_HOURS`) is an estimate; compare it with a real download.
 
-Device test: Settings -> Recitation -> Reciters -> download one short surah (e.g. 112), play it offline, then pause the network
+Device test (run on the owner's phone, working, 2026-11; keep it as the regression check): Settings -> Recitation -> Reciters -> download one short surah (e.g. 112), play it offline, then pause the network
 in the middle of a larger download and check that it resumes and that a 429 (if seen) shows as a pause, not as a failure.
 
 ## Adding a reciter (licence procedure)

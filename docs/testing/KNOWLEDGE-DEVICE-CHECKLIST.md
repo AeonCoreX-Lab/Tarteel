@@ -1,7 +1,12 @@
 # Knowledge packs: device test checklist
 
-Steps 6 and 7 (Library screen, pack install, History and context screen) are covered by automated tests of the logic, but have
-**not been run on a phone**. Do this once on a real Android device before the first real pack ships. The packs below are
+Status (2026-11-11): the owner has run the app on a phone many times and reports that it works, including the recitation and
+both reciters, the online sources, tasbih, and the settings links, school step and bookmark refresh (the sections marked "run on a
+device" below). The signed-pack screens (Library, pack install, History from packs) are hidden in the repository build, which has no
+publisher key, so they still need the test build described in steps 0 to 3. The
+**Books** section at the end is new and **has not been run on a phone**. The boxes below are not ticked one by one: keep the list
+as the regression check before a release, and as the guide for a real pack. For packs, use a real Android device before the first
+real pack ships. The packs below are
 synthetic ("Synthetic claim one."): they contain no real religious content, and must never be published as real packs.
 
 ## 0. Prerequisites
@@ -60,7 +65,7 @@ Needs a build made after the fix (a new native build is not required, the fix is
 8. While it runs, `adb logcat | grep -E "Scudo|SIGABRT|libexpo-sqlite"` must print nothing.
 If step 2 still crashes, send the logcat lines around `Fatal signal 6`: the trace tells whether it is still the close path.
 
-## Knowledge tab (added 2026-10-18; not yet run on a device)
+## Knowledge tab (added 2026-10-18; pack screens need a test build with a catalogue address, key and demo pack, so not yet run on a device)
 With a test app that has a catalogue address and key, and the Wahidi pack (or a demo pack) installed:
 - [ ] **Tab.** A "Knowledge" tab sits between Quran and Bookmarks. With the original empty `config.json` there is **no** such tab.
 - [ ] **Empty.** With no pack installed the tab says "No knowledge packs installed" and its button opens the Library.
@@ -110,7 +115,7 @@ With a test app that has a catalogue address and key, and the Wahidi pack (or a 
 - [ ] Open a surah that the pack does not cover: the screen says the installed packs have nothing about it (it does not tell you to add packs).
 - [ ] If packs are installed but cannot be read, the Knowledge tab says so, lists the pack, the stage (`trust`, `open` or `query`) and a short technical message, and "Try again" works. Copy those lines into the bug report.
 
-## Reading-screen design (Knowledge tab, HadeethEnc, Sunnah, History). Not yet run on a device
+## Reading-screen design (Knowledge tab, HadeethEnc, Sunnah, History). Run on a device, working (reported by the owner)
 
 Look at each screen in light, dark and AMOLED themes, and once with a large Arabic size and wide line spacing in Settings.
 
@@ -123,7 +128,7 @@ Look at each screen in light, dark and AMOLED themes, and once with a large Arab
 - [ ] With TalkBack on: decorative stars, rules and frames are skipped; headings are announced as headings.
 - [ ] Bengali and Arabic UI: nothing is cut off; a long Bengali title wraps instead of overflowing.
 
-## Wikipedia background reading (flag `wikipedia` is `true`; setting off by default). Not yet run on a device
+## Wikipedia background reading (flag `wikipedia` is `true`; setting off by default). Run on a device, working (reported by the owner)
 
 - [ ] Settings shows "Background reading (Wikipedia)", Off. Open History for a surah with no pack content (or with no pack installed): a "More background from Wikipedia" card with a consent box; nothing is requested yet.
 - [ ] Turn it on from the card: up to five results appear, each with a short passage; the passage has no stray tags or `&quot;`-style codes.
@@ -136,7 +141,7 @@ Look at each screen in light, dark and AMOLED themes, and once with a large Arab
 - [ ] An entity page (Timeline → an entry) shows the same card below the pack's own text, searched by the entry's name.
 - [ ] A surah that HAS pack content does not show the card on the History screen.
 
-## Tasbih counter (Today screen → Tasbih). Not yet run on a device
+## Tasbih counter (Today screen → Tasbih). Run on a device, working (reported by the owner)
 
 - [ ] Today screen shows four tiles in one row (Qibla, Month, Tasbih, Alerts) and none is cut off, in English and in Bengali, at the largest system font size.
 - [ ] The Tasbih tile's icon (a ring of beads with a tassel) is clear at tile size. If the beads show as a solid ring or nothing, tell me.
@@ -151,9 +156,9 @@ Look at each screen in light, dark and AMOLED themes, and once with a large Arab
 - [ ] TalkBack: the circle reads the dhikr name and "12 of 33", and the new number is announced after each double tap.
 - [ ] The Arabic of each dhikr shows complete (no clipped vowel marks), and the Bengali sound and meaning read correctly.
 
-## Tafsir (QuranEnc) and the Sources screens. Not yet run on a device
+## Tafsir (QuranEnc) and the Sources screens. Run on a device, working (reported by the owner)
 
-The QuranEnc answer shape could not be checked from the build machine. This section is how it gets checked.
+The QuranEnc answer shape could not be checked from the build machine; the owner's phone run is what confirmed it.
 
 - [ ] History for any surah: a "Tafsir (online)" row appears, with or without packs. Tapping it opens the tafsir screen with a consent box; nothing is requested yet.
 - [ ] Turn it on from the box. The editions are Al-Mukhtasar (Bengali, first in Bengali), Saadi (Arabic) and Saheeh notes (English). The list of ayahs loads (a few seconds for a long surah) and shows the first 15; "Load more" adds 15.
@@ -166,9 +171,9 @@ The QuranEnc answer shape could not be checked from the build machine. This sect
 - [ ] Under the credit line of the tafsir screen: `<edition key> · Version x.y.z · updated <date>`. If it says the version could not be read, send a screenshot; the text itself is still the publisher's current one.
 - [ ] A tafsir block that covers several ayahs shows "Ayah 5–8" above its text, and the surah list shows "5–8" in the star.
 
-## Classical tafsir (Quranpedia). Not yet run on a device
+## Classical tafsir (Quranpedia). Run on a device, working (reported by the owner)
 
-The API's whole answers could not be seen from the build machine; this section is how they get checked.
+The API's whole answers could not be seen from the build machine; the owner's phone run is what confirmed them.
 
 - [ ] History for any surah: a row "Classical tafsir (online)". It opens a screen with a consent box; nothing is requested yet.
 - [ ] Turn it on. "About this surah" shows the introduction and facts in Arabic, each under the server's own heading. **If it says "unexpected answer" or is empty, send a screenshot.**
@@ -178,7 +183,7 @@ The API's whole answers could not be seen from the build machine; this section i
 - [ ] Previous / Next ayah and surah work. Turning it off in Settings brings the consent box back.
 - [ ] Settings shows "Classical tafsir (Quranpedia)", Off by default. The Sources screen lists Quranpedia with its licence and what it sends.
 
-## Settings links, school step and bookmarks (added 2026-10-27). Not yet run on a device
+## Settings links, school step and bookmarks (added 2026-10-27). Run on a device, working (reported by the owner)
 
 - [ ] Today: tap the location chip (top right). Settings opens, scrolls to the **Location** block and the block pulses about twice, then stays still. Go back to Today and tap the chip again: it plays again.
 - [ ] Today with no location: "Enter manually" does the same; with a failed calculation, "Open settings" does the same.
@@ -192,7 +197,7 @@ The API's whole answers could not be seen from the build machine; this section i
 - [ ] Settings -> Calculation: the same picker. An install made before this version shows "Currently: Hanafi Asr" or "Standard Asr" with no school selected until one is picked.
 - [ ] Bookmarks: open a surah, bookmark an ayah, go back to the Bookmarks tab: it is there at once, without closing the app. Remove it from the surah: the tab no longer lists it. Bookmark from the Bookmarks tab itself (open the ayah, add another) works the same.
 
-## Books (islamic.app and OpenITI, added 2026-11-09). Not yet run on a device
+## Books (islamic.app and OpenITI, with generated covers, added 2026-11-09). Not yet run on a device
 
 The API answers and the OpenITI file layout could not be seen from the build machine; this section is how they get checked. **Send a screenshot of anything that says "unexpected answer" or shows markup.**
 
