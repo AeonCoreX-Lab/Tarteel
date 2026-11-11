@@ -27,3 +27,4 @@
   The only thing the app records about packs is which are installed (rows in `user.db`, table `downloads`). See
   [docs/architecture/KNOWLEDGE.md](../architecture/KNOWLEDGE.md).
 - Future optional cloud features must be opt-in, off by default, and documented here before shipping.
+- On-device translation (Books reader; off by default): the passage is translated on the phone by Google ML Kit and is not sent anywhere. The first translation downloads a language pack (about 30 MB per language) from Google's ML Kit model service, which can see the IP address and which language pack is asked for, not the text. Packs can be deleted in Settings; translations are not saved.

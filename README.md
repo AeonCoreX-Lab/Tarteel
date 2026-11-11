@@ -21,7 +21,7 @@ No ads, no mandatory account, no mandatory internet, no tracking.
 | Recitation (Listen page, reader follows the recitation) | Built and working on a phone. Two reciters, Mishary Alafasy and Mahmoud Khalil Al-Husary, from the Islamic Network CDN, with the host's written confirmation (see [docs/audio](docs/audio/README.md)). Downloads are opt-in; streaming is off by default |
 | History, Library, Timeline (signed offline packs) | Built, tested in code; hidden until a publisher key and catalogue address are set (see [KNOWLEDGE](docs/architecture/KNOWLEDGE.md)). The shipped packs are small, content is still being cleared and reviewed |
 | Online sources: HadeethEnc, Wikipedia, QuranEnc tafsir, Quranpedia classical tafsir | Live, opt-in (all off by default), nothing stored, each credited; run on a phone. See [ONLINE-SOURCES](docs/architecture/ONLINE-SOURCES.md) |
-| Books (Knowledge tab): islamic.app Library read live; OpenITI texts the person chooses to keep and read offline; covers drawn by the app (no publisher images) | Built, **not yet run on a device**. Opt-in (off by default); islamic.app stores nothing; OpenITI is CC BY-NC-SA 4.0, credited, kept only on request and removable |
+| Books (Knowledge tab): islamic.app Library read live; OpenITI texts the person chooses to keep and read offline; covers drawn by the app (no publisher images); Arabic originals, with optional on-device machine translation (Google ML Kit, off by default, always marked, Arabic kept) | Built, **not yet run on a device**. Opt-in (off by default); islamic.app stores nothing; OpenITI is CC BY-NC-SA 4.0, credited, kept only on request and removable |
 | Sunnah.com (and anything that is its data) | **Off** until Sunnah.com agrees in writing |
 
 The app has a brand header (`AppBar`) on the main tabs, a splash that is held long enough to read, and a first-run setup flow.
@@ -87,6 +87,10 @@ npm run build:db                   # builds apps/mobile/assets/db/quran.db
 
 Tests use Node's built-in runner and SQLite (Node >= 22.18). Android APKs are built by
 `.github/workflows/android.yml` (manual dispatch or `v*` tag).
+
+**Distribution**: the APK is published on Uptodown and on the project's own website. It is not planned for Google Play or F-Droid, so
+the rules of those stores do not decide what the app may contain (for example the optional Google ML Kit translation, see
+[INVENTORY](docs/licensing/INVENTORY.md)). The licences still do.
 
 ## Licensing
 

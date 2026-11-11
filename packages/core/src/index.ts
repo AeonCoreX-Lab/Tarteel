@@ -2,6 +2,7 @@ import type { PreferencesStore } from "@tarteel/storage";
 import type { AyahRef, ReaderMode, ThemeMode, UiLanguage } from "@tarteel/types";
 import type { TasbihState } from "./tasbih.ts";
 import type { Madhab } from "./madhab.ts";
+import type { TranslateTargetPref } from "./translate.ts";
 
 /** Everything stored in the preferences store (MMKV / localStorage). Keep it SMALL. */
 export interface PreferenceSchema {
@@ -11,6 +12,17 @@ export interface PreferenceSchema {
   selectedTranslationId: string | null;
   readerMode: ReaderMode;
   arabicFontSize: number;
+  /** Arabic text size in the Books reader, kept apart from the Quran reader's so each can be set for its own page. */
+  bookFontSize: number;
+  /**
+   * Off by default. When on, an Arabic passage can be translated on this device (machine translation, marked as such). Turning it on
+   * lets the app download a small language pack (about 30 MB per language) from Google, once, when the person asks for a translation.
+   */
+  translateOn: boolean;
+  /** Language to translate into: "app" = the app's language. */
+  translateTarget: TranslateTargetPref;
+  /** Download language packs only over Wi-Fi. */
+  translateWifiOnly: boolean;
   translationFontSize: number;
   /** Line height multiplier. */
   lineSpacing: number;
@@ -96,6 +108,10 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
   selectedTranslationId: null,
   readerMode: "both",
   arabicFontSize: 28,
+  bookFontSize: 26,
+  translateOn: false,
+  translateTarget: "app",
+  translateWifiOnly: true,
   translationFontSize: 16,
   lineSpacing: 1.8,
   lastRead: null,
@@ -128,6 +144,7 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
 
 export const LIMITS = {
   arabicFontSize: { min: 18, max: 56 },
+  bookFontSize: { min: 18, max: 44 },
   translationFontSize: { min: 12, max: 32 },
   lineSpacing: { min: 1.3, max: 2.6 },
   audioPlaybackRate: { min: 0.75, max: 2 },
@@ -183,6 +200,7 @@ export class ReadingProgress {
 }
 export * from "./setup.ts";
 export * from "./madhab.ts";
+export * from "./translate.ts";
 export * from "./translations.ts";
 export * from "./hadith.ts";
 export * from "./hadeethenc.ts";

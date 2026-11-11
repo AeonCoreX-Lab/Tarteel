@@ -13,6 +13,7 @@ import com.prayer_times.FullScreenAlarmPackage
 class TarteelAndroidPackage : ReactPackage {
   private val delegates: List<ReactPackage> = listOf(
     FullScreenAlarmPackage(),
+    TarteelTranslatePackage(),
   )
 
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> =

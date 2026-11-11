@@ -49,4 +49,4 @@ UI is always written fresh in Tarteel's design system.
 
 ## Books (2026-11-09)
 
-Classical books inside the Knowledge tab: islamic.app Library read live, and OpenITI texts kept on the device for offline reading. Built and unit-tested at the parsing level; not yet run on a device (see KNOWLEDGE-DEVICE-CHECKLIST). Covers are drawn by the app. Not included: Bengali books (IslamHouse needs written permission), reading-position memory, in-book search, bookmarks inside books.
+Classical books inside the Knowledge tab: islamic.app Library read live, and OpenITI texts kept on the device for offline reading. Built and unit-tested at the parsing level; not yet run on a device (see KNOWLEDGE-DEVICE-CHECKLIST). Covers are drawn by the app. Optional on-device machine translation (ML Kit, off by default, marked as machine translation) with a `TranslatorPort` so another engine can be added later. Not included: licensed human translations of the books (none free exists), Bengali books (IslamHouse needs written permission), reading-position memory, in-book search, bookmarks inside books.

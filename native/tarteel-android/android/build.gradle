@@ -36,4 +36,7 @@ dependencies {
   // Version is supplied by the React Native Gradle plugin of the host app.
   implementation "com.facebook.react:react-android"
   implementation "androidx.core:core-ktx:1.13.1"
+  // On-device translation (Tarteel's own TarteelTranslateModule). Bundled SDK, no Play services needed; language packs
+  // (about 30 MB each) are downloaded by ML Kit only when the person asks for a translation. Proprietary Google SDK: see docs/licensing/INVENTORY.md.
+  implementation "com.google.mlkit:translate:17.0.3"
 }
