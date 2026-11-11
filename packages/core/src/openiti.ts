@@ -62,7 +62,7 @@ export function openItiRepo(date: number): string | null {
   return `${String(Math.ceil(date / 25) * 25).padStart(4, "0")}AH`;
 }
 
-const GITHUB_BLOB = /^https:\/\/github\.com\/OpenITI\/([A-Za-z0-9]+)\/(?:blob|raw)\/([A-Za-z0-9._-]+)\/(data\/[A-Za-z0-9._\/-]+)$/;
+const GITHUB_BLOB = /^https:\/\/github\.com\/OpenITI\/([A-Za-z0-9]+)\/(?:blob|raw)\/([A-Za-z0-9._-]+)\/(data\/[A-Za-z0-9._/-]+)$/;
 
 /**
  * The addresses to try for a text, best first. The metadata's own `url` (a GitHub page address) is turned into the raw one;
@@ -371,7 +371,7 @@ function cleanLine(s: string): string {
     .replace(TAG_AT, " ")
     .replace(TAG_DOLLAR, " ")
     .replace(/%~%/g, "   ")
-    .replace(/[ \t ]+/g, " ")
+    .replace(/[ \t\u00a0]+/g, " ")
     .trim();
 }
 
