@@ -3,8 +3,18 @@ import type { TimingsMap } from '../types/prayer';
 const REQUIRED_KEYS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'] as const;
 const OPTIONAL_KEYS = ['Imsak', 'Midnight', 'Firstthird', 'Lastthird'] as const;
 const HH_MM = /^\d{2}:\d{2}$/;
-const EARLY_MORNING_THRESHOLD_MIN = 6 * 60; // 06:00
-const LATE_EVENING_THRESHOLD_MIN = 18 * 60; // 18:00
+/**
+ * An Isha (or a mark of the evening's night) before this is past the
+ * midnight that ends its evening — the rule every reader takes a day by
+ * (`rowDateShift` in utils/prayerTimes.ts).
+ */
+export const EARLY_MORNING_THRESHOLD_MIN = 6 * 60; // 06:00
+/** An Imsak from this on is the evening before its Fajr (polar summer). */
+export const LATE_EVENING_THRESHOLD_MIN = 18 * 60; // 18:00
+/** A Maghrib before this is after midnight, not before Asr (`validateTimings`). */
+export const LATE_MAGHRIB_LIMIT_MIN = 3 * 60; // 03:00
+/** …provided it is no further than this after Asr. */
+const LATE_MAGHRIB_AFTER_ASR_MAX_MIN = 9 * 60;
 
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(':').map(Number);
@@ -21,13 +31,34 @@ function timeToMinutes(t: string): number {
  *
  * Returns the offending key pair on failure, or `null` on success.
  */
-function findOrderViolation(timings: TimingsMap): string | null {
+/** Are the five prayers and sunrise in their order (Isha may pass midnight)? */
+export function inPrayerOrder(timings: TimingsMap): boolean {
+  try {
+    return findOrderViolation(timings) == null;
+  } catch {
+    return false;
+  }
+}
+
+function findOrderViolation(
+  timings: TimingsMap,
+  lateMaghrib = false,
+): string | null {
   const f = timeToMinutes(timings.Fajr!);
   const sr = timeToMinutes(timings.Sunrise!);
   const d = timeToMinutes(timings.Dhuhr!);
   const a = timeToMinutes(timings.Asr!);
-  const m = timeToMinutes(timings.Maghrib!);
+  const m0 = timeToMinutes(timings.Maghrib!);
   const i = timeToMinutes(timings.Isha!);
+  // Where the sun sets after midnight (Reykjavik and Tromsø in early summer,
+  // on their own clocks), Maghrib is the next calendar day's small hours.
+  const m =
+    lateMaghrib &&
+    m0 < LATE_MAGHRIB_LIMIT_MIN &&
+    m0 < a &&
+    m0 + 1440 - a <= LATE_MAGHRIB_AFTER_ASR_MAX_MIN
+      ? m0 + 1440
+      : m0;
 
   if (!(f < sr)) return `Fajr (${timings.Fajr}) must be before Sunrise (${timings.Sunrise})`;
   if (!(sr < d)) return `Sunrise (${timings.Sunrise}) must be before Dhuhr (${timings.Dhuhr})`;
@@ -118,7 +149,9 @@ export function validateTimings(timings: TimingsMap): TimingsMap {
       );
     }
   }
-  const violation = findOrderViolation(timings);
+  // A network answer for a place whose sun sets after midnight is a real
+  // day, not damage: AlAdhan's Reykjavik on 21 June sets at 00:04.
+  const violation = findOrderViolation(timings, true);
   if (violation) {
     throw new Error(`Invalid prayer times — out of order: ${violation}`);
   }

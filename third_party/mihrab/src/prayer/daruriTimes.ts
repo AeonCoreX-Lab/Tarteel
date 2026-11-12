@@ -32,7 +32,7 @@
  *
  * ── WHY IT IS COMPUTED HERE AND NOT FETCHED ───────────────────────────
  *
- * No provider publishes these. Not AlAdhan, not PrayTimes.dev, not the
+ * No provider publishes these. Not AlAdhan, not the
  * Habous table the issue is written from. They are derived from solar
  * geometry at the user's own coordinates, which is the one thing the app
  * can always do for itself, and they are shown beside whichever source
@@ -123,13 +123,15 @@
  * docs/latitude-45-substitute.md has the measurement and what would
  * change the answer; the code is on `issue-20-lat45-substitute`.
  */
-import { clockNightTimes } from '../utils/nightTimes';
+import { firstThirdOn } from '../utils/nightTimes';
 import {
   addDays,
-  combineLocalDateAndTime,
+  eventAt,
+  readZone,
   startOfLocalDay,
 } from '../utils/prayerTimes';
 import type { TimingsMap } from '../types/prayer';
+import { civilInZone } from '../utils/zoneClock';
 
 /**
  * adhan.js does not re-export `SolarTime` from its entry point, so this
@@ -288,9 +290,18 @@ function utcDateFromHours(
  * other time in the app (`Rounding.nearest`), and a boundary that read a
  * minute earlier than the ʿAṣr on the row above it would look like a bug.
  */
-function localClock(at: Date | null): string | undefined {
+function localClock(
+  at: Date | null,
+  /** The clock to write on (`DEVICE_CLOCK`): the day's own, so the boundaries read as its rows do. */
+  clock?: string | null,
+): string | undefined {
   if (!at) return undefined;
   const rounded = new Date(Math.round(at.getTime() / 60000) * 60000);
+  const zone = readZone(clock);
+  const onZone = zone ? civilInZone(rounded, zone, true) : null;
+  if (onZone) {
+    return `${String(onZone.h).padStart(2, '0')}:${String(onZone.min).padStart(2, '0')}`;
+  }
   const h = String(rounded.getHours()).padStart(2, '0');
   const m = String(rounded.getMinutes()).padStart(2, '0');
   return `${h}:${m}`;
@@ -311,6 +322,7 @@ export function solarDaruriBoundaries(
   date: Date,
   latitude: number,
   longitude: number,
+  clock?: string | null,
 ): DaruriTimes {
   // No engine, no boundaries — the same answer this module gives for
   // every other question it cannot honestly answer. The card simply
@@ -320,7 +332,8 @@ export function solarDaruriBoundaries(
   const y = date.getFullYear();
   const mo = date.getMonth();
   const d = date.getDate();
-  const at = (hours: number) => localClock(utcDateFromHours(y, mo, d, hours));
+  const at = (hours: number) =>
+    localClock(utcDateFromHours(y, mo, d, hours), clock);
 
   // ── A WINDOW NEEDS BOTH ENDS ────────────────────────────────────────
   //
@@ -456,8 +469,10 @@ export function daruriTimesForDay(
   timings: TimingsMap,
   tomorrowFajr: string | undefined,
   asrShadow: 1 | 2 = 1,
+  /** The clock the day is written on (`DEVICE_CLOCK`). */
+  clock?: string | null,
 ): DaruriTimes {
-  const solar = solarDaruriBoundaries(date, latitude, longitude);
+  const solar = solarDaruriBoundaries(date, latitude, longitude, clock);
   const out: DaruriTimes = {};
 
   // Fajr: *isfār*, inside (Fajr, Sunrise).
@@ -504,7 +519,7 @@ export function daruriTimesForDay(
   // Ishāʾ: the first third of the night, inside (Isha, next Fajr).
   if (timings.Maghrib && nightEnd) {
     try {
-      const third = clockNightTimes(timings.Maghrib, nightEnd).Firstthird;
+      const third = firstThirdOn(date, timings.Maghrib, nightEnd, clock);
       if (inside(third, timings.Isha, nightEnd)) out.IshaDaruri = third;
     } catch {
       // An unparseable time from a provider — leave Ishāʾ's boundary out
@@ -537,6 +552,8 @@ export function injectDaruriTimes(
   latitude: number,
   longitude: number,
   asrShadow: 1 | 2 = 1,
+  /** The clock the week is written on (`DEVICE_CLOCK`). */
+  clock?: string | null,
 ): TimingsMap[] {
   return week.map((day, i) => {
     const date = new Date(startDate);
@@ -549,6 +566,7 @@ export function injectDaruriTimes(
       day,
       i < week.length - 1 ? week[i + 1].Fajr : undefined,
       asrShadow,
+      clock,
     );
     return { ...day, ...times };
   });
@@ -603,10 +621,10 @@ export function coerceDaruriAlerts(value: unknown): DaruriKey[] {
 /**
  * Ask the caller whether this boundary's prayer is audible on this day.
  *
- * The prayer's instant is `base` plus its own clock time — `base`, not
- * the boundary's date: Ishāʾ's boundary can land after midnight while
- * the prayer it belongs to is still on the evening before, and the
- * question being asked is about the prayer.
+ * The prayer's instant is its own row on `base`'s card (`eventAt`), not
+ * the boundary's: Ishāʾ's boundary can land after midnight while the
+ * prayer it belongs to is still on the evening before, and the question
+ * being asked is about the prayer.
  *
  * A clock that will not parse leaves the alert standing. Dropping an
  * alert because a time could not be read would be the wrong way round:
@@ -624,7 +642,7 @@ function prayerSpeaks(
   const clock = day[prayer];
   if (!clock) return true;
   try {
-    return isAudible(prayer, combineLocalDateAndTime(base, clock).getTime());
+    return isAudible(prayer, eventAt(prayer, day, base).getTime());
   } catch {
     return true;
   }
@@ -682,23 +700,13 @@ export function buildDaruriAlertEvents(
       if (!clock) continue;
       let at: Date;
       try {
-        at = combineLocalDateAndTime(base, clock);
+        // Ishāʾ's boundary is a third of the way into the night that BEGINS
+        // on this day, so at a long summer latitude it lands after local
+        // midnight — 00:23 for a 23:10 Maghrib — and belongs to tomorrow's
+        // date: `eventAt`'s rule, the same instant as `Firstthird`.
+        at = eventAt(key, day, base);
       } catch {
         continue;
-      }
-      // Ishāʾ's boundary is a third of the way into the night that BEGINS
-      // on this day, so at a long summer latitude it lands after local
-      // midnight — 00:23 for a 23:10 Maghrib — and belongs to tomorrow's
-      // date, not to this one. Exactly the rule `eventAt` applies to
-      // `Firstthird`, which is the same instant under its other name.
-      if (key === 'IshaDaruri' && day.Maghrib) {
-        try {
-          if (at < combineLocalDateAndTime(base, day.Maghrib)) {
-            at = addDays(at, 1);
-          }
-        } catch {
-          // Unparseable Maghrib — the boundary stands on its own date.
-        }
       }
       out.push({ name: key, at: new Date(at.getTime() - leadMinutes * 60_000) });
     }
@@ -792,6 +800,8 @@ export function daruriWindowEnd(
   baseDay: Date,
   offset: number,
   key: DaruriKey,
+  /** The clock the week is written on (`DEVICE_CLOCK`). */
+  dayClock?: string | null,
 ): Date | null {
   const { row, tomorrow } = DARURI_END_OF[key];
   const dayIndex = tomorrow ? offset + 1 : offset;
@@ -800,9 +810,11 @@ export function daruriWindowEnd(
   const clock = day[row];
   if (!clock) return null;
   try {
-    return combineLocalDateAndTime(
+    return eventAt(
+      row,
+      day,
       addDays(startOfLocalDay(baseDay), dayIndex),
-      clock,
+      dayClock,
     );
   } catch {
     return null;
@@ -848,6 +860,8 @@ export function daruriRowState(
   key: DaruriKey,
   now: Date,
   logged: boolean,
+  /** The clock the week is written on (`DEVICE_CLOCK`). */
+  clock?: string | null,
 ): { phase: 'first' | 'second'; at: string; approx: boolean } | null {
   const firstEnd = week[0]?.[key];
   if (!firstEnd) return null;
@@ -856,20 +870,15 @@ export function daruriRowState(
   let firstEndAt: Date;
   try {
     const dayStart = startOfLocalDay(baseDay);
-    firstEndAt = combineLocalDateAndTime(dayStart, firstEnd);
     // Ishāʾ's boundary can fall after midnight and then belongs to the
-    // next date — the same rule `buildDaruriAlertEvents` applies.
-    if (key === 'IshaDaruri' && week[0]?.Maghrib) {
-      if (firstEndAt < combineLocalDateAndTime(dayStart, week[0].Maghrib)) {
-        firstEndAt = addDays(firstEndAt, 1);
-      }
-    }
+    // next date — `eventAt`'s rule, as `buildDaruriAlertEvents` reads it.
+    firstEndAt = eventAt(key, week[0], dayStart, clock);
   } catch {
     return first;
   }
   if (now.getTime() < firstEndAt.getTime()) return first;
   if (logged) return first;
-  const end = daruriWindowEnd(week, baseDay, 0, key);
+  const end = daruriWindowEnd(week, baseDay, 0, key, clock);
   if (!end || now.getTime() >= end.getTime()) return first;
   const { row, tomorrow } = DARURI_END_OF[key];
   const at = week[tomorrow ? 1 : 0]?.[row];
