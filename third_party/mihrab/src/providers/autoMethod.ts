@@ -20,7 +20,13 @@
  * honest answer.
  */
 import { isCoordinateInAlgeria } from '../utils/algeriaRegion';
+import { isCoordinateInIndonesia } from '../utils/indonesiaRegion';
+import { isCoordinateInMalaysia } from '../utils/malaysiaRegion';
 import { isCoordinateInMorocco } from '../utils/moroccoRegion';
+import { isCoordinateInSingapore } from '../utils/singaporeRegion';
+import { isCoordinateInSweden } from '../utils/swedenRegion';
+import { isCoordinateInTurkey } from '../utils/turkeyRegion';
+import { SWEDEN_METHOD_ID } from './swedenMethodId';
 
 /** Muslim World League — the global default when nothing more specific applies. */
 export const DEFAULT_AUTO_METHOD = 3;
@@ -37,6 +43,16 @@ const AUTO_METHOD_REGIONS: readonly AutoMethodRegion[] = [
   { method: 19, covers: isCoordinateInAlgeria },
   // 21 = Morocco (Fajr 19°, Isha 17°, plus the ministry's own margins).
   { method: 21, covers: isCoordinateInMorocco },
+  // 11 = Singapore (MUIS, 20° / 18°), 17 = Malaysia (JAKIM, the same angles).
+  { method: 11, covers: isCoordinateInSingapore },
+  { method: 17, covers: isCoordinateInMalaysia },
+  // 20 = Indonesia (Kemenag, 20° / 18°).
+  { method: 20, covers: isCoordinateInIndonesia },
+  // 24 = Sweden (Islamiska Förbundet's own convention — the app's id, read
+  // off its tables; AlAdhan has none, so it is computed on the device).
+  { method: SWEDEN_METHOD_ID, covers: isCoordinateInSweden },
+  // 13 = Türkiye (Diyanet's own method, computed on the device).
+  { method: 13, covers: isCoordinateInTurkey },
 ];
 
 /**

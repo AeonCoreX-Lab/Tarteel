@@ -1,6 +1,8 @@
 // tokens-ok: default accent hexes for stored settings
+import type { SkyVariant } from '../theme/skyMoods';
 import type { HijriCalendarId } from '../hijri/calendar';
 import type { Madhab } from '../prayer/madhab';
+import type { HighLatitudeRuleId } from '../prayer/calculationPreferences';
 import type { PrePrayerReminderMinutes } from './prePrayerReminder';
 import type { NotificationSoundId } from '../notifications/notificationSounds';
 import type { PrayerOffsetMinutes } from './prayerOffsets';
@@ -12,15 +14,26 @@ import { DEFAULT_READING_SCALE } from '../theme/readingText';
 
 export type LocationMode = 'automatic' | 'manual';
 
-export type PrayerDataProviderId =
-  | 'aladhan'
-  | 'prayertimes_dev'
-  | 'islamiska_forbundet'
-  | 'habous'
-  | 'marw'
-  | 'local_adhan';
+export const PRAYER_DATA_PROVIDER_IDS = [
+  'aladhan',
+  'islamiska_forbundet',
+  'habous',
+  'marw',
+  'muis',
+  'jakim',
+  'kemenag',
+  'namazvakti',
+  'diyanet',
+  'local_adhan',
+] as const;
+export type PrayerDataProviderId = (typeof PRAYER_DATA_PROVIDER_IDS)[number];
 
-export type AppearancePreference = 'system' | 'light' | 'dark';
+/**
+ * Which look the app is drawn in: the system's light or dark, one of them
+ * pinned, or 'sky' — one look through light and dark, painted in the
+ * colours of the hero's sky as it is now (theme/skyTheme.ts).
+ */
+export type AppearancePreference = 'system' | 'light' | 'dark' | 'sky';
 
 export type AppLanguage = 'en' | 'sv' | 'ar' | 'bn' | 'ur' | 'hi' | 'fr' | 'es' | 'de' | 'tr' | 'id' | 'ru' | 'zh';
 
@@ -154,6 +167,15 @@ export type PrayerAppSettings = {
    * computed answers.
    */
   madhab: Madhab | null;
+  /**
+   * What stands in for Fajr and Isha on the summer nights north of about
+   * 48.5° when the sun never sinks far enough — AlAdhan's three rules,
+   * under its names, applied the same online and on the phone.
+   */
+  highLatitudeRule: HighLatitudeRuleId;
+  /** The Fajr and Isha twilight angles behind the Custom method (id 99). */
+  customFajrAngle: number;
+  customIshaAngle: number;
   locationMode: LocationMode;
   manualLatitude: number;
   manualLongitude: number;
@@ -283,6 +305,13 @@ export type PrayerAppSettings = {
    */
   activeLocationPresetId?: string;
   /**
+   * Each location's own prayer-time source (`locationProviders.ts`), keyed
+   * by `locationKeyOf`: "My location", each saved location, an unsaved
+   * picked place. `dataProvider` / `dataProviderAuto` mirror the active
+   * one's.
+   */
+  locationProviders?: Record<string, { auto: boolean; provider: PrayerDataProviderId }>;
+  /**
    * Per-prayer offsets in minutes — task #22. Allows the user to nudge
    * each prayer ±N minutes to match a local mosque schedule. Empty object
    * (default) means no offsets are applied. See `applyOffsets()` in
@@ -396,6 +425,24 @@ export type PrayerAppSettings = {
    */
   endOfDayLogReminderEnabled: boolean;
   /**
+   * Mark late logs as late — issue #74, off by default.
+   *
+   * A prayer logged from the notification, the full-screen alarm or a Log
+   * Today widget is recorded `on-time`. With this on, one logged in the
+   * second half of its window, or after it, is recorded `late` instead.
+   * Logs made in the app are not affected. See `journal/logTiming`.
+   */
+  logLateByClock: boolean;
+  /**
+   * The launch run — on by default. A launch opens on a picture of the
+   * Today screen (native/LaunchSnapshot.ts); with this on, the picture's
+   * hero is posed at the current prayer and runs from there to now once
+   * the live screen is under it (boot/launchWarp.ts). Off, the picture
+   * is of the screen as it was left, nothing is posed or run, and it
+   * simply fades into the live screen: the quickest way to it.
+   */
+  launchAnimation: boolean;
+  /**
    * App accent color id — task #127. Drives the in-app accent and (when
    * `useSystemDynamicTheme` is off) also the widget highlight via the
    * sync logic in `syncWidgetUiHints.ts`. When `useSystemDynamicTheme`
@@ -423,6 +470,14 @@ export type PrayerAppSettings = {
    * render outside React — see `syncWidgetUiHints.ts`, the Live Activity
    * payload, and the prayer-notification builder.
    */
+  /**
+   * Which colours the Sky theme wears (theme/skyMoods.ts): 'vibrant', the
+   * representative palette it first shipped with, or 'realistic', the sky
+   * as it looks over a nearly neutral page — the default. Picked under
+   * Appearance and in the walkthrough when Sky is the theme; kept when it
+   * is not, for the next time it is.
+   */
+  skyVariant: SkyVariant;
   tintedSurfaces: boolean;
   /**
    * Custom colours the user has kept, newest first — see
@@ -659,7 +714,11 @@ export type PrayerAppSettings = {
 };
 
 export const DEFAULT_SETTINGS: PrayerAppSettings = {
-  appearance: 'system',
+  // Sky for a new install (2.31): the app's own look, the one the
+  // walkthrough opens on. An install from before keeps what it had —
+  // settings saved without an appearance are read as 'system' in
+  // storage.ts — and is offered Sky once instead (SkyThemeOffer).
+  appearance: 'sky',
   useSystemDynamicTheme: false,
   pureBlackDark: false,
   dataProvider: 'aladhan',
@@ -673,6 +732,9 @@ export const DEFAULT_SETTINGS: PrayerAppSettings = {
   calculationMethod: 'auto',
   school: 0,
   madhab: null,
+  highLatitudeRule: 'angle_based',
+  customFajrAngle: 18,
+  customIshaAngle: 17,
   // Default to GPS so first-run users in Sweden (or anywhere) don't get
   // stuck on a hardcoded "manual" placeholder if they skip onboarding.
   // Onboarding's manual-entry path explicitly switches this to 'manual'
@@ -727,6 +789,8 @@ export const DEFAULT_SETTINGS: PrayerAppSettings = {
   // Off until asked for: an unsolicited nightly notification is the kind
   // of thing people uninstall an app over.
   endOfDayLogReminderEnabled: false,
+  logLateByClock: false,
+  launchAnimation: true,
   // App accent defaults to brand green (matches the historical hardcoded
   // accent so users on existing installs see no visual diff after the
   // upgrade).
@@ -735,6 +799,7 @@ export const DEFAULT_SETTINGS: PrayerAppSettings = {
   // New installs open on the green colour theme (walkthrough + Settings).
   // Upgrades without this key stay Classic — see storage.ts.
   tintedSurfaces: true,
+  skyVariant: 'realistic',
   // Nobody starts with a colour they did not pick.
   savedAccentColors: [],
   // Live Activity defaults: OFF; when enabled, the detail-rich layout
