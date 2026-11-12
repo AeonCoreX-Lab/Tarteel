@@ -16,7 +16,7 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "node --no-warnings --import ./scripts/lib/register-extless.mjs --test \"packages/*/test/**/*.test.ts\" \"scripts/**/*.test.ts\" \"tests/**/*.test.ts\"",
+    "test": "node --no-warnings --import ./scripts/lib/register-extless.mjs --test \"packages/*/test/**/*.test.ts\" \"workers/*/test/**/*.test.ts\" \"scripts/**/*.test.ts\" \"tests/**/*.test.ts\"",
     "validate:quran": "node --no-warnings scripts/validate-quran/cli.ts",
     "validate:translations": "node --no-warnings scripts/validate-translations/cli.ts",
     "validate:knowledge": "node --no-warnings scripts/validate-knowledge/cli.ts",

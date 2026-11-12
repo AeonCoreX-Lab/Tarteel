@@ -15,6 +15,6 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["packages/*/src", "packages/*/test", "scripts"],
+  "include": ["packages/*/src", "packages/*/test", "workers/*/src", "workers/*/test", "scripts"],
   "exclude": ["node_modules", "apps"]
 }

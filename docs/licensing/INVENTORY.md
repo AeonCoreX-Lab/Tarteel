@@ -49,6 +49,13 @@ Never mark an asset "open source" without verification. Fill every column; "TBD"
 | Libraries | code | see package-lock.json | — | run a license scan before release | — | — | — | — |
 | Wikidata structured data (people, places, events, dates) | data (build-time import of drafts) | https://www.wikidata.org ; https://www.wikidata.org/wiki/Wikidata:Licensing | - | CC0 1.0 for structured data (Wikidata licensing page, read 2026-10-19). Other namespaces and Wikipedia text are CC BY-SA and are NOT used | Wikidata contributors (waived) | not required; each draft records its item number, date and revision in `editorialBasis` | **yes for the data; drafts only, a person must source and review before publishing** | licensing page read 2026-10-19; the live API has not been reached from the build sandbox |
 
+## Cloudflare Workers AI, Workers KV and Gemma (translation server; added 2026-11-12)
+
+- **What**: `workers/translate`, Tarteel's own Cloudflare Worker for the optional **online** translation engine. It calls Google's Gemma model (`@cf/google/gemma-3-12b-it`) through Cloudflare Workers AI and caches answers in Workers KV for up to 90 days.
+- **Terms**: Cloudflare's service terms and the [Gemma Terms of Use](https://ai.google.dev/gemma/terms) (Gemma is open-weights under Google's own terms, not an OSI licence). Cloudflare states that Workers AI does not use customer content to train models and does not keep prompts and answers; the KV cache is Tarteel's own storage. Free plan limits and pricing: https://developers.cloudflare.com/workers-ai/platform/pricing/ and https://developers.cloudflare.com/kv/platform/limits (read 2026-11-12).
+- **Data**: what the person sends is one Arabic passage; the Worker keeps a hash and the translation for up to 90 days and logs only counts. This is a server run by the project, so it is described in [docs/privacy](../privacy/README.md) and is off unless the person turns it on.
+- **Open points (owner)**: (1) the shared cache stores machine translations of the books' text: for OpenITI (CC BY-NC-SA 4.0) the translations must stay credited and non-commercial; for islamic.app the terms are not known, so ask them before relying on the cache for their books; (2) the Gemma terms; (3) the account: use a Cloudflare account of its own, because the free limits are per account.
+
 ## Google ML Kit Translate (added 2026-11-11)
 
 - **What**: `com.google.mlkit:translate:17.0.3`, used by Tarteel's own `TarteelTranslateModule` for optional on-device machine translation. Language packs (about 30 MB each) are downloaded by ML Kit from Google when the person agrees.

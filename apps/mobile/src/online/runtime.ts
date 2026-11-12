@@ -3,7 +3,14 @@ import type { IslamicBooksClient, QuranEncClient, QuranpediaClient, WikiClient }
 import { createFetchHadithHttp } from "../hadith/runtime";
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const config = require("./config.json") as { wikipedia?: boolean; quranenc?: boolean; quranpedia?: boolean; islamicbooks?: boolean; openiti?: boolean };
+const config = require("./config.json") as { wikipedia?: boolean; quranenc?: boolean; quranpedia?: boolean; islamicbooks?: boolean; openiti?: boolean; translateWorkerUrl?: string };
+
+/**
+ * The address of Tarteel's translation Worker (`workers/translate`), for the optional online translator. Empty until the Worker is
+ * deployed (see its README). While it is empty there is no online option anywhere in the app and no request is ever made; only
+ * an `https://` address counts.
+ */
+export const translateWorkerUrl: string = typeof config.translateWorkerUrl === "string" && config.translateWorkerUrl.startsWith("https://") ? config.translateWorkerUrl : "";
 
 /**
  * Wikipedia background reading is offered only in a build that turns it on in config.json. With it off there is no card, no

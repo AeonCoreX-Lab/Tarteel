@@ -14,7 +14,7 @@ import { LocationError, deviceRegion, detectLocation } from "../../src/platform/
 import { RECITERS, selectedReciter } from "../../src/audio/runtime";
 import { hadeethEncEnabled, hadithEnabled } from "../../src/hadith/runtime";
 import { TranslationSettings } from "../../src/translate/settings";
-import { useEngine } from "../../src/translate/parts";
+import { useEngines } from "../../src/translate/parts";
 import { islamicBooksEnabled, openItiEnabled, quranEncEnabled, quranpediaEnabled, wikipediaEnabled } from "../../src/online/runtime";
 import { knowledgeConfigured } from "../../src/knowledge/runtime";
 import { useApp } from "../../src/state/app";
@@ -61,7 +61,7 @@ export default function SettingsTab() {
   const th = useTheme();
   const t = useT();
   const s = useSettings();
-  const engine = useEngine();
+  const engines = useEngines();
   const router = useRouter();
   const params = useLocalSearchParams<{ focus?: string; n?: string }>();
   const scrollRef = useRef<ScrollView | null>(null);
@@ -243,9 +243,9 @@ export default function SettingsTab() {
           <Segmented label={t("bkOiSettingTitle")} value={s.onlineOpenIti ? 1 : 0} onChange={(v) => s.set("onlineOpenIti", v === 1)} options={[{ value: 0, label: t("off") }, { value: 1, label: t("tsOn") }]} />
         </Group>
       ) : null}
-      {engine ? (
+      {engines && (engines.device || engines.online) ? (
         <Group title={t("trSettingTitle")}>
-          <TranslationSettings engine={engine} />
+          <TranslationSettings engines={engines} />
         </Group>
       ) : null}
 

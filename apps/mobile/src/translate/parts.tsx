@@ -7,112 +7,144 @@ import { useSettings } from "../state/settings";
 import { useT } from "../i18n";
 import type { StringKey } from "../i18n";
 import { useTheme } from "../theme";
-import { getTranslator, rememberTranslation, rememberedTranslation, translationKey } from "./runtime";
+import { chooseEngine, getEngines, rememberTranslation, rememberedTranslation, translationKey } from "./runtime";
+import type { Engines } from "./runtime";
+
+type ErrorCode = "download-failed" | "failed" | "unavailable" | "busy" | "offline";
 
 type State =
   | { k: "idle" }
   | { k: "preparing" }
   | { k: "translating"; done: number; total: number }
   | { k: "ready"; tr: MachineTranslation }
-  | { k: "error"; code: "download-failed" | "failed" | "unavailable" };
+  | { k: "error"; code: ErrorCode };
 
-/** The engine this build has, or null (decided once). `undefined` while it is being checked. */
-export function useEngine(): TranslatorPort | null | undefined {
-  const [engine, setEngine] = useState<TranslatorPort | null | undefined>(undefined);
+/** The engines this build has (decided once). `undefined` while that is being checked. */
+export function useEngines(): Engines | undefined {
+  const [engines, setEngines] = useState<Engines | undefined>(undefined);
   useEffect(() => {
     let cancelled = false;
-    void getTranslator().then((e) => !cancelled && setEngine(e));
+    void getEngines().then((e) => !cancelled && setEngines(e));
     return () => {
       cancelled = true;
     };
   }, []);
-  return engine;
+  return engines;
 }
 
-const ERROR_KEY: Record<"download-failed" | "failed" | "unavailable", StringKey> = { "download-failed": "trErrDownload", failed: "trErrFailed", unavailable: "trUnavailable" };
+const ERROR_KEY: Record<ErrorCode, StringKey> = { "download-failed": "trErrDownload", failed: "trErrFailed", unavailable: "trUnavailable", busy: "trErrBusy", offline: "trErrOffline" };
 
 /**
- * Translate one Arabic passage on this device. The Arabic stays; the translation is shown below it, marked as machine
- * translation. Until the person turned translation on, the first tap shows what will happen (a small language pack is downloaded
- * once, then nothing leaves the phone) and asks. Any screen with Arabic text can use this.
+ * Translate one Arabic passage. The Arabic stays; the translation is shown below it, marked as machine translation. Until the
+ * person turned translation on, the first tap shows what will happen and asks: on this device (a small language pack is downloaded
+ * once, then nothing leaves the phone), or, when this build has it, online (the passage is sent to Tarteel's translation server).
+ * Any screen with Arabic text can use this.
  */
 export function PassageTranslation({ text, from = "ar" }: { text: string; from?: TranslateLang }) {
   const th = useTheme();
   const t = useT();
   const on = useSettings((s) => s.translateOn);
+  const online = useSettings((s) => s.translateOnline);
   const targetPref = useSettings((s) => s.translateTarget);
   const wifiOnly = useSettings((s) => s.translateWifiOnly);
   const ui = useSettings((s) => s.uiLanguage);
   const set = useSettings((s) => s.set);
   const to = targetLanguage(targetPref, ui);
-  const key = translationKey(text, to);
-  const engine = useEngine();
-  const [state, setState] = useState<State>(() => {
-    const done = rememberedTranslation(key);
-    return done ? { k: "ready", tr: done } : { k: "idle" };
-  });
+  const engines = useEngines();
+  const engine = engines ? chooseEngine(engines, online) : undefined;
+  const key = translationKey(text, to, engine?.id ?? "");
+  const [state, setState] = useState<State>({ k: "idle" });
   const stop = useRef<AbortController | null>(null);
   useEffect(() => () => stop.current?.abort(), []);
+  // A different passage, language or engine starts again, and stops a translation still running for the old one.
+  useEffect(() => {
+    stop.current?.abort();
+    setState({ k: "idle" });
+  }, [key]);
 
-  const run = async (): Promise<void> => {
-    if (!engine) return setState({ k: "error", code: "unavailable" });
+  const run = async (eng: TranslatorPort): Promise<void> => {
     stop.current?.abort();
     const c = new AbortController();
     stop.current = c;
     try {
       setState({ k: "preparing" });
-      await engine.prepare(from, to, { wifiOnly });
+      await eng.prepare(from, to, { wifiOnly });
       if (c.signal.aborted) return;
       setState({ k: "translating", done: 0, total: 1 });
-      const tr = await translateText(engine, text, from, to, { signal: c.signal, onProgress: (done, total) => !c.signal.aborted && setState({ k: "translating", done, total }) });
+      const tr = await translateText(eng, text, from, to, { signal: c.signal, onProgress: (done, total) => !c.signal.aborted && setState({ k: "translating", done, total }) });
       if (c.signal.aborted) return;
-      rememberTranslation(key, tr);
+      rememberTranslation(translationKey(text, to, eng.id), tr);
       setState({ k: "ready", tr });
     } catch (e) {
       if (c.signal.aborted || (e instanceof TranslateError && e.code === "cancelled")) return;
-      setState({ k: "error", code: e instanceof TranslateError && (e.code === "download-failed" || e.code === "unavailable") ? e.code : "failed" });
+      const code = e instanceof TranslateError ? e.code : "failed";
+      setState({ k: "error", code: code === "download-failed" || code === "unavailable" || code === "busy" || code === "offline" ? code : "failed" });
     }
   };
 
-  if (engine === undefined) return null;
-  if (engine === null) return <Caption>{t("trUnavailable")}</Caption>;
+  if (engines === undefined) return null;
+  if (engines.device === null && engines.online === null) return <Caption>{t("trUnavailable")}</Caption>;
 
-  if (state.k === "ready")
+  const remembered = engine ? rememberedTranslation(key) : undefined;
+  const view: State = state.k === "idle" && remembered ? { k: "ready", tr: remembered } : state;
+
+  if (view.k === "ready")
     return (
       <Card padding={14}>
         <View style={{ gap: 8 }}>
-          <Text style={{ color: th.brassText, fontSize: 12, fontWeight: "800", letterSpacing: 0.5 }}>{`${t("trLabel")} · ${state.tr.engineName}`}</Text>
-          <Text selectable style={{ color: th.text, fontSize: 16, lineHeight: 25, writingDirection: "ltr" }}>{state.tr.text}</Text>
+          <Text style={{ color: th.brassText, fontSize: 12, fontWeight: "800", letterSpacing: 0.5 }}>{`${t("trLabel")} · ${view.tr.engineName}`}</Text>
+          <Text selectable style={{ color: th.text, fontSize: 16, lineHeight: 25, writingDirection: "ltr" }}>{view.tr.text}</Text>
           <Text style={{ color: th.muted, fontSize: 12, lineHeight: 18 }}>{t("trConsentWarn")}</Text>
         </View>
       </Card>
     );
 
-  if (state.k === "preparing" || state.k === "translating")
-    return <Caption>{state.k === "preparing" ? t("trPreparing") : `${t("trWorking")} ${state.done}/${state.total}`}</Caption>;
+  if (view.k === "preparing" || view.k === "translating")
+    return <Caption>{view.k === "preparing" ? t("trPreparing") : `${t("trWorking")} ${view.done}/${view.total}`}</Caption>;
 
   return (
     <View style={{ gap: 8 }}>
-      {state.k === "error" ? <Text accessibilityLiveRegion="polite" style={{ color: th.text, fontSize: 14, lineHeight: 20, fontWeight: "700" }}>{t(ERROR_KEY[state.code])}</Text> : null}
-      {on ? (
+      {view.k === "error" ? <Text accessibilityLiveRegion="polite" style={{ color: th.text, fontSize: 14, lineHeight: 20, fontWeight: "700" }}>{t(ERROR_KEY[view.code])}</Text> : null}
+      {on && engine ? (
         <View style={{ flexDirection: "row" }}>
-          <Button label={state.k === "error" ? t("trRetry") : t("bkTranslate")} onPress={() => void run()} />
+          <Button label={view.k === "error" ? t("trRetry") : t("bkTranslate")} onPress={() => void run(engine)} />
         </View>
       ) : (
         <Card padding={14}>
           <View style={{ gap: 8 }}>
-            <Text style={{ color: th.text, fontSize: 15, fontWeight: "700" }}>{t("trConsentTitle")}</Text>
-            <Text style={{ color: th.text, fontSize: 13, lineHeight: 19 }}>{t("trConsentBody")}</Text>
+            {engines.device !== null ? (
+              <>
+                <Text style={{ color: th.text, fontSize: 15, fontWeight: "700" }}>{t("trConsentTitle")}</Text>
+                <Text style={{ color: th.text, fontSize: 13, lineHeight: 19 }}>{t("trConsentBody")}</Text>
+                <View style={{ flexDirection: "row" }}>
+                  <Button
+                    label={t("trConsentOn")}
+                    onPress={() => {
+                      set("translateOn", true);
+                      set("translateOnline", false);
+                      if (engines.device) void run(engines.device);
+                    }}
+                  />
+                </View>
+              </>
+            ) : null}
+            {engines.online !== null ? (
+              <>
+                <Text style={{ color: th.text, fontSize: 15, fontWeight: "700" }}>{t("trConsentOnlineTitle")}</Text>
+                <Text style={{ color: th.text, fontSize: 13, lineHeight: 19 }}>{t("trConsentOnlineBody")}</Text>
+                <View style={{ flexDirection: "row" }}>
+                  <Button
+                    label={t("trConsentOnlineOn")}
+                    onPress={() => {
+                      set("translateOn", true);
+                      set("translateOnline", true);
+                      if (engines.online) void run(engines.online);
+                    }}
+                  />
+                </View>
+              </>
+            ) : null}
             <Text style={{ color: th.muted, fontSize: 12, lineHeight: 18 }}>{t("trConsentWarn")}</Text>
-            <View style={{ flexDirection: "row" }}>
-              <Button
-                label={t("trConsentOn")}
-                onPress={() => {
-                  set("translateOn", true);
-                  void run();
-                }}
-              />
-            </View>
           </View>
         </Card>
       )}

@@ -19,6 +19,12 @@ export interface PreferenceSchema {
    * lets the app download a small language pack (about 30 MB per language) from Google, once, when the person asks for a translation.
    */
   translateOn: boolean;
+  /**
+   * Off by default. When on (and the build has an online translator), translation uses the online engine instead of the one on the
+   * device: the passage being translated is sent to Tarteel's translation server on Cloudflare, which answers from a shared cache
+   * or asks a Gemma model. Turned on only by the person, in Settings, after it says so.
+   */
+  translateOnline: boolean;
   /** Language to translate into: "app" = the app's language. */
   translateTarget: TranslateTargetPref;
   /** Download language packs only over Wi-Fi. */
@@ -110,6 +116,7 @@ export const PREFERENCE_DEFAULTS: PreferenceSchema = {
   arabicFontSize: 28,
   bookFontSize: 26,
   translateOn: false,
+  translateOnline: false,
   translateTarget: "app",
   translateWifiOnly: true,
   translationFontSize: 16,
@@ -201,6 +208,7 @@ export class ReadingProgress {
 export * from "./setup.ts";
 export * from "./madhab.ts";
 export * from "./translate.ts";
+export * from "./translatecloud.ts";
 export * from "./translations.ts";
 export * from "./hadith.ts";
 export * from "./hadeethenc.ts";

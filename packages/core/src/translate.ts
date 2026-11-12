@@ -1,12 +1,14 @@
 /**
  * Machine translation, as a port. The reader (and any later screen) talks to a `TranslatorPort`; an engine is one file that
- * implements it. Today there is one engine (ML Kit, on the device). A bigger one (a local language model) or another system
- * engine would be one more file and one more entry in the list the app passes to `pickTranslator`, with no change to a screen.
+ * implements it. Two engines exist: ML Kit, on the device (the default), and an online one (`translatecloud.ts`) that the person
+ * chooses in Settings. Another engine (a local language model) would be one more file and one more entry in the app's list, with
+ * no change to a screen.
  *
  * Rules every engine and screen follow:
  *  - the original text is never replaced: a translation is shown beside it, marked as machine translation;
  *  - nothing is translated before the person turned it on, and a language pack is downloaded only after they agreed;
- *  - the text being translated is not sent anywhere by Tarteel (an on-device engine keeps it on the device).
+ *  - an on-device engine keeps the text on the device. The online engine is the only one that sends text anywhere, only after
+ *    the person turned it on in Settings, and the app never falls back to it from the on-device one.
  */
 
 export const TRANSLATE_LANGS = ["ar", "en", "bn"] as const;
@@ -15,7 +17,8 @@ export type TranslateLang = (typeof TRANSLATE_LANGS)[number];
 /** Where the translation goes: the app's own language (the default), or one chosen. */
 export type TranslateTargetPref = "app" | "en" | "bn";
 
-export type TranslateErrorCode = "unavailable" | "pack-missing" | "download-failed" | "failed" | "cancelled";
+/** `busy`: an online engine has reached its limit for now. `offline`: an online engine could not be reached. */
+export type TranslateErrorCode = "unavailable" | "pack-missing" | "download-failed" | "failed" | "cancelled" | "busy" | "offline";
 
 export class TranslateError extends Error {
   readonly code: TranslateErrorCode;
@@ -44,8 +47,11 @@ export interface TranslatorPort {
   prepare(from: TranslateLang, to: TranslateLang, options: PrepareOptions): Promise<void>;
   /** Deletes one language pack. */
   remove(lang: TranslateLang): Promise<void>;
-  /** Translates one short piece of text. Rejects with `pack-missing` when `prepare` has not been done. */
-  translate(text: string, from: TranslateLang, to: TranslateLang): Promise<string>;
+  /**
+   * Translates one short piece of text. Rejects with `pack-missing` when `prepare` has not been done. An engine that uses the
+   * network stops its request when `signal` is aborted; one on the device may ignore it.
+   */
+  translate(text: string, from: TranslateLang, to: TranslateLang, signal?: AbortSignal): Promise<string>;
 }
 
 /** What a screen shows under the original: the text and where it came from. Always `machine: true`. */
@@ -131,7 +137,7 @@ export async function translateText(port: TranslatorPort, text: string, from: Tr
     if (piece.trim() === "") {
       out.push(piece);
     } else {
-      const translated = await port.translate(piece.trim(), from, to);
+      const translated = await port.translate(piece.trim(), from, to, options.signal);
       out.push(translated.trim());
     }
     options.onProgress?.(i + 1, pieces.length);

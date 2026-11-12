@@ -21,7 +21,7 @@ No ads, no mandatory account, no mandatory internet, no tracking.
 | Recitation (Listen page, reader follows the recitation) | Built and working on a phone. Two reciters, Mishary Alafasy and Mahmoud Khalil Al-Husary, from the Islamic Network CDN, with the host's written confirmation (see [docs/audio](docs/audio/README.md)). Downloads are opt-in; streaming is off by default |
 | History, Library, Timeline (signed offline packs) | Built, tested in code; hidden until a publisher key and catalogue address are set (see [KNOWLEDGE](docs/architecture/KNOWLEDGE.md)). The shipped packs are small, content is still being cleared and reviewed |
 | Online sources: HadeethEnc, Wikipedia, QuranEnc tafsir, Quranpedia classical tafsir | Live, opt-in (all off by default), nothing stored, each credited; run on a phone. See [ONLINE-SOURCES](docs/architecture/ONLINE-SOURCES.md) |
-| Books (Knowledge tab): islamic.app Library read live; OpenITI texts the person chooses to keep and read offline; covers drawn by the app (no publisher images); Arabic originals, with optional on-device machine translation (Google ML Kit, off by default, always marked, Arabic kept) | Built, **not yet run on a device**. Opt-in (off by default); islamic.app stores nothing; OpenITI is CC BY-NC-SA 4.0, credited, kept only on request and removable |
+| Books (Knowledge tab): islamic.app Library read live; OpenITI texts the person chooses to keep and read offline; covers drawn by the app (no publisher images); Arabic originals, with optional machine translation (on the phone with Google ML Kit, or online through Tarteel's translation server; both off by default, always marked, Arabic kept) | Built, **not yet run on a device**. Opt-in (off by default); islamic.app stores nothing; OpenITI is CC BY-NC-SA 4.0, credited, kept only on request and removable |
 | Sunnah.com (and anything that is its data) | **Off** until Sunnah.com agrees in writing |
 
 The app has a brand header (`AppBar`) on the main tabs, a splash that is held long enough to read, and a first-run setup flow.
@@ -61,6 +61,7 @@ Brand: [BRAND](docs/design/BRAND.md) · UI kit: [UI-KIT](docs/design/UI-KIT.md) 
 | `apps/mobile` | Expo / React Native app (Android first) |
 | `scripts/` | `validate-quran`, `validate-translations`, `validate-audio`, `validate-knowledge`, `build-database`, `build-pack`, importers (`import-tanzil`, `import-quranenc`, `import-quranpedia`, `import-wikidata`), `upstream` (verify/status/diff) |
 | `data/` | Committed datasets: `quran/`, `translations/`, `knowledge/` (pack sources), `sources/` (raw publisher files). Each has a manifest with sha256 hashes |
+| `workers/translate` | Optional Cloudflare Worker for online machine translation (Workers AI + shared KV cache); off in the app until its address is set. Setup in its [README](workers/translate/README.md) |
 | `native/tarteel-android` | Local Android library: autolinked glue for the vendored Kotlin full-screen alert |
 | `third_party/mihrab-android` | Kotlin that came from Mihrab (full-screen alert); maintained by Tarteel, changes in `CHANGES.md` |
 | `third_party/mihrab` | code that came from Mihrab (AGPL), maintained by Tarteel, changes in `CHANGES.md` — see [docs/upstream](docs/upstream/README.md) |

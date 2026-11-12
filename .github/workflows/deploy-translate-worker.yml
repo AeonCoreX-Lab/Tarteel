@@ -1,0 +1,64 @@
+name: Deploy translation Worker
+
+# Publishes workers/translate to Cloudflare Workers. It does nothing (and does not fail) until the one-time setup in
+# workers/translate/README.md is done: the KV namespace id is pasted into wrangler.toml and both secrets exist.
+#
+#   CLOUDFLARE_API_TOKEN   Cloudflare dashboard -> My Profile -> API Tokens -> "Edit Cloudflare Workers" template
+#   CLOUDFLARE_ACCOUNT_ID  Cloudflare dashboard -> Workers & Pages -> shown in the right-hand column
+#
+# Nothing else is a secret: the Workers AI binding in wrangler.toml needs no key.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/translate/**"
+      - ".github/workflows/deploy-translate-worker.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: "Check the one-time setup is done"
+        id: guard
+        working-directory: workers/translate
+        run: |
+          if grep -q "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" wrangler.toml; then
+            echo "::notice::Translation Worker not deployed: paste the KV namespace id into workers/translate/wrangler.toml (see workers/translate/README.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          elif [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice::Translation Worker not deployed: add the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets (see workers/translate/README.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        if: steps.guard.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        if: steps.guard.outputs.ready == 'true'
+        working-directory: workers/translate
+        run: npm install
+
+      - name: Deploy to Cloudflare Workers
+        if: steps.guard.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/translate
+          command: deploy
