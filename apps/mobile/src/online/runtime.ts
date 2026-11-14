@@ -10,7 +10,7 @@ const config = require("./config.json") as { wikipedia?: boolean; quranenc?: boo
  * deployed (see its README). While it is empty there is no online option anywhere in the app and no request is ever made; only
  * an `https://` address counts.
  */
-export const translateWorkerUrl: string = typeof config.translateWorkerUrl === "string" && config.translateWorkerUrl.startsWith("https://") ? config.translateWorkerUrl : "";
+export const translateWorkerUrl: string = typeof config.translateWorkerUrl === "string" && config.translateWorkerUrl.trim().startsWith("https://") ? config.translateWorkerUrl.trim() : "";
 
 /**
  * Wikipedia background reading is offered only in a build that turns it on in config.json. With it off there is no card, no
